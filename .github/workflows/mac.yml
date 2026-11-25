@@ -121,13 +121,6 @@ jobs:
             vendor/GhosttyKit.xcframework
             vendor/ghostty-resources
           key: ghostty-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('scripts/build-ghostty.sh') }}
-      # The Swift packages' source, so they aren't cloned every time.
-      - name: Restore Swift packages
-        uses: actions/cache@v6
-        with:
-          path: build/SourcePackages
-          key: spm-${{ runner.os }}-${{ hashFiles('project.yml') }}
-          restore-keys: spm-${{ runner.os }}-
       # No signing team here, so the app is signed to run locally. That
       # also makes it an unofficial build: no updates, no analytics.
       - name: Sign to run locally
