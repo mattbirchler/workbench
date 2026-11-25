@@ -832,6 +832,12 @@ private struct SessionRowView: View {
                         .lineLimit([.working, .remoteWorking].contains(session.activity) ? 1 : 2)
                 }
                 .font(.subheadline)
+                // The Mac's step bar: a segment per step, the current one glowing.
+                if let items = session.checklist, !items.isEmpty,
+                   [.working, .remoteWorking, .waiting].contains(session.activity) {
+                    ChecklistStepsBar(items: items, activity: session.activity)
+                        .padding(.top, 4)
+                }
             }
             Spacer(minLength: 8)
             VStack(alignment: .trailing, spacing: 5) {

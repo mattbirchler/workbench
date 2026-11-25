@@ -857,16 +857,15 @@ struct ChecklistBar: View {
                                 .foregroundStyle(PhoneTheme.inkMuted)
                                 .accessibilityLabel("\(running) agents working")
                         }
-                        Text("\(items.doneCount)/\(items.count)")
-                            .monospaced()
-                            .foregroundStyle(PhoneTheme.inkMuted)
                         Image(systemName: "chevron.up")
                             .font(.caption.weight(.semibold))
                             .foregroundStyle(PhoneTheme.inkMuted)
                             .rotationEffect(.degrees(expanded ? 180 : 0))
                     }
                     .font(.subheadline)
-                    ChecklistProgressBar(progress: items.progress)
+                    // The same segments as the project list and the Mac, with
+                    // the count at the end.
+                    ChecklistStepsBar(items: items, activity: session.activity)
                 }
                 .padding(.horizontal, 14)
                 .padding(.vertical, 12)
