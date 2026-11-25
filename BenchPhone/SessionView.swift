@@ -170,7 +170,7 @@ struct SessionView: View {
                         .shadow(color: .black.opacity(0.18), radius: 16, y: 6)
                         .transition(ChatMotion.card)
                     } else if let session, session.isAllowOrDeny {
-                        PermissionCard(session: session) { allow in
+                        PermissionCard(session: session, reply: { composing = true }) { allow in
                             client.answer(sessionID: sessionID, allow: allow)
                         }
                         .transition(ChatMotion.card)
@@ -1157,89 +1157,44 @@ private struct ContextRing: View {
 /// means Deny; these do the same.
 private struct PermissionCard: View {
     let session: CompanionSession
+    /// Puts the cursor in the message box, to say something else instead.
+    var reply: (() -> Void)?
     let answer: (Bool) -> Void
-    /// How tall the command is when laid out at the card's width.
-    @State private var commandTextHeight: CGFloat = 0
-    /// What you just tapped, shown until the Mac takes the card away.
-    @State private var chosen: Bool?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(spacing: 8) {
                 Image(systemName: "hand.raised.fill").foregroundStyle(PhoneTheme.waiting)
-                Text(session.question ?? "\(session.agentTitle) needs your permission")
+                Text(session.permissionTitle)
                     .font(.system(.subheadline, design: .rounded, weight: .semibold))
                     .foregroundStyle(PhoneTheme.ink)
+                Spacer(minLength: 6)
+                if let since = session.since {
+                    ActiveTimer(since: since, activity: session.activity)
+                        .font(.footnote)
+                }
             }
             if let command = session.command, !command.isEmpty {
-                // All of it, before you allow it: a long command scrolls
-                // rather than hiding its later lines.
-                // Sized from the text's own height: a frame with only a
-                // most-height takes all it's offered.
-                ScrollView {
-                    commandText(command)
-                        .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { commandTextHeight = $0 }
-                }
-                .scrollDisabled(commandTextHeight <= 150)
-                .frame(height: min(max(commandTextHeight, 16), 150))
+                CommandBlock(command: command)
             } else if let action = session.action {
                 // An older Mac only sends the start of the first line.
                 Text(action).font(.system(.footnote, design: .monospaced)).foregroundStyle(PhoneTheme.inkMuted).lineLimit(3)
             }
-            ZStack {
-                HStack(spacing: 10) {
-                    Button { choose(true) } label: { Text("Allow").font(.body.weight(.semibold)).frame(maxWidth: .infinity) }
-                        .buttonStyle(.borderedProminent)
-                        .tint(PhoneTheme.done)
-                    Button { choose(false) } label: { Text("Deny").font(.body.weight(.semibold)).frame(maxWidth: .infinity) }
-                        .buttonStyle(.bordered)
-                        .tint(PhoneTheme.ink)
-                }
-                .opacity(chosen == nil ? 1 : 0)
-                .disabled(chosen != nil)
-                .accessibilityHidden(chosen != nil)
-                if let chosen {
-                    Label(chosen ? "Allowed" : "Denied", systemImage: chosen ? "checkmark.circle.fill" : "xmark.circle.fill")
-                        .font(.body.weight(.semibold))
-                        .foregroundStyle(chosen ? PhoneTheme.done : PhoneTheme.inkMuted)
-                        .transition(.opacity.combined(with: .scale(scale: 0.9)))
-                }
+            PermissionButtons(session: session, answer: answer)
+            if let reply, session.canReply {
+                Button("Reply instead", action: reply)
+                    .font(.footnote.weight(.medium))
+                    .foregroundStyle(PhoneTheme.inkMuted)
+                    .frame(maxWidth: .infinity)
+                    .touchArea(vertical: 8)
+                    .buttonStyle(.plain)
+                    .accessibilityHint("Puts the cursor in the message box")
             }
-        }
-        .animation(.easeOut(duration: 0.15), value: chosen)
-        .sensoryFeedback(trigger: chosen) { _, new in
-            switch new {
-            case true?: .success
-            case false?: .impact(weight: .light)
-            case nil: nil
-            }
-        }
-        // Anything new from the Mac while the card is still up means it's
-        // asking again (or never heard), so the buttons come back.
-        .onChange(of: session) { chosen = nil }
-        .task(id: chosen) {
-            guard chosen != nil else { return }
-            try? await Task.sleep(for: .seconds(4))
-            if !Task.isCancelled { chosen = nil }
         }
         .padding(14)
         .background(PhoneTheme.surface, in: RoundedRectangle(cornerRadius: PhoneTheme.Radius.card, style: .continuous))
         .overlay(RoundedRectangle(cornerRadius: PhoneTheme.Radius.card, style: .continuous).strokeBorder(PhoneTheme.waiting.opacity(0.6), lineWidth: 1.5))
         .shadow(color: .black.opacity(0.18), radius: 16, y: 6)
-    }
-
-    private func commandText(_ command: String) -> some View {
-        Text(command)
-            .font(.system(.footnote, design: .monospaced))
-            .foregroundStyle(PhoneTheme.inkMuted)
-            .fixedSize(horizontal: false, vertical: true)
-            .frame(maxWidth: .infinity, alignment: .leading)
-    }
-
-    /// Shows the answer at once: the Mac can take a second to act on it.
-    private func choose(_ allow: Bool) {
-        chosen = allow
-        answer(allow)
     }
 }
 

@@ -375,7 +375,7 @@ final class DemoServer {
                     id: websiteSession, title: "Pricing page", activity: .waiting,
                     prompt: "Add a pricing page with the three plans, and link it from the nav.",
                     question: "Claude wants to run: npm run build", isAllowOrDeny: true, canReply: true,
-                    since: .now.addingTimeInterval(-2 * minute))]),
+                    since: .now.addingTimeInterval(-2 * minute), command: "npm run build")]),
             CompanionProject(
                 id: notes, name: "Field Notes", repoName: "field-notes", path: "~/Code/field-notes", branch: "main",
                 activity: .waiting,

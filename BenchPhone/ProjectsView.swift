@@ -405,7 +405,9 @@ struct ProjectsView: View {
                         SessionRowView(project: item.project, session: item.session,
                                        icon: client.icons[item.project.parentID ?? item.project.id],
                                        parentName: item.project.parentID.flatMap { id in client.snapshot?.projects.first { $0.id == id }?.name },
-                                       selected: isSelected(item.project.id, session: item.session.id))
+                                       selected: isSelected(item.project.id, session: item.session.id),
+                                       answer: canAnswer(item.session) ? { client.answer(sessionID: item.session.id, allow: $0) } : nil,
+                                       pick: canAnswer(item.session) ? { client.answerQuestions(sessionID: item.session.id, answers: [CompanionAnswer(selected: [$0])]) } : nil)
                     }
                     .listRowBackground(rowBackground(tint: tinted ? color : nil, selected: isSelected(item.project.id, session: item.session.id),
                                                      breathes: tinted, finishedAt: item.session.activity == .done ? item.session.stoppedAt : nil))
@@ -417,6 +419,12 @@ struct ProjectsView: View {
                 SectionHeader(title: title, color: color, count: rows.count)
             }
         }
+    }
+
+    /// Whether a row can answer for its session: the Mac is there to hear
+    /// it. (`canReply` is about messages, and is off while a question is up.)
+    private func canAnswer(_ session: CompanionSession) -> Bool {
+        !client.isShowingSaved && client.status == .connected
     }
 
     /// Projects with nothing going on, in the Mac's sections: Pinned in
@@ -850,10 +858,34 @@ private struct SessionRowView: View {
     /// The project a worktree belongs to, by name.
     var parentName: String?
     var selected = false
+    /// Answers an allow or deny from the row. Nil when it can't be sent
+    /// from here (the Mac is out of reach, or the session can't take it).
+    var answer: ((Bool) -> Void)?
+    /// Answers a question by the number of the option picked.
+    var pick: ((Int) -> Void)?
 
     private var tint: Color? { PhoneTheme.color(for: session.activity) }
 
     var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            summary
+                .accessibilityElement(children: .combine)
+                .accessibilityAddTraits(selected ? .isSelected : [])
+            // Answer from here, as on the Mac's sidebar: an allow or deny
+            // with its command, or a question with a few plain options.
+            if session.isAllowOrDeny, let answer {
+                if let command = session.command, !command.isEmpty {
+                    CommandBlock(command: command, lineLimit: 2)
+                }
+                PermissionButtons(session: session, compact: true, answer: answer)
+            } else if let question = session.quickQuestion, let pick {
+                QuickAnswers(session: session, question: question, pick: pick)
+            }
+        }
+        .padding(.vertical, 4)
+    }
+
+    private var summary: some View {
         HStack(spacing: 12) {
             ZStack {
                 if let tint {
@@ -916,9 +948,6 @@ private struct SessionRowView: View {
                 }
             }
         }
-        .padding(.vertical, 4)
-        .accessibilityElement(children: .combine)
-        .accessibilityAddTraits(selected ? .isSelected : [])
     }
 
     private var title: String {
@@ -948,6 +977,8 @@ private struct SessionRowView: View {
             if let host = session.remoteHost { text += " on \(host)" }
             return text
         case .waiting:
+            // The command has a block of its own under the row.
+            if session.isAllowOrDeny, answer != nil { return session.permissionTitle }
             return session.question ?? "Waiting for you"
         case .done:
             return session.summary?.split(whereSeparator: \.isNewline).first.map(String.init) ?? "Finished"
