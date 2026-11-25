@@ -48,6 +48,9 @@ struct BenchPhoneApp: App {
                 } else if let mode = ProcessInfo.processInfo.environment["BENCH_CHECKLIST_SAMPLE"] {
                     // Screenshots: the checklist bar, folded or ("open") open.
                     ChecklistPreview(expanded: mode == "open")
+                } else if let kind = ProcessInfo.processInfo.environment["BENCH_SURFACE_SAMPLE"] {
+                    // Screenshots: the Lock Screen dashboard, drawn in the app.
+                    SurfacePreview(kind: kind)
                 } else if ProcessInfo.processInfo.environment["BENCH_MARKDOWN_SAMPLE"] != nil {
                     // Screenshots: render the Markdown sample on its own.
                     ScrollView { MarkdownText(text: MarkdownText.sample).padding(16) }.background(PhoneTheme.canvas)

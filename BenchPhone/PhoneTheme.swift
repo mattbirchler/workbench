@@ -71,6 +71,8 @@ enum PhoneTheme {
     /// phone's own otherwise. Read in a view's body, so views follow
     /// theme changes.
     static var palette: CompanionPalette { MacTheme.shared.palette ?? standard }
+    /// The theme you picked, or nil when the app is in its own colors.
+    static var themePalette: CompanionPalette? { MacTheme.shared.palette }
 }
 
 /// Where the app's colors come from: the Mac's terminal theme (kept so the

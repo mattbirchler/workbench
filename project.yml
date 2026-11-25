@@ -233,6 +233,9 @@ targets:
     sources:
       - path: BenchPhone
       - path: Analytics
+      # The Lock Screen dashboard's and the widgets' drawing, which a debug
+      # build of the app can show for a look without the Lock Screen.
+      - path: BenchPhoneWidgets/DashboardViews.swift
       - path: bench-icon.icon
         buildPhase: resources
       # Icons people can switch to in Settings (AppIconChoice in BenchKit).
