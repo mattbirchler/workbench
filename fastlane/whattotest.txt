@@ -1,9 +1,17 @@
-New in this build:
+New in this build: the project list shows more, and the app gives more feedback.
 
-• Codex sessions. If you run Codex tabs in Workbench 0.10 on your Mac, they show up here as Codex, not Claude: their name in the list and the chat, their permission cards, and their own models and effort levels when you switch models. Please try sending a message, allowing a request and switching the model in a Codex session.
+• Step progress on rows. When an agent is working through a checklist, its row in the project list shows the same segmented bar as the Mac: one segment per step, the current one glowing, and a count like 2/5. The checklist bar inside a chat uses the same segments.
 
-• Workbench's own colors. The plain System look uses Workbench's blue (mint in dark mode) instead of Claude's orange, from the very first screen.
+• Roomier rows. The timer moved up beside the name and the arrows on the right are gone, so the current step has the whole row and should no longer be cut off. The branch shows beside the project's name.
 
-• Shorter permission cards. A one-line command no longer gets a card seven lines tall.
+• Pull requests on busy rows. A session with a pull request shows its number and how its checks stand, like "#42 · 3/3 checks".
 
-Things to look for: anywhere a Codex session still says Claude, or a Claude session says Codex.
+• New section headers, and agents on a branch now hang under their project when both are quiet.
+
+• More taps. You should feel one when a session finishes while you're looking, a soft tick as each step completes, and taps when you answer a question, start an agent, switch model or theme, or pair.
+
+• Rows waiting on you breathe slowly, and a row gets a sweep of light when its session finishes.
+
+• Fixed: the project list could open slightly scrolled, with the usage card tucked under the title.
+
+Things to look for: rows that look cramped or cut off with long project or branch names, any tap that feels like too much, and whether the list still opens at the very top every time.
