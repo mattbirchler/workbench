@@ -80,6 +80,10 @@ struct SessionView: View {
     @State private var draft: String
     @State private var attachments: [PendingAttachment]
     @State private var problem: String?
+    /// The model being switched to, until the Mac reports it. Shared by
+    /// the header, which does the switching, and the message box, which
+    /// shows the model.
+    @State private var switchingModel: ModelChoice?
     /// Counts answers to Claude's questions, for the tap that goes with each.
     @State private var answersSent = 0
     /// The messages as turns, with what you just sent merged in. Grouped
@@ -138,9 +142,9 @@ struct SessionView: View {
         if let project, let session {
             SessionHeader(project: project, session: session, icon: client.icons[project.parentID ?? project.id],
                           buttonsInBar: hasVerticalBar, inTitleRow: headerInBar, request: $modelRequest,
+                          switching: $switchingModel,
                           switchModel: { client.reply(sessionID: sessionID, text: $0.command, attachments: []) },
-                          setEffort: { client.reply(sessionID: sessionID, text: $0.command, attachments: []) },
-                          openModels: { showsModels.toggle() })
+                          setEffort: { client.reply(sessionID: sessionID, text: $0.command, attachments: []) })
         } else {
             // The tab is gone from the Mac (or hasn't been heard of yet,
             // while connecting): keep a way back.
@@ -194,6 +198,8 @@ struct SessionView: View {
                     if let session {
                         ComposeBar(session: session, draft: $draft, attachments: $attachments, focused: $composing,
                                    modelRequest: $modelRequest, showsModels: $showsModels,
+                                   switchingModel: switchingModel,
+                                   setMode: session.permissionMode == nil ? nil : { client.setPermissionMode(sessionID: sessionID, mode: $0) },
                                    commands: (client.slashCommands[projectID] ?? []).filter { !$0.opensInTerminal },
                                    stop: client.canInterrupt ? { client.interrupt(sessionID: sessionID) } : nil) { send() }
                             .onChange(of: draft) { old, text in
@@ -648,13 +654,10 @@ private struct SessionHeader: View {
     /// Set by the `/model` list to switch, after asking first if the
     /// conversation is long.
     @Binding var request: ModelRequest?
+    /// The model being switched to. The message box shows it.
+    @Binding var switching: ModelChoice?
     let switchModel: (ModelChoice) -> Void
     let setEffort: (EffortLevel) -> Void
-    /// Opens the `/model` list above the message box.
-    let openModels: () -> Void
-    @State private var switching: ModelChoice?
-
-    private var current: String? { switching?.name ?? session.model }
 
     private var tint: Color { PhoneTheme.color(for: session.activity) ?? PhoneTheme.inkMuted }
 
@@ -664,82 +667,83 @@ private struct SessionHeader: View {
                             switchModel: switchModel, setEffort: setEffort)
     }
 
+    /// Who this is on one row, what it's doing on the next. The status
+    /// has the row to itself: sharing one with the name, the model and the
+    /// buttons, it was cut down to a word or two.
     private var header: some View {
-        HStack(spacing: 8) {
-            if !buttonsInBar { SessionBackButton() }
-            CompanionProjectIcon(project: project, icon: icon, size: 30)
-            VStack(alignment: .leading, spacing: 1) {
-                Text(project.isWorktree ? (project.branch ?? project.name) : project.name)
-                    .font(.system(.body, design: .rounded, weight: .semibold))
-                    .foregroundStyle(PhoneTheme.ink)
-                    .lineLimit(1)
-                HStack(spacing: 5) {
-                    ActivityMark(activity: session.activity, size: 11)
-                    Text(statusText)
-                        .font(.caption.weight(.medium))
-                        .foregroundStyle(session.activity == .idle ? PhoneTheme.inkMuted : PhoneTheme.ink.opacity(0.85))
+        VStack(alignment: .leading, spacing: 7) {
+            HStack(spacing: 8) {
+                if !buttonsInBar { SessionBackButton() }
+                CompanionProjectIcon(project: project, icon: icon, size: 30)
+                VStack(alignment: .leading, spacing: 1) {
+                    Text(project.isWorktree ? (project.branch ?? project.name) : project.name)
+                        .font(.system(.body, design: .rounded, weight: .semibold))
+                        .foregroundStyle(PhoneTheme.ink)
                         .lineLimit(1)
-                        .contentTransition(.opacity)
-                    // Kept whole: the status beside it gives way first.
-                    if let tokens = session.contextTokens, let window = session.contextWindow {
-                        ContextRing(tokens: tokens, window: window)
-                            .padding(.leading, 2)
+                    if inTitleRow {
+                        // No second row in the bar's title row: the status
+                        // stays under the name there.
+                        status
+                    } else if let place {
+                        HStack(spacing: 4) {
+                            Image(systemName: "arrow.triangle.branch")
+                                .font(.caption2.weight(.semibold))
+                            Text(place)
+                                .font(.caption.monospaced())
+                                .lineLimit(1)
+                                .truncationMode(.middle)
+                        }
+                        .foregroundStyle(PhoneTheme.inkMuted)
                     }
                 }
+                .layoutPriority(1)
+                Spacer(minLength: 0)
+                if !buttonsInBar {
+                    ChangesButton(project: project)
+                    ProjectMenuButton(projectID: project.id, session: session)
+                }
             }
-            // The name comes first: the pill is the last thing to get room.
-            .layoutPriority(1)
-            Spacer(minLength: 0)
-            if session.model != nil || session.canRunCommand {
-                modelPill
-            }
-            if !buttonsInBar {
-                ChangesButton(project: project)
-                ProjectMenuButton(projectID: project.id, session: session)
+            if !inTitleRow {
+                status
+                    .padding(.leading, buttonsInBar ? 0 : 4)
             }
         }
         .headerChrome(inBar: inTitleRow, leading: buttonsInBar ? 16 : 12, rule: tint.opacity(session.activity == .idle ? 0.15 : 0.45))
         .animation(.easeInOut(duration: 0.3), value: session.activity)
     }
 
-    /// The model, in the session's color. Tap for the same list `/model`
-    /// opens. How full the context is sits under the project's name: in
-    /// here it squeezed the name down to a letter.
-    private var modelPill: some View {
-        let costly = ModelChoice.usesLimitsFaster(model: session.model, switching: switching)
-        return Button(action: openModels) {
-            HStack(spacing: 4) {
-                if costly {
-                    Image(systemName: "flame.fill")
-                        .foregroundStyle(ModelChoice.costlyColor)
-                }
-                Text(ModelChoice.label(model: session.model, switching: switching))
-                    .foregroundStyle(costly ? ModelChoice.costlyColor : PhoneTheme.inkMuted)
-                    .contentTransition(.opacity)
-                if switching != nil {
-                    ProgressView()
-                        .controlSize(.mini)
-                } else {
-                    Image(systemName: "chevron.up.chevron.down")
-                        .imageScale(.small)
+    /// The mark, what's going on in words, and how full the context is.
+    private var status: some View {
+        HStack(spacing: 6) {
+            ActivityMark(activity: session.activity, size: 11)
+            Text(statusText)
+                .font(inTitleRow ? .caption.weight(.medium) : .footnote.weight(.medium))
+                .foregroundStyle(session.activity == .idle ? PhoneTheme.inkMuted : PhoneTheme.ink.opacity(0.85))
+                .lineLimit(1)
+                .contentTransition(.opacity)
+            if !inTitleRow { Spacer(minLength: 6) }
+            // Kept whole: the status beside it gives way first.
+            if let tokens = session.contextTokens, let window = session.contextWindow {
+                if !inTitleRow {
+                    Text("\(shortTokens(tokens)) of \(shortTokens(window))")
+                        .font(.caption.monospacedDigit())
                         .foregroundStyle(PhoneTheme.inkMuted)
+                        .fixedSize()
+                        .accessibilityHidden(true)
                 }
+                ContextRing(tokens: tokens, window: window)
+                    .padding(.leading, inTitleRow ? 2 : 0)
             }
-            .animation(.easeInOut(duration: 0.15), value: current)
-            .font(.caption2.weight(.medium))
-            .lineLimit(1)
-            .fixedSize()
-            .padding(.horizontal, 9)
-            .padding(.vertical, 8)
-            .background(costly ? ModelChoice.costlyColor.opacity(0.16) : tint.opacity(session.activity == .idle ? 0.08 : 0.14),
-                        in: Capsule())
-            .overlay { if costly { Capsule().strokeBorder(ModelChoice.costlyColor.opacity(0.35), lineWidth: 0.5) } }
-            .touchArea(horizontal: 2, vertical: 8)
         }
-        .buttonStyle(.plain)
-        .accessibilityLabel("Model \(current ?? "unknown")")
-        .accessibilityValue(costly ? ModelChoice.usesLimitsFasterNote : "")
-        .accessibilityHint("Shows the models and effort levels")
+    }
+
+    /// Where the session is working: its branch, or for a worktree (whose
+    /// name is its branch) the repo and its pull request.
+    private var place: String? {
+        if project.isWorktree {
+            return [project.repoName, project.pullRequest.map { "#\($0.number)" }].compactMap { $0 }.joined(separator: " · ")
+        }
+        return project.branch
     }
 
     private var statusText: String {
@@ -835,6 +839,82 @@ private struct SessionHaptics: ViewModifier {
             .sensoryFeedback(.selection, trigger: model) { (old: String?, new: String?) -> Bool in
                 old != nil && new != nil
             }
+    }
+}
+
+private extension View {
+    /// A small capsule in the message box: the model, the permission mode.
+    func composerPill(fill: Color, stroke: Color? = nil) -> some View {
+        font(.caption.weight(.medium))
+            .lineLimit(1)
+            .fixedSize()
+            .padding(.horizontal, 9)
+            .padding(.vertical, 5)
+            .background(fill, in: Capsule())
+            .overlay { if let stroke { Capsule().strokeBorder(stroke, lineWidth: 0.5) } }
+            .touchArea(horizontal: 2, vertical: 10)
+    }
+}
+
+/// How much the agent does before asking, as a pill that opens the list
+/// of modes. Shows the one you picked at once: the Mac reports the change
+/// a moment later, when Claude Code's screen says so.
+private struct ModePill: View {
+    let mode: PermissionMode
+    let set: (PermissionMode) -> Void
+    @State private var switching: PermissionMode?
+
+    private var shown: PermissionMode { switching ?? mode }
+
+    var body: some View {
+        Menu {
+            Picker("Mode", selection: Binding(get: { shown }, set: choose)) {
+                ForEach(PermissionMode.offered, id: \.self) { option in
+                    // Two lines of text: the name, and what it does under it.
+                    Label {
+                        Text(option.name)
+                        Text(option.detail)
+                    } icon: {
+                        Image(systemName: option.symbol)
+                    }
+                    .tag(option)
+                }
+            }
+            .pickerStyle(.inline)
+            .labelsHidden()
+        } label: {
+            HStack(spacing: 4) {
+                Image(systemName: shown.symbol)
+                    .imageScale(.small)
+                Text(shown.name)
+                    .contentTransition(.opacity)
+                if switching != nil {
+                    ProgressView().controlSize(.mini)
+                } else {
+                    Image(systemName: "chevron.up.chevron.down")
+                        .imageScale(.small)
+                }
+            }
+            .foregroundStyle(shown == .bypass ? PhoneTheme.error : PhoneTheme.inkMuted)
+            .composerPill(fill: shown == .bypass ? PhoneTheme.error.opacity(0.14) : PhoneTheme.ink.opacity(0.07))
+            .animation(.easeInOut(duration: 0.15), value: shown)
+        }
+        .buttonStyle(.plain)
+        .sensoryFeedback(.selection, trigger: shown)
+        .onChange(of: mode) { switching = nil }
+        .accessibilityLabel("Permission mode, \(shown.name)")
+        .accessibilityHint("Chooses how much the agent does before asking")
+    }
+
+    private func choose(_ option: PermissionMode) {
+        guard option != mode else { switching = nil; return }
+        switching = option
+        set(option)
+        // Give up on showing it if the Mac never reports it.
+        Task {
+            try? await Task.sleep(for: .seconds(4))
+            if switching == option { switching = nil }
+        }
     }
 }
 
@@ -1208,6 +1288,10 @@ private struct ComposeBar: View {
     @Binding var modelRequest: ModelRequest?
     /// True while the list of models `/model` opens is showing.
     @Binding var showsModels: Bool
+    /// The model being switched to, until the Mac reports it.
+    var switchingModel: ModelChoice?
+    /// Switches the permission mode. Nil when the session reports none.
+    var setMode: ((PermissionMode) -> Void)?
     /// Slash commands to suggest while you type one.
     var commands: [SlashCommand] = []
     /// Stops Claude, when the Mac can.
@@ -1320,6 +1404,7 @@ private struct ComposeBar: View {
                 HStack(alignment: .bottom, spacing: 8) {
                     AttachmentControls(attachments: $attachments)
                         .disabled(!session.canReply)
+                    VStack(alignment: .leading, spacing: 9) {
                     HStack(alignment: .top, spacing: 8) {
                         if isShellCommand {
                             // Stands for the `!` you typed, so there's no
@@ -1359,7 +1444,7 @@ private struct ComposeBar: View {
                             .accessibilityHint("Goes back to a message for \(session.agentTitle), keeping what you typed")
                             .transition(.opacity.combined(with: .scale(scale: 0.8)))
                         }
-                        TextField(isShellCommand ? "Command to run" : isSideQuestion ? "Ask a side question" : session.canReply ? "Message \(session.agentTitle)" : "Can't send right now",
+                        TextField(isShellCommand ? "Command to run" : isSideQuestion ? "Ask a side question" : !session.canReply ? "Can't send right now" : session.activity == .working ? "Queue a message for \(session.agentTitle)" : "Message \(session.agentTitle)",
                                   text: $field, axis: .vertical)
                             // An iPad has room for a pasted paragraph or two;
                             // an iPhone keeps it short, above the keyboard.
@@ -1390,6 +1475,8 @@ private struct ComposeBar: View {
                                 draft = ComposerDraft.leaving(draft)
                                 return .handled
                             }
+                    }
+                    if showsPills { pills }
                     }
                     .padding(.horizontal, 16)
                     .padding(.vertical, 11)
@@ -1429,6 +1516,65 @@ private struct ComposeBar: View {
         }
         .onChange(of: field) { _, text in fieldChanged(to: text) }
         .onChange(of: draft, initial: true) { _, new in draftChanged(to: new) }
+    }
+
+    /// The model and the permission mode sit in the box, under what you
+    /// type, as in Claude Code's terminal. They step aside for a shell
+    /// command or a side question, which neither applies to.
+    private var showsPills: Bool {
+        guard !isShellCommand, !isSideQuestion else { return false }
+        return session.model != nil || session.canRunCommand || mode != nil
+    }
+
+    private var mode: PermissionMode? {
+        guard setMode != nil else { return nil }
+        return session.permissionMode.flatMap(PermissionMode.init(rawValue:))
+    }
+
+    private var pills: some View {
+        HStack(spacing: 6) {
+            if session.model != nil || session.canRunCommand {
+                modelPill
+            }
+            if let mode, let setMode {
+                ModePill(mode: mode, set: setMode)
+            }
+            Spacer(minLength: 0)
+        }
+    }
+
+    /// The model. Tap for the same list `/model` opens.
+    private var modelPill: some View {
+        let costly = ModelChoice.usesLimitsFaster(model: session.model, switching: switchingModel)
+        let current = switchingModel?.name ?? session.model
+        return Button {
+            if showsModels { showsModels = false } else { openModels() }
+        } label: {
+            HStack(spacing: 4) {
+                if costly {
+                    Image(systemName: "flame.fill")
+                        .foregroundStyle(ModelChoice.costlyColor)
+                }
+                Text(ModelChoice.label(model: session.model, switching: switchingModel))
+                    .foregroundStyle(costly ? ModelChoice.costlyColor : PhoneTheme.inkMuted)
+                    .contentTransition(.opacity)
+                if switchingModel != nil {
+                    ProgressView()
+                        .controlSize(.mini)
+                } else {
+                    Image(systemName: "chevron.up.chevron.down")
+                        .imageScale(.small)
+                        .foregroundStyle(PhoneTheme.inkMuted)
+                }
+            }
+            .animation(.easeInOut(duration: 0.15), value: current)
+            .composerPill(fill: costly ? ModelChoice.costlyColor.opacity(0.16) : PhoneTheme.ink.opacity(0.07),
+                          stroke: costly ? ModelChoice.costlyColor.opacity(0.35) : nil)
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Model \(current ?? "unknown")")
+        .accessibilityValue(costly ? ModelChoice.usesLimitsFasterNote : "")
+        .accessibilityHint("Shows the models and effort levels")
     }
 
     /// True while the send button is a stop button: Claude is working and
@@ -1479,7 +1625,10 @@ private struct ComposeBar: View {
 
     private var note: String? {
         if !session.canReply { return session.replyProblem }
-        if session.activity == .working { return "Working. Your message waits for the current step to finish." }
+        // With nothing typed, the box itself says a message will wait and
+        // its button is Stop. Once you type, this line says it, and
+        // carries Stop.
+        if session.activity == .working, !showsStop { return "Working. Your message waits for the current step to finish." }
         return nil
     }
 
