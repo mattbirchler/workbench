@@ -1,0 +1,1224 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rss version="2.0" xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle" xmlns:dc="http://purl.org/dc/elements/1.1/">
+  <channel>
+    <title>Workbench</title>
+    <link>https://mattbirchler.github.io/bench-releases/appcast.xml</link>
+    <description>Updates for Workbench, a Mac app for running Claude Code.</description>
+    <language>en</language>
+    <item>
+      <title>Workbench 0.10.1</title>
+      <pubDate>Wed, 25 Nov 2026 12:04:34 GMT</pubDate>
+      <sparkle:version>69</sparkle:version>
+      <sparkle:shortVersionString>0.10.1</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
+      <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
+      <description><![CDATA[
+<p>Workbench is now open source. The code for the Mac app, the iPhone app and everything around them is on GitHub at github.com/mattbirchler/workbench under the MIT License, and new releases are posted there too. Nothing changes for you: Workbench keeps updating itself the same way.</p>
+<p><strong>Workbench for iPhone is on the App Store.</strong> The sidebar card, the welcome and Settings &gt; Remote Access now link to the App Store instead of TestFlight. If you closed the old TestFlight card, the new one shows once more.</p>
+<p><strong>Chat works with Claude you restarted yourself.</strong> If you quit Claude in a tab and started it again by hand, for example with <code>claude --continue</code>, the chat could say Claude wasn&#x27;t running and stop you from sending messages, even while Claude was visibly working. Now, when Claude is the program running in the tab and its message box is on screen, you can send from the chat. Permission cards and the Stop button still need the terminal for a Claude started this way.</p>
+      ]]></description>
+      <enclosure url="https://github.com/mattbirchler/workbench/releases/download/v0.10.1-69/Workbench-0.10.1-69.zip" type="application/octet-stream" sparkle:edSignature="QwKHot8fdbU2VSYv/0In/5ZjltRtepNEqBpB0kvNXhOJf3QIWo77izBv4NwISc5tvMDsV6yCzNsoJukWCrwGDw==" length="35316850"/>
+    </item>
+    <item>
+      <title>Workbench 0.10</title>
+      <pubDate>Tue, 24 Nov 2026 23:45:09 GMT</pubDate>
+      <sparkle:version>68</sparkle:version>
+      <sparkle:shortVersionString>0.10</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
+      <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
+      <description><![CDATA[
+<p>Workbench 0.10 is a big one. Alongside Claude Code, it can now run Codex, tabs have a cleaner new home, and file tabs have become a place to make quick edits yourself.</p>
+<p><strong>Codex, in beta.</strong> If you have OpenAI&#x27;s Codex installed, you can now open Codex tabs right next to your Claude Code ones. They get the same chat, sidebar states, past sessions, recaps and iPhone app. Its permission requests show up as cards you can allow or deny, and you can switch its model and effort right from the message box. Pick which agent new tabs run in Settings &gt; Agents. Claude Code is still what Workbench is built around, so Codex is marked Beta: its own multiple-choice questions and plans are still answered in its terminal, and a few things like attaching pictures and switching permission modes are Claude-only for now.</p>
+<p><img src="https://workbenchapp.dev/images/0.10/codex-model-picker.png" alt="The Switch Model list above a Codex message box. It lists ten models, from GPT-6.2 Sol to GPT-5.6 Luna, each with a one-line description, and a row of effort levels from Low to Max underneath." style="max-width:100%;height:auto;border-radius:8px"></p>
+<p><strong>Accounts for both agents.</strong> Settings &gt; Claude Accounts is now Settings &gt; Accounts, and it lists your Codex sign-ins too. Workbench finds extra Codex accounts on its own, and each project can pick which Claude account and which Codex account it uses.</p>
+<p><strong>Tabs, rethought.</strong> Tabs now sit in a row at the top of your terminal or chat, with an underline under the one you&#x27;re in, and the empty strip above them is gone, so your work gets that room back. Each tab says what its agent is doing in a word: Working, Needs you, Done or Ping. Two tabs in a split show as one tab with both names. The switch between a Claude tab&#x27;s terminal and chat now sits at the right end of the row.</p>
+<p><strong>Edit files in a file tab.</strong> Open a file and start typing. Press ⌘S to save, and the tab shows a dot while you have unsaved changes. If your agent changes the same file before you save, your edits stay put and Workbench asks whether to reload the file or keep yours. Closing a tab or quitting with unsaved work asks first.</p>
+<p><strong>Start an agent from a GitHub issue.</strong> The New Agent sheet has a From Issue button whenever the repo has open issues. Pick one and Workbench writes the prompt and names the branch for you, and the agent reads the issue and its comments itself.</p>
+<p><strong>See the simulators you left running.</strong> When iOS simulators are running, the sidebar shows how many next to the CPU and memory rings. Hover it to see how long each one has been on and how much memory it&#x27;s holding, and shut them down from there. You can turn this off in Settings &gt; General &gt; Mac Activity.</p>
+<p><img src="https://workbenchapp.dev/images/0.10/simulators.png" alt="The simulator count in the sidebar with its card open. It lists an iPhone 18 Pro and an iPad Pro, each with its iOS version, how long it has been running and its memory, plus Shut Down buttons." style="max-width:100%;height:auto;border-radius:8px"></p>
+<p><strong>Also in this update</strong></p>
+<ul><li><strong>Workbench&#x27;s own colors.</strong> The plain System look now uses Workbench&#x27;s own blue (mint in dark mode) instead of Claude&#x27;s orange, and the welcome opens in your theme from the first moment.</li><li><strong>Shorter permission cards.</strong> A one-line command no longer gets a card seven lines tall.</li><li><strong>No more stray ports badge.</strong> Every Claude tab showed a ports badge, because Claude Code now opens a small port of its own. Workbench leaves the agents&#x27; own ports out, so the badge only shows for servers you or your agent start.</li><li><strong>Sidebar rows stay put.</strong> A project row in the sidebar could go blank until you moved the pointer over it. That&#x27;s fixed.</li><li><strong>The right version number.</strong> The first copy of 0.10 called itself 0.1 in places like its About window. This one says 0.10.</li></ul>
+      ]]></description>
+      <enclosure url="https://github.com/mattbirchler/bench-releases/releases/download/v0.10-68/Workbench-0.10-68.zip" type="application/octet-stream" sparkle:edSignature="5AK2XP5EiGVjCjzkYry8J5SulXJuvTQp3RqELR0UIYvGxSvz1/Li4poyEA8FgfkOSsZkYtrXFrPXeJxwJbO0Aw==" length="35310941"/>
+    </item>
+    <item>
+      <title>Workbench 0.10</title>
+      <pubDate>Tue, 24 Nov 2026 23:26:42 GMT</pubDate>
+      <sparkle:version>67</sparkle:version>
+      <sparkle:shortVersionString>0.10</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
+      <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
+      <description><![CDATA[
+<p>Workbench 0.10 is a big one. Alongside Claude Code, it can now run Codex, tabs have a cleaner new home, and file tabs have become a place to make quick edits yourself.</p>
+<p><strong>Codex, in beta.</strong> If you have OpenAI&#x27;s Codex installed, you can now open Codex tabs right next to your Claude Code ones. They get the same chat, sidebar states, past sessions, recaps and iPhone app. Its permission requests show up as cards you can allow or deny, and you can switch its model and effort right from the message box. Pick which agent new tabs run in Settings &gt; Agents. Claude Code is still what Workbench is built around, so Codex is marked Beta: its own multiple-choice questions and plans are still answered in its terminal, and a few things like attaching pictures and switching permission modes are Claude-only for now.</p>
+<p><img src="https://workbenchapp.dev/images/0.10/codex-model-picker.png" alt="The Switch Model list above a Codex message box. It lists ten models, from GPT-6.2 Sol to GPT-5.6 Luna, each with a one-line description, and a row of effort levels from Low to Max underneath." style="max-width:100%;height:auto;border-radius:8px"></p>
+<p><strong>Accounts for both agents.</strong> Settings &gt; Claude Accounts is now Settings &gt; Accounts, and it lists your Codex sign-ins too. Workbench finds extra Codex accounts on its own, and each project can pick which Claude account and which Codex account it uses.</p>
+<p><strong>Tabs, rethought.</strong> Tabs now sit in a row at the top of your terminal or chat, with an underline under the one you&#x27;re in, and the empty strip above them is gone, so your work gets that room back. Each tab says what its agent is doing in a word: Working, Needs you, Done or Ping. Two tabs in a split show as one tab with both names. The switch between a Claude tab&#x27;s terminal and chat now sits at the right end of the row.</p>
+<p><strong>Edit files in a file tab.</strong> Open a file and start typing. Press ⌘S to save, and the tab shows a dot while you have unsaved changes. If your agent changes the same file before you save, your edits stay put and Workbench asks whether to reload the file or keep yours. Closing a tab or quitting with unsaved work asks first.</p>
+<p><strong>Start an agent from a GitHub issue.</strong> The New Agent sheet has a From Issue button whenever the repo has open issues. Pick one and Workbench writes the prompt and names the branch for you, and the agent reads the issue and its comments itself.</p>
+<p><strong>See the simulators you left running.</strong> When iOS simulators are running, the sidebar shows how many next to the CPU and memory rings. Hover it to see how long each one has been on and how much memory it&#x27;s holding, and shut them down from there. You can turn this off in Settings &gt; General &gt; Mac Activity.</p>
+<p><img src="https://workbenchapp.dev/images/0.10/simulators.png" alt="The simulator count in the sidebar with its card open. It lists an iPhone 18 Pro and an iPad Pro, each with its iOS version, how long it has been running and its memory, plus Shut Down buttons." style="max-width:100%;height:auto;border-radius:8px"></p>
+<p><strong>Also in this update</strong></p>
+<ul><li><strong>Workbench&#x27;s own colors.</strong> The plain System look now uses Workbench&#x27;s own blue (mint in dark mode) instead of Claude&#x27;s orange, and the welcome opens in your theme from the first moment.</li><li><strong>Shorter permission cards.</strong> A one-line command no longer gets a card seven lines tall.</li><li><strong>No more stray ports badge.</strong> Every Claude tab showed a ports badge, because Claude Code now opens a small port of its own. Workbench leaves the agents&#x27; own ports out, so the badge only shows for servers you or your agent start.</li><li><strong>Sidebar rows stay put.</strong> A project row in the sidebar could go blank until you moved the pointer over it. That&#x27;s fixed.</li></ul>
+      ]]></description>
+      <enclosure url="https://github.com/mattbirchler/bench-releases/releases/download/v0.10-67/Workbench-0.1-67.zip" type="application/octet-stream" sparkle:edSignature="rQhDGod/N3rhdzJFL2DeTevThBJMXyV1uBQlmI2khwrg8ryD7KddbOcUxXD1+R+wAyWC0SK9R5/ZoXOKJhw8Cw==" length="35310937"/>
+    </item>
+    <item>
+      <title>Workbench 0.9.15</title>
+      <pubDate>Mon, 23 Nov 2026 23:37:20 GMT</pubDate>
+      <sparkle:version>66</sparkle:version>
+      <sparkle:shortVersionString>0.9.15</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
+      <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
+      <description><![CDATA[
+<p>Here&#x27;s what&#x27;s new in today&#x27;s update to Workbench. This one is about making the app lighter on your Mac.</p>
+<p><strong>Lighter on your Mac while Claude works.</strong> The soft motion that shows a session is busy now runs at 30 frames a second instead of your display&#x27;s full rate, and the light that runs around the message box is much simpler to draw. On Macs with ProMotion displays, this should mean less background work for as long as a session is running.</p>
+<p><strong>Also in this update</strong></p>
+<ul><li><strong>Calm is the starting Motion level.</strong> If you&#x27;ve never picked a Motion level, Workbench now uses Calm: the small spinners and dots still move, and the sparkles, glows and start page hold still. If you picked a level yourself, it stays as you set it, and Full is still in Settings &gt; Appearance.</li><li><strong>No more beach ball with lots of projects.</strong> With dozens of projects or worktrees, the sidebar could pin Workbench at 100% CPU. It now stays quick however many you have.</li><li><strong>Pictures stay off your clipboard.</strong> Sending a message with pictures used to pass each one through your clipboard on its way to Claude, which could set off clipboard tools and briefly replace what you had copied. Pictures now go straight to Claude, and messages with several pictures send faster.</li><li><strong>Open HTML files as pages.</strong> When you&#x27;re viewing an HTML file, a new globe button in its header opens it in a browser tab so you see the page instead of its source.</li></ul>
+<p><img src="https://workbenchapp.dev/images/0.9.15/html-in-browser-tab.png" alt="A file tab showing the source of guide.html. In the header above the code, a globe button sits in the row of buttons on the right, between the copy and folder buttons." style="max-width:100%;height:auto;border-radius:8px"></p>
+      ]]></description>
+      <enclosure url="https://github.com/mattbirchler/bench-releases/releases/download/v0.9.15-66/Workbench-0.9.15-66.zip" type="application/octet-stream" sparkle:edSignature="PquOs/d+ohfJa5OvJWgx50d0caLodW+f81QXrgC1Ab679K6sFEP+CHPpUR6AreeafZ+1xJPlGhExYw+tQZ+hAg==" length="34963156"/>
+    </item>
+    <item>
+      <title>Workbench 0.9.14</title>
+      <pubDate>Sun, 22 Nov 2026 19:37:06 GMT</pubDate>
+      <sparkle:version>65</sparkle:version>
+      <sparkle:shortVersionString>0.9.14</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
+      <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
+      <description><![CDATA[
+<p>Here&#x27;s what&#x27;s new in today&#x27;s update to Workbench.</p>
+<p><strong>A browser in your tabs.</strong> Open any site in a Workbench tab, right beside your chat. Press ⌘L and type an address, a search, or a port number for a server on your Mac. Artifacts and dev servers open in the same browser.</p>
+<p><img src="https://workbenchapp.dev/images/0.9.14/browser-tab.png" alt="A Workbench tab showing a web page from a local dev server. Above the page are back, forward and reload buttons and an address field reading &quot;localhost:5173&quot;." style="max-width:100%;height:auto;border-radius:8px"></p>
+<p><strong>Also in this update</strong></p>
+<ul><li><strong>⌘T opens the New Tab page.</strong> With Claude, shell and browser tabs, agents, shortcuts and past sessions to choose from, ⌘T and the + button now show them all. Press ⌘T again to start Claude.</li></ul>
+<p><img src="https://workbenchapp.dev/images/0.9.14/new-tab-page.png" alt="The New Tab page for a project called Pantry. A Start Claude button sits above three smaller buttons: New Shell Tab, New Browser Tab, and New Agent on a Branch." style="max-width:100%;height:auto;border-radius:8px"></p>
+<ul><li><strong>Artifacts say where they open.</strong> Point at a page in the Artifacts panel and it offers Open in Tab, Open in Browser and Copy Link by name. A page that&#x27;s already open in a tab is highlighted, and clicking it takes you there.</li></ul>
+<p><img src="https://workbenchapp.dev/images/0.9.14/artifact-actions.png" alt="The Artifacts panel listing three pages. The first, Weekly Usage Dashboard, is highlighted and shows three actions under its name: Open in Tab, Open in Browser, and Copy Link." style="max-width:100%;height:auto;border-radius:8px"></p>
+<ul><li><strong>Starting Claude looks alive.</strong> A new chat shows light running around the message box and &quot;Starting Claude&quot; while Claude boots.</li><li><strong>Smoother waits.</strong> Compacting a conversation, side questions, opening a conversation, setup checks and starting an agent have gentler motion in place of a stock spinner. All of it follows your Motion setting.</li><li><strong>Click away from a picture.</strong> Clicking the dark space around a picture in the full-window viewer closes it.</li><li><strong>⌘W closes what you&#x27;re looking at.</strong> With Settings, the Overview or the New Tab page in front, ⌘W closes that page and leaves the tab underneath alone.</li></ul>
+      ]]></description>
+      <enclosure url="https://github.com/mattbirchler/bench-releases/releases/download/v0.9.14-65/Workbench-0.9.14-65.zip" type="application/octet-stream" sparkle:edSignature="XO4lvmpWvLOqTYTNZXrPboz7r0wDIhtQBoVYhL6b5xazB06uz9F32cNIH+b257CDXb7Hxem16WdxLH4AsNtJBw==" length="34963074"/>
+    </item>
+    <item>
+      <title>Workbench 0.9.13</title>
+      <pubDate>Sat, 21 Nov 2026 22:10:47 GMT</pubDate>
+      <sparkle:version>64</sparkle:version>
+      <sparkle:shortVersionString>0.9.13</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
+      <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
+      <description><![CDATA[
+<p>Here&#x27;s what&#x27;s new in today&#x27;s update to Workbench.</p>
+<p><strong>Claude can do more for you in Workbench.</strong> Open a new Claude tab and ask. Here are some things you can say now:</p>
+<ul><li>&quot;Start three agents, one for each of these bugs.&quot;</li><li>&quot;How are the agents doing?&quot;</li><li>&quot;Tell the login agent to add tests, and show me what it says when it&#x27;s done.&quot;</li><li>&quot;Remove the agents that are finished.&quot;</li><li>&quot;Reopen the conversation where we worked on the importer.&quot;</li><li>&quot;Open the diff for the settings screen.&quot;</li><li>&quot;Show me localhost:3000.&quot;</li><li>&quot;Start the dev server in a tab I can see.&quot;</li><li>&quot;Run the tests and tell me on my phone when they pass.&quot;</li><li>&quot;How much of my plan have I used?&quot;</li><li>&quot;How are the checks on this pull request?&quot;</li><li>&quot;Pin this project and rename it Recipes.&quot;</li></ul>
+<p><strong>Also in this update</strong></p>
+<ul><li><strong>Review each turn.</strong> When Claude finishes a turn that edited files, a card under the reply lists each file with its added and removed lines. Click a file to see that turn&#x27;s changes, or open the review tab&#x27;s new Latest Turn view to read only what the last turn did.</li><li><strong>Artifacts open in Workbench.</strong> Links to pages Claude publishes can open in their own tab, and you can split one beside the chat. The first link asks where you&#x27;d like them to open, and Settings › Claude › Open Artifacts changes it later.</li><li><strong>More room for tabs.</strong> The tab bar&#x27;s controls are now a + for a new Claude tab and an arrow menu for everything else, including shell tabs, agents, shortcuts, past sessions and accounts. Terminal and Chat are now icons.</li><li><strong>Copy a preview&#x27;s address.</strong> ⇧⌘C copies the current page&#x27;s address from a preview tab.</li><li><strong>A brighter finish.</strong> On an HDR display, the highlight that plays when a project finishes is brighter than white.</li><li><strong>Dictation leaves your headphones alone.</strong> With dictation turned on, Workbench could push Bluetooth headphones into their lower-quality call mode even when you weren&#x27;t dictating. It now touches the microphone only while you dictate.</li></ul>
+      ]]></description>
+      <enclosure url="https://github.com/mattbirchler/bench-releases/releases/download/v0.9.13-64/Workbench-0.9.13-64.zip" type="application/octet-stream" sparkle:edSignature="ybVVkJyAauZhMtpaImVFJ+HEymd6gBLieE+bY5MMkNgek6VLg4r62tlS+9fUZJ/mJw6t7crTC1Jc0AWJ5eBHCg==" length="34575025"/>
+    </item>
+    <item>
+      <title>Workbench 0.9.12</title>
+      <pubDate>Fri, 20 Nov 2026 13:08:34 GMT</pubDate>
+      <sparkle:version>63</sparkle:version>
+      <sparkle:shortVersionString>0.9.12</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
+      <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
+      <description><![CDATA[
+<p>Here&#x27;s what&#x27;s new in today&#x27;s update to Workbench.</p>
+<ul><li><strong>Choose your sounds.</strong> Pick the sound for when Claude finishes and when Claude needs you, from Workbench&#x27;s own tones or your Mac&#x27;s alert sounds. Sounds are now off by default. Turn them on in Settings › Appearance › Sounds.</li><li><strong>Interface text size.</strong> Make the sidebar, tabs, Changes, Overview and Settings smaller or larger in Settings › Appearance › Interface Text. Chat text keeps its own size.</li><li><strong>New keyboard shortcuts.</strong></li><li>⌘. stops Claude, even while you have a message typed</li><li>⇧⌘O opens the Overview</li><li>Help › Keyboard Shortcuts (⌘/) lists every key Workbench answers to</li></ul>
+      ]]></description>
+      <enclosure url="https://github.com/mattbirchler/bench-releases/releases/download/v0.9.12-63/Workbench-0.9.12-63.zip" type="application/octet-stream" sparkle:edSignature="oa+WcpUSBT9GCC92kZquW2eAQlJY81LszTtajhHzSoCruDUecs64Fg9hXI8Ir6HSs7ofDfEPBqvi3mODfI3hCw==" length="34362472"/>
+    </item>
+    <item>
+      <title>Workbench 0.9.11</title>
+      <pubDate>Thu, 19 Nov 2026 07:37:59 GMT</pubDate>
+      <sparkle:version>62</sparkle:version>
+      <sparkle:shortVersionString>0.9.11</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
+      <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
+      <description><![CDATA[
+<p>Here&#x27;s what&#x27;s new in today&#x27;s update to Workbench.</p>
+<ul><li><strong>Dictation.</strong> Many users dictate into Workbench already through an app like Wispr Flow. If you don&#x27;t already have an app for this, you can enable it in settings.</li><li><strong>Visual improvements across the board.</strong></li><li>A new message box, with Claude&#x27;s status and Stop built in</li><li>Chat view is more compact and helpful</li><li>Quiet sounds when Claude finishes or needs you</li><li>Depth on the canvas and a soft fade under the tab bar</li><li>The start page glow in each project&#x27;s color</li><li>Press states on buttons</li><li>The sidebar more clearly distinguishes the active project</li><li>To-do updates no longer appearing as turns</li><li><strong>More questions from Claude can be answered in the chat view.</strong></li><li><strong>Changes panel git header.</strong> A tidier header.</li></ul>
+      ]]></description>
+      <enclosure url="https://github.com/mattbirchler/bench-releases/releases/download/v0.9.11-62/Workbench-0.9.11-62.zip" type="application/octet-stream" sparkle:edSignature="0kT5hOnk6x+wkD8wyzQKtW2OCgYDgyAiQ1CHd4aNaSUQyoArw7YZvcDkvxV7Uja+FcDpkgDFG8h0mT43VtGhAQ==" length="34309253"/>
+    </item>
+    <item>
+      <title>Workbench 0.9.10</title>
+      <pubDate>Wed, 18 Nov 2026 00:13:26 GMT</pubDate>
+      <sparkle:version>61</sparkle:version>
+      <sparkle:shortVersionString>0.9.10</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
+      <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
+      <description><![CDATA[
+<p>Here&#x27;s what&#x27;s new in today&#x27;s update to Workbench.</p>
+<h3>Copy a whole file</h3>
+<p>The file viewer and the changes viewer now have a copy button at the top, next to the wrap button. Click it to copy everything in the file. In the changes viewer, it copies the file as it is now, not the diff.</p>
+<h3>Removed worktrees free up space right away</h3>
+<p>When you clean up a worktree or discard an agent&#x27;s work, Workbench now deletes the worktree&#x27;s folder outright. Before, it went to the Trash, where it kept taking up room until you emptied it. If you&#x27;d rather keep the safety net, turn on &quot;Move removed worktrees to the Trash&quot; in Settings › General › Agents.</p>
+<h3>Smaller things</h3>
+<ul><li><strong>Switching models doesn&#x27;t ask first.</strong> In a long conversation, picking a different model used to bring up an alert asking if you were sure. Now it just switches, the same as in Claude Code&#x27;s terminal. This applies on iPhone too.</li><li><strong>Syntax colors when reviewing a commit.</strong> The Review view shows every file in a commit together, and none of that code used to be colored. Each file&#x27;s code is now colored for its own language.</li></ul>
+<h3>Fixes</h3>
+<ul><li><strong>⌘C in Claude Code&#x27;s terminal.</strong> If you selected text inside Claude Code and pressed ⌘C, nothing was copied. The key now reaches Claude Code when the terminal itself has nothing selected, so the copy works.</li></ul>
+      ]]></description>
+      <enclosure url="https://github.com/mattbirchler/bench-releases/releases/download/v0.9.10-61/Workbench-0.9.10-61.zip" type="application/octet-stream" sparkle:edSignature="GnzLZ92WfhImXXAGH2qfWVShR9kwIJAosO6X5pV/p5zCIRLOBhcpmXM/0d1sp76OjTNutQI72exQJvYjiGyMCA==" length="32554829"/>
+    </item>
+    <item>
+      <title>Workbench 0.9.9</title>
+      <pubDate>Sat, 14 Nov 2026 23:57:08 GMT</pubDate>
+      <sparkle:version>60</sparkle:version>
+      <sparkle:shortVersionString>0.9.9</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
+      <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
+      <description><![CDATA[
+<p>Here&#x27;s what&#x27;s new in today&#x27;s update to Workbench.</p>
+<h3>More slash commands work in the chat</h3>
+<p>Seven of Claude Code&#x27;s commands used to send you to the terminal, because they open a picker or dialog only the terminal can show. They now work right in the chat:</p>
+<ul><li><strong><code>/context</code> and <code>/agents</code></strong> show what they print as a card in the conversation. Long output folds, with a button for the rest.</li><li><strong><code>/status</code></strong> shows a card with the session&#x27;s model, mode, context, account and folder.</li><li><strong><code>/help</code></strong> lists every command, grouped into Claude Code&#x27;s own, the project&#x27;s, yours and each plugin&#x27;s. Click one to put it in the message box.</li><li><strong><code>/resume</code></strong> opens Past Sessions, the same list as ⌘Y.</li><li><strong><code>/usage</code>, <code>/cost</code> and <code>/stats</code></strong> open Usage and Costs.</li><li><strong><code>/export</code></strong> asks where to save the conversation, then saves it.</li></ul>
+<h3>Merge When Ready</h3>
+<p>When you ask Claude to merge a pull request, it usually sits and waits for the checks to finish. That ties up the session and spends tokens on waiting. Workbench already keeps an eye on each pull request&#x27;s checks, so now it does the waiting.</p>
+<p>There&#x27;s a new Merge action in the Changes panel, and it follows the pull request:</p>
+<ul><li><strong>Checks running:</strong> the button says Merge When Ready. Click it and Workbench asks Claude to merge once the checks pass. A line under the buttons shows how far along they are, and you can click again to cancel.</li><li><strong>Checks passed:</strong> Merge asks Claude right away.</li><li><strong>Checks failing:</strong> the button becomes Fix Checks, which asks Claude to read the failed logs, fix the problem and push.</li></ul>
+<p>A waiting merge is called off if the checks fail or the pull request changes, and you get a notification either way. It&#x27;s also dropped if you quit Workbench.</p>
+<h3>A sidebar that says more</h3>
+<p><strong>What each agent is working on.</strong> In the Standard layout, a busy project now shows its task on the line under its name, then the timer and the current step. With several agents going, &quot;Running the tests&quot; alone didn&#x27;t say which job was which.</p>
+<p><strong>Room for two lines.</strong> What Claude is doing, and a quiet project&#x27;s status (like a pull request&#x27;s title), now wrap onto a second line instead of being cut off after a few words. Short text still takes one line.</p>
+<p><strong>Merged worktrees fold away.</strong> Two or more merged worktrees with nothing going on show as one line, like &quot;4 merged&quot;, under their project. Click it to see them, or Clean Up to remove them all after one question.</p>
+<p><strong>Choose how long projects stay Active and Recent.</strong> Projects used to leave Active after 6 hours and go Inactive (closing their tabs) after a day. If you come back to a project every few days, that meant always finding it closed. In Settings › General › Sidebar you can now pick both times, and turn off closing a project&#x27;s tabs when it goes Inactive.</p>
+<h3>Empty screens with something to look at</h3>
+<p>A new chat, the Overview with no sessions, a project with no changes or no artifacts: these used to be an icon and two lines of gray text. Each now shows a small terminal-style panel that hints at what will be there, and a button where there&#x27;s something to do.</p>
+<p><img src="https://mattbirchler.github.io/bench-releases/images/0.9.9/empty-chat.png" alt="A new, empty chat. A small terminal panel shows the prompt &quot;fix the flaky login test&quot; and Claude&#x27;s first two steps. Under it: &quot;Ready when you are. Tell Claude what to work on. Type / for commands, or @ to point it at a file.&quot;" style="max-width:100%;height:auto;border-radius:8px"></p>
+<h3>Smaller things</h3>
+<ul><li><strong>The context ring explains itself.</strong> Point at the ring beside the model (or click it) and a card shows how full Claude&#x27;s context is, the token count, and what happens when it fills up. When it&#x27;s getting full, the card suggests <code>/compact</code> or a new chat.</li></ul>
+<h3>Fixes</h3>
+<ul><li><strong>Blank chats.</strong> Switching to a chat sometimes showed nothing, with the conversation a long scroll up. The newest part of the conversation is now drawn in a way that can&#x27;t come up empty.</li><li><strong>A crash at launch on some Macs.</strong> On a few Macs, Workbench quit about a second after opening. The menu bar icon was the cause, and it has been rebuilt. Its panel now opens with a small arrow pointing at the icon, and otherwise works the same.</li></ul>
+      ]]></description>
+      <enclosure url="https://github.com/mattbirchler/bench-releases/releases/download/v0.9.9-60/Workbench-0.9.9-60.zip" type="application/octet-stream" sparkle:edSignature="3AhL+dWn3PIB0yqDmK4tpHKlQQOOXK9h7BEfnLcNBvmcoA4hinJ6qV+QaU+LpbW41dIRAjGoDk/pfM5DAgFIBA==" length="32542118"/>
+    </item>
+    <item>
+      <title>Workbench 0.9.8</title>
+      <pubDate>Sat, 14 Nov 2026 02:13:41 GMT</pubDate>
+      <sparkle:version>58</sparkle:version>
+      <sparkle:shortVersionString>0.9.8</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
+      <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
+      <description><![CDATA[
+<p>Here&#x27;s what&#x27;s new in today&#x27;s update to Workbench.</p>
+<h3>Switch Claude&#x27;s mode from the message box</h3>
+<p>There&#x27;s a new button beside the model picker that shows which mode Claude is in, and lets you change it without going to the terminal. Pick from Ask first, Accept edits, Plan, Auto, or Bypass permissions, each with a line explaining what it does.</p>
+<p><img src="https://mattbirchler.github.io/bench-releases/images/0.9.8/mode-button.png" alt="The message box in a Claude tab, with a &quot;Bypass permissions&quot; button next to the model picker, and a ring beside the model that&#x27;s a bit under half full." style="max-width:100%;height:auto;border-radius:8px"></p>
+<p>Bypass permissions only works in a session that Claude started with it (like <code>claude --dangerously-skip-permissions</code>). Pick it anywhere else and Workbench tells you so, and leaves the mode as it was.</p>
+<h3>Context at a glance</h3>
+<p>How full Claude&#x27;s context is now shows as a small ring beside the model, instead of numbers like &quot;64k / 1M&quot;. It fills up as the conversation grows, and turns orange, then red, as it gets close to the limit. Point at it to see the exact numbers.</p>
+<p><img src="https://mattbirchler.github.io/bench-releases/images/0.9.8/context-ring.png" alt="The model picker reading &quot;Opus 5.5&quot;, with a small ring beside it that&#x27;s a bit under half full." style="max-width:100%;height:auto;border-radius:8px"></p>
+<h3>Easier to find your place in the sidebar</h3>
+<p>When several agents were working at once, the project you had open could be hard to pick out from the busy ones around it. With some themes, they all had the same light gray outline.</p>
+<p>The project you have open now has a thicker ring and a light fill. Busy projects use your theme&#x27;s orange (or Claude orange) instead of gray, so you can still see at a glance which ones have work going.</p>
+<p><img src="https://mattbirchler.github.io/bench-releases/images/0.9.8/sidebar.png" alt="The Active section of the sidebar. Blog and Field Notes are working, with orange outlines. Pantry is also working and is the project that&#x27;s open, with a thick light ring around it." style="max-width:100%;height:auto;border-radius:8px"></p>
+<p>If you&#x27;d rather not see the sparkles on busy projects, choose Calm or Still in Settings › Appearance › Motion.</p>
+<h3>Copy a table from the chat</h3>
+<p>Point at a table in the chat and a copy button appears in its corner, just like on code blocks. It copies the table as Markdown, with its columns lined up so it reads well as plain text too. On iPhone the button is always shown.</p>
+<p><img src="https://mattbirchler.github.io/bench-releases/images/0.9.8/table.png" alt="A table in the chat comparing three ways to store a pantry list, with a copy button in its top right corner." style="max-width:100%;height:auto;border-radius:8px"></p>
+<h3>Smaller things</h3>
+<ul><li><strong>⌘ shortcut hints show sooner.</strong> Holding Command shows the ⌘1 to ⌘9 hints in the sidebar after a tenth of a second, instead of half a second.</li><li><strong>Arrow keys in a long message.</strong> In the message box, Up and Down now move through the lines a long paragraph wraps onto. They only bring back your previous messages from the top or bottom line.</li><li><strong>Tab shortcuts.</strong> Settings now says where your tab shortcuts actually show up: the New Tab page and the + button&#x27;s menu. A project&#x27;s shortcuts also work in its worktrees.</li><li><strong>Freeze reports.</strong> If Workbench ever stops responding for a few seconds, it saves a report of what it was doing in <code>~/Library/Application Support/Bench/hangs</code>. If you send one along with a bug report, it helps a lot.</li></ul>
+<h3>Fixes</h3>
+<ul><li>The green check on a finished project in the sidebar is no longer cut off on its right edge.</li></ul>
+      ]]></description>
+      <enclosure url="https://github.com/mattbirchler/bench-releases/releases/download/v0.9.8-58/Workbench-0.9.8-58.zip" type="application/octet-stream" sparkle:edSignature="0yLvjsP9nQmRDQ6fQLNfQe+ioN+mi/dWwH+bnbfrY7FLjYmW8DEWbCIzE+IJusrx1Py0OYPLEknqJklwa4PxAQ==" length="32401743"/>
+    </item>
+    <item>
+      <title>Workbench 0.9.7</title>
+      <pubDate>Fri, 13 Nov 2026 13:39:35 GMT</pubDate>
+      <sparkle:version>57</sparkle:version>
+      <sparkle:shortVersionString>0.9.7</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
+      <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
+      <description><![CDATA[
+<p>Here&#x27;s what&#x27;s new in today&#x27;s update to Workbench.</p>
+<h3>A calmer sidebar</h3>
+<p>The lines under each project now use the full width of the sidebar. What Claude is doing, and its recap when it&#x27;s done, used to stop well short of the right edge and get cut off after a few words.</p>
+<p>A busy project is now just two lines: its name, and what Claude is doing right now. The list of its last few steps is gone. Cut down to a few words each, those steps said little, and the row changed every time Claude did something. The chat still shows every step in full.</p>
+<p><img src="https://mattbirchler.github.io/bench-releases/images/0.9.7/sidebar-rows.png" alt="The Active section of the sidebar. Pantry is running its tests, with a &quot;+ Agent&quot; button beside its name. Recipes has finished, with a two-line recap under it. Field Notes is busy reading its importer." style="max-width:100%;height:auto;border-radius:8px"></p>
+<p>The button for a new agent is easier to find. It&#x27;s a round + on the project you&#x27;re in, and it says &quot;Agent&quot; when you point at it. It grows over the row, so nothing in the sidebar moves.</p>
+<h3>Drop a screenshot on Claude</h3>
+<p>Drag a screenshot or any other file onto a Claude tab&#x27;s terminal and Workbench types its path, the way Terminal does. Claude Code takes an image&#x27;s path as an attachment, so this is a quick way to show Claude what you&#x27;re looking at. A picture dragged from a web page is saved to a file first, and links and text type as themselves.</p>
+<h3>Put your Macs in order</h3>
+<p>If you&#x27;ve paired other Macs, drag their buttons at the top of the sidebar into the order you want, or right-click one and choose Move Left or Move Right. This Mac always stays first.</p>
+<h3>Fixes</h3>
+<ul><li><strong>Agent teams:</strong> when Claude works with a team of agents, the messages they send each other no longer show up in the chat as if you sent them. This fixes it on iPhone and iPad too.</li></ul>
+      ]]></description>
+      <enclosure url="https://github.com/mattbirchler/bench-releases/releases/download/v0.9.7-57/Workbench-0.9.7-57.zip" type="application/octet-stream" sparkle:edSignature="HQ7roqR1msC9KNdhQfzx162qBdVpRjY0EuWIiETI0mEN/t0b/iX4rT/HaFWRIL1pf/Ebs6s/IW3qmkov2A7WDw==" length="32370649"/>
+    </item>
+    <item>
+      <title>Workbench 0.9.6</title>
+      <pubDate>Fri, 13 Nov 2026 01:26:08 GMT</pubDate>
+      <sparkle:version>56</sparkle:version>
+      <sparkle:shortVersionString>0.9.6</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
+      <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
+      <description><![CDATA[
+<p>Here&#x27;s what&#x27;s new in today&#x27;s update to Workbench.</p>
+<h3>Your other Macs look and work like this one</h3>
+<p>Switch the sidebar to another Mac and its projects are now sorted the way they are here: Pinned at the top, then Active, Recent and Inactive. It&#x27;s the same list you&#x27;d see sitting at that Mac.</p>
+<p><img src="https://mattbirchler.github.io/bench-releases/images/0.9.6/another-mac-sidebar.png" alt="Two project lists side by side, one for this Mac and one for another Mac. Both are sorted into Pinned, Active, Recent and Inactive." style="max-width:100%;height:auto;border-radius:8px"></p>
+<p>Right-click a project on another Mac and you get the same menu you get on this one. Start a Claude tab or an agent, pin it, move it to Inactive, clean up a finished agent: all of it now works from wherever you are.</p>
+<h3>See the whole command before you allow it</h3>
+<p>When Claude asks to run a command, the card above the message box now shows all of it. It used to show only the start of the first line, which isn&#x27;t much to say yes to. A long command scrolls.</p>
+<p><img src="https://mattbirchler.github.io/bench-releases/images/0.9.6/whole-command.png" alt="A card reading &quot;Claude wants to run a command&quot; with a six-line shell command shown in full, and Allow and Deny buttons beside it." style="max-width:100%;height:auto;border-radius:8px"></p>
+<p>Allow now comes first and Deny second everywhere Workbench asks: in the sidebar, in the Overview and in the chat.</p>
+<p>Workbench also asks before a few things that can&#x27;t be undone: removing a project, discarding your review comments, making a new pairing code, and restoring the default Claude actions.</p>
+<h3>More room to write, and replies that are easier to read</h3>
+<p>The message box now grows to 18 lines before it scrolls, more than twice what it did, so a pasted paragraph or a list of feedback stays in view while you edit it.</p>
+<p>In Claude&#x27;s replies, headings are now larger than the text under them, and code blocks and tables are a size bigger. More of the chat follows the text size you pick with ⌘+ and ⌘-, including the cards above the message box.</p>
+<p><img src="https://mattbirchler.github.io/bench-releases/images/0.9.6/reply-and-message-box.png" alt="A reply from Claude with a heading, two subheadings, a list and a code block, above a message box holding nine lines of typed feedback." style="max-width:100%;height:auto;border-radius:8px"></p>
+<h3>Smoother all over</h3>
+<p>This update went through how everything in Workbench moves.</p>
+<ul><li><strong>The model list</strong> opens out of the model button. It used to fade in with the conversation showing through it.</li><li><strong>Cards above the message box</strong> rise into place, and no longer slide up through the box.</li><li><strong>The sidebar holds still</strong> when you pick a project. New Agent is now a small + on the project&#x27;s row, where it used to be a row of its own that pushed the list down.</li><li><strong>Sidebar sections fold</strong> open and shut, and a project that changes section slides to its new place.</li><li><strong>Switching between the terminal and the chat</strong> no longer shows one through the other.</li><li><strong>Reduce Motion</strong> is respected in the chat: things appear without moving.</li></ul>
+<h3>One name for each thing</h3>
+<p>Menus and buttons that do the same thing now say the same thing. It&#x27;s New Claude Tab, New Shell Tab and New Agent on a Branch wherever you start one, and Side by Side, Stacked and Unsplit wherever you arrange a split. Project menus, and the buttons above a file and its changes, keep one order.</p>
+<h3>Fixes and smaller changes</h3>
+<ul><li><strong>Workbench keeps running</strong> when you close its last window.</li><li><strong>Skills from plugins</strong> show up in the list when you type a slash.</li><li><strong>A Claude tab counts as working</strong> when its title shows the half-circle spinner.</li><li><strong>Small buttons are easier to click</strong>, including tab close and the clear button in the command bar.</li><li><strong>Names that are cut off</strong> show in full when you rest the pointer on them.</li><li><strong>Status colours</strong> (passing, failing, lines added and removed) are easier to read in both light and dark.</li><li><strong>The cards above the message box</strong> share one shape, and Send Answer is the same size as Allow and Deny.</li><li><strong>Settings sheets</strong> follow your theme, and the welcome screens&#x27; buttons follow its accent colour.</li><li><strong>The command bar</strong> lists worktrees by branch, as the sidebar does.</li><li><strong>VoiceOver</strong> reads sidebar rows as buttons and names the buttons in the title bar.</li></ul>
+<p>The iPhone and iPad app is getting the same attention in its next update.</p>
+      ]]></description>
+      <enclosure url="https://github.com/mattbirchler/bench-releases/releases/download/v0.9.6-56/Workbench-0.9.6-56.zip" type="application/octet-stream" sparkle:edSignature="zLZEKwQf30jf1G+Q9jRJW4n21ypZQe/Qe1Z1paz8entHzAVRz+U8Iw9O6XxweT/fagQv5ZPCYrjwpu8rpPx+Dg==" length="32372484"/>
+    </item>
+    <item>
+      <title>Workbench 0.9.5</title>
+      <pubDate>Thu, 12 Nov 2026 11:09:10 GMT</pubDate>
+      <sparkle:version>55</sparkle:version>
+      <sparkle:shortVersionString>0.9.5</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
+      <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
+      <description><![CDATA[
+<p>Here&#x27;s what&#x27;s new in today&#x27;s update to Workbench.</p>
+<h3>Ask a side question with /btw</h3>
+<p>Start a message with <strong>/btw</strong> and the message box turns into a side question: a &quot;btw&quot; chip appears in front of what you type, and a hint reminds you that the answer stays out of the conversation.</p>
+<p><img src="https://mattbirchler.github.io/bench-releases/images/0.9.5/btw-chip.png" alt="The message box with a &quot;btw&quot; chip in front of the question &quot;why did it sort by name first?&quot; and the hint &quot;Claude answers on the side. It isn&#x27;t added to the conversation.&quot;" style="max-width:100%;height:auto;border-radius:8px"></p>
+<p>Claude answers in a card above the box, with everything it knows about the conversation so far, while the conversation itself carries on untouched. Copy the answer, or close the card when you&#x27;re done. Side questions can only be answered, so Claude can&#x27;t run commands or change files from one.</p>
+<p><img src="https://mattbirchler.github.io/bench-releases/images/0.9.5/btw-answer.png" alt="A side question card above the message box, with the question &quot;why did it sort by name first?&quot; and Claude&#x27;s answer" style="max-width:100%;height:auto;border-radius:8px"></p>
+<p>To go back to a normal message, press Escape, or Delete at the start of the line. Side questions work from the iPhone and iPad app and from your other Macs too.</p>
+<h3>Pair your iPhone without Tailscale</h3>
+<p>You no longer need Tailscale to use Workbench on your iPhone or iPad. Workbench on your Mac shows a pairing code right away, and the app connects over your home Wi-Fi. If you do use Tailscale, Workbench still prefers it, and falls back to Wi-Fi when Tailscale is off.</p>
+<p>To get the Wi-Fi connection on a phone you already paired, update the iPhone app and pair it again once.</p>
+<h3>Copying that pastes properly</h3>
+<p>The copy button on a message, and any text you select in the chat, now copy as formatted text and as Markdown. Paste into Mail or Notes and you get headings, lists and links. Paste into a plain-text field or a terminal and you get the Markdown.</p>
+<h3>Fixes and smaller changes</h3>
+<ul><li><strong>Tabs animate</strong> as they open and close.</li><li><strong>Every Claude tab shows on the sidebar card.</strong> A project&#x27;s card used to describe only one of them.</li><li><strong>Tab moves to the next field</strong> in a form prompt box.</li><li><strong>The ⌘ number hints in the sidebar</strong> wait until you hold Command, and no longer shift the rows around.</li><li><strong>Paths with ~ stay intact in the chat.</strong> Text between two ~ characters used to get a line through it.</li><li><strong>Messages that end on an @ file mention send.</strong> They used to sit unsent in the terminal.</li></ul>
+      ]]></description>
+      <enclosure url="https://github.com/mattbirchler/bench-releases/releases/download/v0.9.5-55/Workbench-0.9.5-55.zip" type="application/octet-stream" sparkle:edSignature="fxnFdx2pWflI/Ujh9p8PN/oWm0OpWsjL1NYvQ8kUef9MvR8EIEoMkFxLNPwhWm/JCLdodm+i9aEjV/IDsPMTCA==" length="32254048"/>
+    </item>
+    <item>
+      <title>Workbench 0.9.4</title>
+      <pubDate>Wed, 11 Nov 2026 13:29:12 GMT</pubDate>
+      <sparkle:version>54</sparkle:version>
+      <sparkle:shortVersionString>0.9.4</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
+      <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
+      <description><![CDATA[
+<p>Here&#x27;s what&#x27;s new in today&#x27;s update to Workbench.</p>
+<h3>Commands that are easier to follow</h3>
+<p>The commands Claude runs read much better in the chat now.</p>
+<ul><li><strong>Quiet rows for quick looks.</strong> When Claude only reads a file, searches or checks <code>git status</code>, it shows as a single quiet line, like &quot;Read PantryStore.swift lines 10–20&quot;. Click it to open the file.</li><li><strong>Claude&#x27;s own words first.</strong> A command card leads with Claude&#x27;s description of what it&#x27;s doing, like &quot;Ran the tests&quot;, with the command underneath. While it runs, a timer ticks so you know it&#x27;s still going.</li><li><strong>The output you care about.</strong> Short output shows in full. Longer output shows the last few lines, where the results usually are, with <strong>Show all</strong> for the rest.</li><li><strong>Past tense when it&#x27;s done.</strong> Finished commands read &quot;Ran&quot;, &quot;Read&quot;, &quot;Searched for&quot; and so on, so you can tell at a glance what already happened.</li><li><strong>Files written from the shell look like files.</strong> When Claude writes a file with a shell here-document, the chat shows it like any other file Claude wrote, with its contents and line count.</li></ul>
+<p><img src="https://mattbirchler.github.io/bench-releases/images/0.9.4/command-cards.png" alt="A chat where Claude searches and reads a file as quiet one-line rows, edits a file, writes a test file, runs the tests with the last lines of output and a &quot;Show all 12 lines&quot; button, and checks git status" style="max-width:100%;height:auto;border-radius:8px"></p>
+<h3>Pictures, front and center</h3>
+<p>Click a picture in the chat and it opens over the whole Workbench window instead of in a small sheet. Pinch to zoom with your trackpad, or double-click. The viewer fades in gently and darkens toward the edges, so the picture stands out.</p>
+<p>Right-click a picture, in the chat or in the full-screen viewer, to <strong>Copy Image</strong> or <strong>Save Image…</strong>.</p>
+<h3>Rename a tab</h3>
+<p>Right-click a tab and choose <strong>Rename Tab…</strong> to give it a name of your own. <strong>Use Default Name</strong> puts the original back.</p>
+<h3>Fixes and smaller changes</h3>
+<ul><li><strong>Claude&#x27;s question stays in view while subagents work.</strong> It used to get pushed out of sight as subagent updates came in.</li><li><strong>The copy button sits at the bottom of Claude&#x27;s replies.</strong> You no longer have to scroll back up to copy a long reply you just finished reading.</li><li><strong>Active projects with no open tabs move down.</strong> In the Active list, projects you&#x27;re working in now come first.</li><li><strong>Smoother scrolling past plans</strong> in the chat.</li><li><strong>Checking this Mac&#x27;s HTTPS address is more reliable.</strong> The check skips system proxies, and if it fails, it says what went wrong.</li></ul>
+<h3>Workbench for iPad</h3>
+<p>The iPhone and iPad app now has a Mac-style layout on a wide iPad: projects on the left, the chat in the middle, and Changes, Files and Artifacts on the right. That update is on its way to the App Store now.</p>
+      ]]></description>
+      <enclosure url="https://github.com/mattbirchler/bench-releases/releases/download/v0.9.4-54/Workbench-0.9.4-54.zip" type="application/octet-stream" sparkle:edSignature="Pl5GiqWoZ3MxYpRBMUrOKQu6tEcYVTgwPR6ur6TbDrc3JM0+ZmVaruNnu/VG1Oagt0cHHKriqUs2uYEPXIXnCQ==" length="32101017"/>
+    </item>
+    <item>
+      <title>Workbench 0.9.3</title>
+      <pubDate>Tue, 10 Nov 2026 13:58:12 GMT</pubDate>
+      <sparkle:version>53</sparkle:version>
+      <sparkle:shortVersionString>0.9.3</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
+      <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
+      <description><![CDATA[
+<p>Here&#x27;s what&#x27;s new in today&#x27;s update to Workbench.</p>
+<h3>Move your setup to another Mac</h3>
+<p>Settings › General has a new <strong>Move to Another Mac</strong> section. Export saves your setup to one file, and Import on the other Mac brings it in. You choose which parts come along, both when you export and again when you import: projects and sidebar, shortcuts, appearance, other settings, Claude accounts, and paired Macs. Whatever an import replaces is backed up first.</p>
+<p><img src="https://mattbirchler.github.io/bench-releases/images/0.9.3/export-settings.png" alt="The Export Settings sheet, with checkboxes for projects and sidebar, shortcuts, appearance, other settings, Claude accounts, and paired Macs" style="max-width:100%;height:auto;border-radius:8px"></p>
+<h3>Shell commands look like shell commands</h3>
+<p>Start a message with <code>!</code> and the message box turns into a shell prompt. The <code>!</code> becomes a chip, your command is set in the code font, and Send becomes Run. There&#x27;s no need for a space after the <code>!</code>. Press Delete at the start of the line, or Escape, to go back to a normal message.</p>
+<p><img src="https://mattbirchler.github.io/bench-releases/images/0.9.3/shell-mode.png" alt="The message box in shell mode: a chip with an exclamation mark, the command &quot;make test&quot; in a code font, and a Run button" style="max-width:100%;height:auto;border-radius:8px"></p>
+<h3>See how long Claude worked</h3>
+<p>After a run of 30 seconds or more, the chat shows how long Claude worked and when it finished, just like the terminal does.</p>
+<p><img src="https://mattbirchler.github.io/bench-releases/images/0.9.3/run-time.png" alt="A chat where Claude&#x27;s answer is followed by the line &quot;Simmered for 20m 23s, done 7:07 AM&quot;" style="max-width:100%;height:auto;border-radius:8px"></p>
+<h3>Choose the command Claude tabs run</h3>
+<p>Settings › Claude has a new <strong>Command</strong> field. Leave it empty for plain <code>claude</code>, or type your own, like <code>claude --permission-mode acceptEdits</code> or the path to a wrapper script. Workbench warns you if a command would break a tab, and Use Default puts it back.</p>
+<p><img src="https://mattbirchler.github.io/bench-releases/images/0.9.3/claude-command.png" alt="The Command field in Settings › Claude, set to &quot;claude --permission-mode acceptEdits&quot;, with a Use Default button" style="max-width:100%;height:auto;border-radius:8px"></p>
+<h3>Fixes and smaller changes</h3>
+<ul><li><strong>Switching Macs no longer makes the pills jump.</strong> Clicking between This Mac and another Mac in the sidebar used to send the pills to the top of the sidebar and slide them back down.</li><li><strong>The message box shows a border while you type in it.</strong> The border was there all along, hidden behind the glass.</li><li><strong>A <code>!</code> on its own can&#x27;t be sent.</strong> It used to go to Claude as a message.</li></ul>
+      ]]></description>
+      <enclosure url="https://github.com/mattbirchler/bench-releases/releases/download/v0.9.3-53/Workbench-0.9.3-53.zip" type="application/octet-stream" sparkle:edSignature="KBwaWUbTtEeVjZbqUIfbk7DRM509P/xKzCRKLxxLuek/KFL81t3/H6y24AIf/2XgjoTTUq7Es62SUK98keg0Dg==" length="32016109"/>
+    </item>
+    <item>
+      <title>Workbench 0.9.2</title>
+      <pubDate>Mon, 09 Nov 2026 16:18:20 GMT</pubDate>
+      <sparkle:version>52</sparkle:version>
+      <sparkle:shortVersionString>0.9.2</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
+      <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
+      <description><![CDATA[
+<p>Here&#x27;s what&#x27;s new in today&#x27;s update to Workbench.</p>
+<h3>A steadier chat</h3>
+<p>Numerous updates to make the chat view more stable and faster, and to make sure it never shows you a blank screen ever again.</p>
+<h3>Drag tabs to reorder them</h3>
+<p>Tabs can now be dragged along the tab bar, and the other tabs move out of the way as you go. A split pair moves together as one tab.</p>
+<h3>Fixes and smaller changes</h3>
+<ul><li><strong>Ctrl-Tab works in every tab.</strong> Ctrl-Tab and Ctrl-Shift-Tab used to switch tabs only from a terminal. In a chat, the message box treated them as typing. Now they step through the project&#x27;s tabs from anywhere in the main window.</li><li><strong>Clicking near a tab&#x27;s close button selects the tab.</strong> The gaps around a tab&#x27;s title and close button used to grab the window instead, so a click there could drag the window out of its tiled spot.</li><li><strong>Quit Workbench Completely means completely.</strong> With Keep Working on, this now ends the Claude tabs Workbench was keeping running, too.</li></ul>
+      ]]></description>
+      <enclosure url="https://github.com/mattbirchler/bench-releases/releases/download/v0.9.2-52/Workbench-0.9.2-52.zip" type="application/octet-stream" sparkle:edSignature="wE9Fl2ON/2HNvXklGXFDTQo1s+TspiqoSiVeNfhop2jxBkXD3jtBTZaz9LHqxYv7PYgEgQHK70Te3LPTeAOVAA==" length="31965922"/>
+    </item>
+    <item>
+      <title>Workbench 0.9.1</title>
+      <pubDate>Mon, 09 Nov 2026 02:29:05 GMT</pubDate>
+      <sparkle:version>51</sparkle:version>
+      <sparkle:shortVersionString>0.9.1</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
+      <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
+      <description><![CDATA[
+<p>Here&#x27;s what&#x27;s new in today&#x27;s update to Workbench.</p>
+<h3>Queue prompts while your Mac is asleep</h3>
+<p>Have an idea while you&#x27;re out? Open a project in the iPhone app and queue a prompt. When your Mac wakes up, Workbench starts it as a new agent on its own branch, with nothing for you to confirm. Your project list stays on your phone while the Mac is offline, and prompts are encrypted so only your devices can read them. Needs the iPhone app 1.1.1, rolling out now.</p>
+<p><img src="https://mattbirchler.github.io/bench-releases/images/0.9.1/queue-prompt.png" alt="The iPhone app showing a project while the Mac is asleep, with a box to queue a prompt and two prompts waiting" style="max-width:100%;height:auto;border-radius:8px"></p>
+<h3>Up arrow brings back your last message</h3>
+<p>In the chat, press up in an empty message box to get back what you sent last, just like the terminal. Keep pressing to go further back, edit, and send again.</p>
+<h3>Fable is marked amber</h3>
+<p>Fable uses your plan limits faster than the other models, so its name under the message box is now an amber capsule with a flame. In the model list, Fable says so and Haiku gets a leaf as the light, economy model.</p>
+<p><img src="https://mattbirchler.github.io/bench-releases/images/0.9.1/model-list.png" alt="The model list over the chat, with Fable marked &quot;Uses your limits faster&quot; and a leaf beside Haiku" style="max-width:100%;height:auto;border-radius:8px"></p>
+<h3>Smaller changes</h3>
+<ul><li>Anonymous usage counts now include which Claude model a session uses and when you switch. &quot;Share anonymous usage data&quot; in Settings turns this off, as before.</li></ul>
+      ]]></description>
+      <enclosure url="https://github.com/mattbirchler/bench-releases/releases/download/v0.9.1-51/Workbench-0.9.1-51.zip" type="application/octet-stream" sparkle:edSignature="4pY4sX3U+M0D44SP7IodcTR9EggydD/bWRJ8Oxrc6s4kt6+H+d36jRshzP0ZCLabj0/RWdg4+lzbxx95o1prDg==" length="31938551"/>
+    </item>
+    <item>
+      <title>Workbench 0.9.1</title>
+      <pubDate>Sun, 08 Nov 2026 16:28:01 GMT</pubDate>
+      <sparkle:version>50</sparkle:version>
+      <sparkle:shortVersionString>0.9.1</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
+      <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
+      <description><![CDATA[
+<p>Here&#x27;s what&#x27;s new in today&#x27;s update to Workbench.</p>
+<h3>Mention files with @</h3>
+<p>Type <code>@</code> anywhere in a chat message to pick from the project&#x27;s files and folders, the same way you would in Claude Code&#x27;s terminal. Use the arrow keys and Tab or Return to choose one. Picking a folder fills in <code>@Sources/</code> and keeps suggesting what&#x27;s inside it, so you can drill down to the file you want. This works for remote Mac tabs too.</p>
+<h3>Slash commands in the middle of a message</h3>
+<p>You no longer have to start a message with a command to use one. Type something like &quot;clean this up with /uns&quot; and Workbench suggests <code>/unslop</code>. Commands that only make sense on their own, like <code>/clear</code> or <code>/model</code>, still only show up when they&#x27;re the whole message.</p>
+<h3>Select across a whole reply</h3>
+<p>On the Mac, you can now drag across several paragraphs, headings, and list items in Claude&#x27;s reply and copy them all at once. Before, each paragraph had to be selected on its own. Code blocks and tables are still selected separately.</p>
+<h3>Fixes and smaller changes</h3>
+<ul><li><strong>SSH works in Workbench tabs again.</strong> If your Ghostty config turned on its SSH shell features, running <code>ssh</code> in Workbench failed with &quot;Unknown command: ghostty&quot;. Workbench now turns off just those two features and keeps the rest of your settings.</li><li><strong>New Claude tabs work after logging out.</strong> With Keep Working on, logging out of your Mac and back in could leave new Claude tabs stuck at &quot;Login incorrect&quot;. Workbench now notices and starts fresh, and your conversations pick up where they left off.</li><li><strong>Your message stays when you change models.</strong> Picking a model from the model name under the message box used to erase what you&#x27;d typed. Now it stays put.</li><li><strong>A new home on the web.</strong> The Workbench website is now at [workbenchapp.dev](https://workbenchapp.dev). Old links still work.</li></ul>
+      ]]></description>
+      <enclosure url="https://github.com/mattbirchler/bench-releases/releases/download/v0.9.1-50/Workbench-0.9.1-50.zip" type="application/octet-stream" sparkle:edSignature="MOFP6Z2erlNgCkuN91Edd96YwWb8FKmxiQHJRYLUUUWHRnlDZoy5XA3elENr/12K+O1YdHK2iLPpm1D5BGVjDw==" length="31817718"/>
+    </item>
+    <item>
+      <title>Workbench 0.9</title>
+      <pubDate>Sat, 07 Nov 2026 19:34:13 GMT</pubDate>
+      <sparkle:version>49</sparkle:version>
+      <sparkle:shortVersionString>0.9</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
+      <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
+      <description><![CDATA[
+<p>Here&#x27;s what&#x27;s new in today&#x27;s update to Workbench.</p>
+<h3>Keep working</h3>
+<p>Sometimes you want to restart Workbench, but you don&#x27;t want to interrupt your agents. So you wait for them to be done. And they keep going so you wait some more.</p>
+<p>This is off by default for now, but there is a new feature you can enable from the general settings called &quot;Keep Working&quot;. When this is enabled, your Claude Code sessions operate independently of the Workbench UI. What this means is that if you have 1, 2, or 20 agents grinding away on stuff, and the next Workbench update shows up, you can install it and restart without slowing your agents down at all.</p>
+<p>I&#x27;m not the first person to implement something like this by any means, but it&#x27;s so cool once you get used to having this.</p>
+<p><img src="https://mattbirchler.github.io/bench-releases/images/0.9/keep-working.png" alt="The Keep Working setting in Settings › General, turned on" style="max-width:100%;height:auto;border-radius:8px"></p>
+<h3>Performance improvements</h3>
+<p>I&#x27;ve been adding a lot of features to the app, and this release is clearly no different, but I did take some time to go through some of the core code flows in the project and make sure that they were solid. And I took a look at some of the performance issues in the app and figured out ways to make them better.</p>
+<p>There&#x27;s more to do here for sure, but hopefully some things will feel a bit more zippy than before.</p>
+<h3>Switch models and effort from the chat</h3>
+<p>Type <code>/model</code> in the chat, or click the model name under the message box, to get the same list of models Claude Code shows in its terminal. The list sets effort too! On iPhone, tap the model name at the top of a session, or send <code>/model</code> as well.</p>
+<p><img src="https://mattbirchler.github.io/bench-releases/images/0.9/model-list.png" alt="The model list over the chat, with Opus 5.5 checked and an effort row set to High" style="max-width:100%;height:auto;border-radius:8px"></p>
+<h3>Run a command from the chat</h3>
+<p>Start a message with <code>!</code> to run it in the shell, the way you would in Claude Code&#x27;s terminal. This works from iPhone as well.</p>
+<p><img src="https://mattbirchler.github.io/bench-releases/images/0.9/shell-command.png" alt="A ! bun test card in the chat showing three passing tests" style="max-width:100%;height:auto;border-radius:8px"></p>
+<h3>See when Claude edits another project</h3>
+<p>Sometimes you have related projects, and while your chat exists in one of them, you need it to update a different one. Previously that was effectively impossible to track, but now the right sidebar shows you what other projects are being edited by Claude in a new &quot;Also Changed&quot; section.</p>
+<p><img src="https://mattbirchler.github.io/bench-releases/images/0.9/edits-elsewhere.png" alt="An edit to BuyButton.tsx marked storefront in the chat, and storefront listed under Also Changed" style="max-width:100%;height:auto;border-radius:8px"></p>
+<h3>Commit, push, and open a PR in one click</h3>
+<p>The Changes panel has <strong>Commit</strong>, <strong>Push</strong>, and <strong>Open PR</strong> buttons. Each one sends a message to the project&#x27;s Claude tab, and Claude does the git work, so the buttons work with GitHub, GitLab, or anything else. Reword them, reorder them, or add your own in <strong>Settings › Shortcuts › Claude Actions</strong>.</p>
+<p><img src="https://mattbirchler.github.io/bench-releases/images/0.9/claude-actions.png" alt="The Claude Actions list in Settings with Commit, Push, and Open PR" style="max-width:100%;height:auto;border-radius:8px"></p>
+<h3>Better narrow windows</h3>
+<p>Sometimes you just want a narrow window, and Workbench now does this better than before. As the window gets smaller, the side panels will collapse to make sure you can still see the chat and you can still see them as needed. Also when the project sidebar is collapsed, you can still see project icons, so you can navigate from a more streamlined view if you prefer.</p>
+<p><img src="https://mattbirchler.github.io/bench-releases/images/0.9/narrow-window.png" alt="A narrow Workbench window with project icons down the left and the chat beside them" style="max-width:100%;height:auto;border-radius:8px"></p>
+<h3>A new app icon</h3>
+<p>Workbench has a new icon that&#x27;s more fun! Five others are available, from <strong>Settings › Appearance</strong> on the Mac or in the iPhone app&#x27;s settings.</p>
+<p><img src="https://mattbirchler.github.io/bench-releases/images/0.9/app-icons.png" alt="The six app icons: Northern Lights, Classic, Coral Pop, Ember Ridge, Lagoon, and Ultraviolet" style="max-width:100%;height:auto;border-radius:8px"></p>
+<h3>Appearance settings</h3>
+<p>Colors, fonts, and text size have their own page in Settings, with a live preview that changes as you do.</p>
+<p>Appearance also has a new <strong>Motion</strong> setting, for when the sparkles and glows are more than you want:</p>
+<ul><li><strong>Full</strong> is how Workbench looks today, and it&#x27;s the default.</li><li><strong>Calm</strong> stops the big effects, like the sparkles on a working project and the glow on the start page. The small spinners keep moving, so you can still tell when Claude is working.</li><li><strong>Still</strong> stops everything that moves on its own.</li></ul>
+<p>Calm and Still also use less of your Mac&#x27;s power, so play with these if you want to make the app as light on your system as possible. If Reduce Motion is on in System Settings, Workbench uses Still automatically.</p>
+<p><img src="https://mattbirchler.github.io/bench-releases/images/0.9/appearance.png" alt="The Appearance page&#x27;s live preview in the Northern Lights theme, with a Light and Dark switch" style="max-width:100%;height:auto;border-radius:8px"></p>
+<h3>Fixes and smaller changes</h3>
+<ul><li><strong>Notifications from Claude.</strong> Claude can run <code>bench notify</code> in a Workbench tab to send you a notification on your Mac and your paired iPhone.</li><li><strong>Lists in the message box.</strong> Type a dash or a number, then press Shift-Return (Return on iPhone), and the next line continues the list. Your own messages now show as Markdown, so lists read as lists.</li><li><strong>File paths open in the Finder.</strong> Click a file path in Claude&#x27;s reply to show that file in the Finder.</li><li><strong>A steadier iPhone connection.</strong> A dropped connection is noticed within a minute, and a reply that didn&#x27;t reach the Mac says so and gives you your draft back.</li><li><strong>The version is in the sidebar.</strong> The bottom of the sidebar shows the version and build you&#x27;re running.</li><li><strong>Crash reports.</strong> If Workbench crashes, it sends a report so the bug can be fixed. It&#x27;s part of <strong>Share anonymous usage data</strong> in <strong>Settings › General</strong>, so turning that off turns this off too.</li><li><strong>Easier to install.</strong> Downloads now come as a disk image. Open it and drag Workbench into Applications.</li></ul>
+      ]]></description>
+      <enclosure url="https://github.com/mattbirchler/bench-releases/releases/download/v0.9-49/Workbench-0.9-49.zip" type="application/octet-stream" sparkle:edSignature="uYImr/uLziv9DTBWKK1V/y/1QOHRoedK1M091V0N1a91V/U4muaHMfZ+eaIT6PBNO3ubHyK7s8gG/PxJ0bbpAQ==" length="31757340"/>
+    </item>
+    <item>
+      <title>Workbench 0.8.4</title>
+      <pubDate>Fri, 06 Nov 2026 16:53:38 GMT</pubDate>
+      <sparkle:version>48</sparkle:version>
+      <sparkle:shortVersionString>0.8.4</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
+      <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
+      <description><![CDATA[
+<h3>Pick a color theme</h3>
+<p>Workbench now comes with 36 color themes. Choose one for light mode and one for dark mode in <strong>Settings › General › Colors</strong>, or while setting up, and Workbench switches between them with your Mac&#x27;s appearance. The terminal tabs, sidebars, chat and diffs all take the theme&#x27;s colors. If you&#x27;d rather keep your Ghostty theme, that&#x27;s still an option.</p>
+<p>Your theme&#x27;s own color now shows up throughout, instead of the same orange everywhere: the Start Claude button, the send button, the checklist and timer, and the sidebar rows for sessions Claude is working on. Your messages in the chat view get a soft tint of it too, so they stand out from Claude&#x27;s. A few themes have no color of their own, and those keep the orange.</p>
+<p><img src="https://mattbirchler.github.io/bench-releases/images/0.8.4/themes.png" alt="The same Workbench window in six themes: Clean Slate, Northern Lights, Oat Milk, Indigo Works, Sakura Note, and Hearth" style="max-width:100%;height:auto;border-radius:8px"></p>
+<p><img src="https://mattbirchler.github.io/bench-releases/images/0.8.4/theme-settings.png" alt="The Colors setting with a row of light themes and a row of dark themes" style="max-width:100%;height:auto;border-radius:8px"></p>
+<h3>Read Claude&#x27;s plan in the chat</h3>
+<p>When Claude asks you to approve a plan, the chat view now shows the plan itself, so you don&#x27;t have to switch to the terminal and scroll back to read it. Long plans fold after a screenful, with <strong>Show Full Plan</strong> to read the rest, and the question card has a <strong>Read the Plan</strong> button so you can read it all right before you answer. The iPhone app shows the plan too.</p>
+<p><img src="https://mattbirchler.github.io/bench-releases/images/0.8.4/plan.png" alt="A plan in the chat view, with Show Full Plan, and the question card asking you to approve it with a Read the Plan button" style="max-width:100%;height:auto;border-radius:8px"></p>
+<p>Clicking a file name in the chat now opens files outside the project, like Claude&#x27;s plan files, in a read-only tab. Before, those looked like links but did nothing.</p>
+<h3>Close several tabs at once</h3>
+<p>Right-click a tab for <strong>Close Other Tabs</strong>, <strong>Close Tabs to the Right</strong> and <strong>Close All Tabs</strong>. If any of those tabs is still working, Workbench asks once instead of once per tab.</p>
+<h3>Fixes and smaller changes</h3>
+<ul><li><strong>Switching models feels instant.</strong> The model you pick shows right away, with a small spinner until Claude confirms. A switch made with <code>/model</code> in the terminal shows up right away too.</li><li><strong>A quieter sidebar.</strong> The large card that popped up when you hovered over a project is gone.</li><li><strong>Settings looks right in every theme.</strong> The strip at the top of Settings and the selected section now follow your theme, so they&#x27;re easy to see on dark themes. You can also browse the themes with arrows, for mice that can&#x27;t scroll sideways.</li><li><strong>The New Agent sheet matches your theme.</strong> It no longer shows a dark box inside a light sheet when your theme and your Mac disagree on light or dark.</li><li><strong>Pairing another Mac is easier to find.</strong> The switch in <strong>Settings › Remote Access</strong> is now called &quot;Let my iPhone and other Macs connect&quot;, and the directions point to the <strong>+</strong> next to This Mac at the top of the sidebar.</li><li><strong>No stray blue box on the welcome screens</strong> when Keyboard navigation is turned on in macOS.</li><li><strong>&quot;Left running&quot;</strong> is the new name for processes still going after you close their tab, with a note on what that means.</li></ul>
+<h3>For the iPhone app</h3>
+<p>With this version on your Mac, the iPhone beta can show code in color in diffs and files, open the whole file around a change with unchanged stretches folded away, review a commit by tapping it, and show file type icons. Phones that use <strong>Match Mac</strong> for their colors follow your Mac&#x27;s theme, including its accent color.</p>
+      ]]></description>
+      <enclosure url="https://github.com/mattbirchler/bench-releases/releases/download/v0.8.4-48/Workbench-0.8.4-48.zip" type="application/octet-stream" sparkle:edSignature="jh7y6dHIv0iCY92nnyClxCZQbXl3aibKbn9LZv4Xs1howk3H788WF4hbIp7Y/IR2THA3XrPSlAPbM1Pg0iMBBQ==" length="22255255"/>
+    </item>
+    <item>
+      <title>Workbench 0.8.3</title>
+      <pubDate>Thu, 05 Nov 2026 22:20:07 GMT</pubDate>
+      <sparkle:version>47</sparkle:version>
+      <sparkle:shortVersionString>0.8.3</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
+      <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
+      <description><![CDATA[
+<h3>Send Feedback is always there</h3>
+<p>The feedback button at the top right now stays put when the right panel is open. Before, it often disappeared to make room for the panel&#x27;s Changes, Files and Artifacts switch. Now that switch makes room instead. Workbench is in beta, so please keep the feedback coming.</p>
+<h3>Fixes</h3>
+<ul><li><strong>Approve Claude&#x27;s plan from the chat view or your phone.</strong> When Claude asked you to approve a plan, the chat view and the iPhone app used to tell you to answer in the terminal. Now they show the choices as buttons, like Claude&#x27;s other questions.</li><li><strong>The Files view shows every folder</strong> in a project folder that holds several repos. Before, it could run out of room on one repo&#x27;s build output and leave later folders off the list.</li></ul>
+      ]]></description>
+      <enclosure url="https://github.com/mattbirchler/bench-releases/releases/download/v0.8.3-47/Workbench-0.8.3-47.zip" type="application/octet-stream" sparkle:edSignature="mCxR+epnnxCbeJPtN7jbgvJ1A3k7AXHwdoUEzCWrZYzVwYbQIxY8PxfePWNbL86Kr1TiXjuwAoHmiOIxJCv9DA==" length="22166237"/>
+    </item>
+    <item>
+      <title>Workbench 0.8.2</title>
+      <pubDate>Thu, 05 Nov 2026 21:41:10 GMT</pubDate>
+      <sparkle:version>46</sparkle:version>
+      <sparkle:shortVersionString>0.8.2</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
+      <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
+      <description><![CDATA[
+<h3>A cleaner, glassier window</h3>
+<p>The tabs now sit up in the title bar, so the whole top of the window is one tidy strip and your work gets more room. The open tab flows straight into what&#x27;s under it.</p>
+<p>The message box is now glass, and the conversation scrolls underneath it. The same glass shows up on the other things that float: the jump-to-latest button, the checklist and agents bars, the slash-command list, the usage and Mac meters at the bottom of the sidebar, and the command bar (<strong>⌘K</strong>).</p>
+<p><img src="https://mattbirchler.github.io/bench-releases/images/0.8.2/glass-chat.png" alt="Claude&#x27;s chat with the glass message box, the conversation scrolling under it, and the tabs in the title bar" style="max-width:100%;height:auto;border-radius:8px"></p>
+<ul><li>The <strong>Terminal | Chat</strong> switch now appears when you point at a Claude tab, and slides between the two.</li><li>Shortcuts and past sessions moved into the <strong>+</strong> menu next to New Claude.</li><li>A split shows as one tab with both halves in it. Click the mark between them to put the panes side by side or one above the other, swap sides, or separate them back into two tabs.</li><li>When the message box holds more than fits, its text fades at the edges so you can tell there&#x27;s more.</li></ul>
+<h3>Reviewing changes is much nicer</h3>
+<p>Diffs and files now show code in color, using your terminal theme. Diffs show the whole file with the long unchanged parts folded away, so you see what changed in context. Click <strong>Show 13 lines</strong> to open a fold.</p>
+<p><img src="https://mattbirchler.github.io/bench-releases/images/0.8.2/diffs.png" alt="A diff of checkout.ts in color, with the added lines marked and unchanged lines folded" style="max-width:100%;height:auto;border-radius:8px"></p>
+<ul><li><strong>Changes | File</strong> in a diff&#x27;s header flips between the diff and the whole file. The file view marks changed lines in its margin.</li><li>The up and down arrows in the header (or <strong>Control-Option-↑</strong> and <strong>↓</strong>) step from change to change, and on into the next file.</li><li>You can select across lines in a diff, copy without the line numbers, and search with <strong>⌘F</strong>.</li><li>Clicking a file opens it in a preview tab that the next file you click replaces, so tabs don&#x27;t pile up. Double-click a file to keep its tab.</li><li>Click a commit to review it on one page: its message, the files it touched, and every diff in one scroll. <strong>Review All</strong> does the same for everything on your branch.</li><li>Changed files show an icon for their type, and buttons to open them or show them in Finder when you point at them.</li></ul>
+<h3>Fixes</h3>
+<ul><li>Workbench no longer crashes when the window is narrow with both the sidebar and the right panel open.</li><li>Status colors (added, removed, done, failed) are easier to read in both light and dark mode.</li><li>VoiceOver can now name every control in Settings.</li></ul>
+      ]]></description>
+      <enclosure url="https://github.com/mattbirchler/bench-releases/releases/download/v0.8.2-46/Workbench-0.8.2-46.zip" type="application/octet-stream" sparkle:edSignature="AE05Rs9ErghmOWO77GWB7XVowNZkCu8qR8SDJeoasn0wiOB2A3qngHkXd7hBrRgPAuEJd7x5WD0HpB7Es4rmCw==" length="22171586"/>
+    </item>
+    <item>
+      <title>Workbench 0.8.1</title>
+      <pubDate>Thu, 05 Nov 2026 13:46:41 GMT</pubDate>
+      <sparkle:version>45</sparkle:version>
+      <sparkle:shortVersionString>0.8.1</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
+      <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
+      <description><![CDATA[
+<h3>Split panes</h3>
+<p>Keep Claude and a terminal on screen together instead of flipping between tabs. Press <strong>⌘D</strong> to open a shell beside the tab you&#x27;re in, or <strong>⇧⌘D</strong> to open one below it.</p>
+<p><img src="https://mattbirchler.github.io/bench-releases/images/0.8.1/split-panes.png" alt="Claude&#x27;s chat on the left and a running dev server on the right, with the sidebar sorted into custom groups" style="max-width:100%;height:auto;border-radius:8px"></p>
+<ul><li><strong>⌘]</strong> or a click switches sides. The side you&#x27;re typing in gets a ring, and the other side dims a little.</li><li>Drag the line between them to resize, or double-click it to make both sides the same size.</li><li>Already have the tab you want beside Claude, like your dev server? Right-click a tab and choose <strong>Split With</strong>.</li><li>Right-click the joined tab to stack the panes, swap sides, or unsplit. Splits come back after you quit and reopen.</li></ul>
+<h3>Group projects your way</h3>
+<p>The sidebar can now use groups you make, like a backend and its apps together. Turn it on in <strong>Settings › General › Group projects</strong>, or <strong>View › Group Projects › Custom Groups</strong>.</p>
+<ul><li>Drag projects into a group, or right-click one and choose <strong>Move to Group</strong>.</li><li>Fold a group away when you&#x27;re not using it. Projects you haven&#x27;t grouped wait in <strong>Ungrouped</strong>.</li><li><strong>By Activity</strong>, the Pinned, Active, Recent, and Inactive sections you have now, is still there if you prefer it.</li></ul>
+<h3>Code in the chat stands out, and copies with one click</h3>
+<p>Variable names, commands, and file names in Claude&#x27;s replies now take your terminal theme&#x27;s blue, the way Claude Code shows them in the terminal, on a soft background. They&#x27;re easy to spot even if you use a monospaced font for everything.</p>
+<p>Click one to copy it. No more carefully selecting <code>STRIPE_SECRET_KEY</code> with the mouse. Code blocks have a copy button in their corner too.</p>
+<p><img src="https://mattbirchler.github.io/bench-releases/images/0.8.1/copy-code.png" alt="A table of variable names in the chat, with &quot;Copied&quot; above the one that was clicked" style="max-width:100%;height:auto;border-radius:8px"></p>
+<h3>Make the chat yours</h3>
+<p>Pick the chat&#x27;s font, its code font, and its text size in <strong>Settings › General › Chat Text</strong>, with a preview as you go. While a chat is on screen, <strong>⌘+</strong>, <strong>⌘−</strong>, and <strong>⌘0</strong> change the size.</p>
+<p>You can also choose the color of the ring around a split&#x27;s focused side, in <strong>Settings › General › Appearance</strong>. The choices come from your Ghostty theme, so they still fit when you change themes.</p>
+<p><img src="https://mattbirchler.github.io/bench-releases/images/0.8.1/chat-and-appearance-settings.png" alt="Settings with the new Group projects, Focused pane, and Chat Text options" style="max-width:100%;height:auto;border-radius:8px"></p>
+<h3>Smaller improvements</h3>
+<ul><li><strong>⌘1 to ⌘9 follow the sidebar</strong>, top to bottom, including your agents&#x27; worktrees. With another Mac&#x27;s list showing, they open that Mac&#x27;s projects.</li><li><strong>Option-Backspace and Control-Backspace delete the previous word</strong> in the terminal, like they do in other Mac terminals.</li></ul>
+<h3>Fixes</h3>
+<ul><li>The chat no longer opens blank until Claude prints something.</li><li>On the Mac, a code block with a long first line no longer hides every line after it.</li><li>Quotes in the chat read like they do in the terminal: one unbroken bar, full-brightness text, and no cut-off lines around them.</li><li>When pairing another Mac over Tailscale fails, Workbench now says why, like a link from a different tailnet or HTTPS Certificates turned off. Before, it only said &quot;Connecting&quot;.</li></ul>
+<h3>On iPhone</h3>
+<p>Custom groups and the new code styling come to the iPhone app in its next TestFlight beta.</p>
+      ]]></description>
+      <enclosure url="https://github.com/mattbirchler/bench-releases/releases/download/v0.8.1-45/Workbench-0.8.1-45.zip" type="application/octet-stream" sparkle:edSignature="nXHD2g9/XxwpMhxFjXIS5Sm5gGV8F1SnRNib4aAl6m7cC3Q0FyNNnYMEUbvHleIgSdNdtYF+bJNHglaG5/U1Bw==" length="13150574"/>
+    </item>
+    <item>
+      <title>Workbench 0.8</title>
+      <pubDate>Wed, 04 Nov 2026 03:44:00 GMT</pubDate>
+      <sparkle:version>44</sparkle:version>
+      <sparkle:shortVersionString>0.8</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
+      <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
+      <description><![CDATA[
+<h3>Get Workbench for iPhone</h3>
+<p>The iPhone app is in public beta on TestFlight. Answer Claude&#x27;s questions, allow a command, or send a follow-up from your phone, and get a notification when a session needs you.</p>
+<p>A small card at the bottom of the sidebar links to the beta. It goes away once you open it, close it, or pair a phone. The link is also in <strong>Settings › Remote Access</strong> and on the iPhone step of setup.</p>
+<h3>Updates no longer interrupt you</h3>
+<p>After an update, Workbench used to open What&#x27;s New on top of your work. Now a small card at the bottom of the sidebar says which version you&#x27;re on. Click it to see what changed, or close it.</p>
+<h3>Connecting to your Mac is more reliable</h3>
+<ul><li><strong>Renamed your Mac?</strong> Workbench now sets up Tailscale for the new name, so your phone and other Macs can connect again instead of failing.</li><li><strong>Remote Access only reports it&#x27;s working when it is.</strong> If HTTPS isn&#x27;t working yet, the Mac you&#x27;re connecting to says what&#x27;s wrong, which is usually HTTPS Certificates being off in Tailscale.</li><li><strong>Clearer errors.</strong> When a secure connection to another Mac fails, Workbench says what usually causes it and where to fix it.</li></ul>
+<h3>Screenshots in feedback</h3>
+<p>Send Feedback now takes up to four screenshots, so it&#x27;s easier to show what you mean. The form also uses standard Mac colors instead of your terminal theme.</p>
+<h3>Recaps and Brain Dump use the right Claude account</h3>
+<p>If you use more than one Claude account, recaps and Brain Dump now run on the project&#x27;s own account instead of your main one, and what they use now shows on the Usage page. Brain Dump also splits up your messages with a smaller, faster model.</p>
+      ]]></description>
+      <enclosure url="https://github.com/mattbirchler/bench-releases/releases/download/v0.8-44/Workbench-0.8-44.zip" type="application/octet-stream" sparkle:edSignature="y4eV/Fgd4PIT7x3z9BrRRjkWRH78uQBuW+wlwKPW0mFI2L1E9C3PoKrCM51GXtJvicvhPyRkdJIlcENk+z1SBw==" length="12917140"/>
+    </item>
+    <item>
+      <title>Workbench 0.7.20</title>
+      <pubDate>Tue, 03 Nov 2026 21:12:25 GMT</pubDate>
+      <sparkle:version>43</sparkle:version>
+      <sparkle:shortVersionString>0.7.20</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
+      <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
+      <description><![CDATA[
+<h3>See your month&#x27;s spending without a plan</h3>
+<p>If your Claude account has no plan limits, like an API key, a company gateway, or an Enterprise plan billed by usage, the foot of the sidebar now shows what you&#x27;ve spent this month. Before, some of these accounts showed nothing there.</p>
+<ul><li><strong>Working to a quota?</strong> Set a monthly budget on the Usage page and the ring fills toward it.</li><li><strong>It&#x27;s an estimate.</strong> The number is worked out at standard API prices from Claude Code&#x27;s logs on this Mac, so a negotiated rate or use on other computers won&#x27;t be included.</li></ul>
+<h3>All your projects in Brain Dump</h3>
+<p>Brain Dump used to stop at 10 project icons. Now it shows every one, so you can look through them while you decide what to work on. Point at an icon to see the project&#x27;s name right away.</p>
+<h3>The top of the window acts like a title bar</h3>
+<p>Double-click empty space in the tab row or the panel header to zoom the window, the same as any other Mac app, and drag from there to move it. It follows your Mac&#x27;s title bar double-click setting.</p>
+<h3>Updates install themselves when your Mac is idle</h3>
+<p>Updates now install by default after 30 minutes with no input, as long as nothing would be interrupted. Workbench restarts to do this, so this also applies when you step away from your main Mac. If you&#x27;d rather choose when, turn off <strong>Install updates when this Mac is idle</strong> in Settings. If you already turned it off, it stays off.</p>
+<h3>Also in this version</h3>
+<p>Workbench now keeps a small log on your Mac of how long chats take to open, to help track down chats that stay blank for a while. It has no conversation text in it and isn&#x27;t sent anywhere.</p>
+      ]]></description>
+      <enclosure url="https://github.com/mattbirchler/bench-releases/releases/download/v0.7.20-43/Workbench-0.7.20-43.zip" type="application/octet-stream" sparkle:edSignature="qIQLvGkVLEg5PnWE+SK3OzxMwLZ8eoNRNx9QQ29pWukwtjL+GqtDAMKKx8ztbyJ2h8wFMO4ukOtcDRjmYvflAQ==" length="12870483"/>
+    </item>
+    <item>
+      <title>Workbench 0.7.19</title>
+      <pubDate>Tue, 03 Nov 2026 14:47:44 GMT</pubDate>
+      <sparkle:version>42</sparkle:version>
+      <sparkle:shortVersionString>0.7.19</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
+      <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
+      <description><![CDATA[
+<h3>A different Claude account for each project</h3>
+<p>Keep a work account for work repos and a personal one for everything else. Each project now picks which Claude account its tabs sign in with.</p>
+<ul><li><strong>Settings › Claude Accounts</strong> lists each account with its email, plan, and how many projects use it. <strong>Add Account</strong> walks you through naming it, signing in, and choosing its projects.</li><li><strong>Switch from the project&#x27;s menu</strong> in the sidebar, or the button next to New Claude Tab. Right-click New Claude Tab for a one-off tab on another account.</li><li><strong>Already use several accounts?</strong> Workbench finds them on your Mac and adds them for you.</li><li><strong>Usage follows along.</strong> The sidebar rings show the selected project&#x27;s account, and the Usage page has a card for each one.</li></ul>
+<p>Recaps and other background work still use your main account, and your phone and the menu bar still show its plan usage.</p>
+<h3>Worktrees you made yourself show up in the sidebar</h3>
+<p>Worktrees you made in a terminal or with Claude Code now appear under their project, wherever they live. Nothing starts until you open one.</p>
+<ul><li><strong>They&#x27;re yours.</strong> Workbench never deletes them, even with automatic cleanup on.</li><li><strong>Don&#x27;t want one listed?</strong> Right-click it and choose <strong>Remove from Sidebar</strong>. Its folder and branch stay put, and <strong>Show Hidden Worktrees</strong> on the project brings it back.</li></ul>
+<h3>Choose where new worktrees go</h3>
+<p>Settings › General › Agents has a new setting for where new agents&#x27; worktrees go, with a folder for each repo inside the one you pick. The default is still next to the repo, and worktrees you already have stay where they are.</p>
+<h3>Links in chat look like links</h3>
+<p>Links in Claude&#x27;s replies are now blue, and the pointer turns into a hand over them, so you can tell what&#x27;s clickable.</p>
+      ]]></description>
+      <enclosure url="https://github.com/mattbirchler/bench-releases/releases/download/v0.7.19-42/Workbench-0.7.19-42.zip" type="application/octet-stream" sparkle:edSignature="mVm7iq6lgq3PkcxC24s8681MvNW7IX5Fhs/C67bf/32eC3FFL4x9jwlgtSc75klie35HNUWBDuv+1aYGCypRDA==" length="12843643"/>
+    </item>
+    <item>
+      <title>Workbench 0.7.18</title>
+      <pubDate>Mon, 02 Nov 2026 23:40:37 GMT</pubDate>
+      <sparkle:version>41</sparkle:version>
+      <sparkle:shortVersionString>0.7.18</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
+      <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
+      <description><![CDATA[
+<h3>Inactive projects start fresh</h3>
+<p>When a project moves to Inactive, whether it&#x27;s gone a day without use or you chose Move to Inactive, Workbench now closes its tabs. Coming back to it shows the New Tab page instead of a Claude tab from days ago, so you can start something new or pick up a past session from the list.</p>
+<ul><li>Tabs that are still working stay open: Claude in the middle of a task or waiting on you, or a program like a dev server running in a shell.</li><li>The project you&#x27;re looking at keeps its tabs until you leave it.</li><li>Workbench also starts faster with lots of projects, since it no longer resumes old Claude sessions in projects you haven&#x27;t touched.</li></ul>
+<h3>Settings › Remote Access</h3>
+<p>The iPhone page in Settings is now called Remote Access, since it&#x27;s also where you pair an iPad or another Mac.</p>
+      ]]></description>
+      <enclosure url="https://github.com/mattbirchler/bench-releases/releases/download/v0.7.18-41/Workbench-0.7.18-41.zip" type="application/octet-stream" sparkle:edSignature="sCYVbDexhdLrTaJoK9IxTRYvqu2vEIVqATVkOEuz6P7MNa+EmKcbExRq8MNKUPg6bzlG29pATRVwfb03Zj7mDg==" length="12680371"/>
+    </item>
+    <item>
+      <title>Workbench 0.7.17</title>
+      <pubDate>Mon, 02 Nov 2026 21:44:46 GMT</pubDate>
+      <sparkle:version>40</sparkle:version>
+      <sparkle:shortVersionString>0.7.17</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
+      <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
+      <description><![CDATA[
+<h3>See what you&#x27;ve spent, if you use an API key</h3>
+<p>If Claude Code on your Mac runs on an Anthropic API key, or through Amazon Bedrock or Google Vertex, you pay by the token, and Workbench now shows it that way:</p>
+<ul><li><strong>A Month ring in the sidebar</strong> takes the place of the plan rings. It shows what you&#x27;ve spent this month at API prices.</li><li><strong>Set a monthly budget</strong> in Settings › Usage, for example to match your key&#x27;s spend limit. The ring fills toward it, with a tick for how far through the month you are, and the card warns you once you pass 80%.</li><li><strong>The Usage page</strong> opens with this month&#x27;s spending, and no longer says &quot;Your Claude plan covers this&quot; when you don&#x27;t have one.</li><li><strong>On your iPhone</strong>, the strip above your projects reads like &quot;Spent $312 of $500&quot;, and Usage and Costs starts with this month. This needs the next TestFlight build.</li></ul>
+<p>Workbench works out which kind of account you have from Claude Code itself, including an API key set in your shell profile. The total comes from Claude Code&#x27;s logs on this Mac, so anything else that uses the same key isn&#x27;t counted. If you&#x27;re on a Pro or Max plan, nothing changes.</p>
+<h3>Send Feedback</h3>
+<p>There&#x27;s a new Send Feedback button in the toolbar and in the Help menu. Tell me what&#x27;s broken, confusing, or missing, or what you love. Every message is read.</p>
+<h3>Also</h3>
+<ul><li>Switches in Settings and the welcome are now drawn in Workbench&#x27;s own colors, so they&#x27;re easy to read in dark mode and match your terminal theme.</li></ul>
+      ]]></description>
+      <enclosure url="https://github.com/mattbirchler/bench-releases/releases/download/v0.7.17-40/Workbench-0.7.17-40.zip" type="application/octet-stream" sparkle:edSignature="r8CTV+7nK/e8dzeMox1FbaF8nNadMRlMwMLCRChc4eIrFbsm91m38v8cD0eWQ1AatWQZSNXjRSsY9HlEcnllAw==" length="12675144"/>
+    </item>
+    <item>
+      <title>Workbench 0.7.16</title>
+      <pubDate>Mon, 02 Nov 2026 16:48:56 GMT</pubDate>
+      <sparkle:version>39</sparkle:version>
+      <sparkle:shortVersionString>0.7.16</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
+      <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
+      <description><![CDATA[
+<h3>Pick which projects notify your iPhone</h3>
+<p>Your phone now only gets notifications for the projects you choose. Right-click a project in the sidebar and choose <strong>Send Notifications to iPhone</strong>. A bell on its row shows it&#x27;s on. The setting is off for every project to start, so turn it on for the ones you care about after updating. Worktrees follow their project.</p>
+<h3>A Lock Screen dashboard</h3>
+<p>With the latest Workbench beta on your iPhone, tap the Lock Screen button at the top of Projects to keep every Claude session on your Lock Screen at once: what needs you, what&#x27;s working, and what&#x27;s done. This Mac keeps it up to date. Workbench no longer starts a Lock Screen activity for a session on its own.</p>
+<h3>Do more on another Mac from this one</h3>
+<p>When a project on another Mac is on screen:</p>
+<ul><li>Start an agent and pick the branch it starts from. It branches from main like the New Agent sheet would, copies the suggested .env files, and no longer hangs on Starting if the connection drops. New Agent on a Branch is in the right-click menu too.</li><li>Close Claude tabs, and clean up or discard agents, with the same warnings you&#x27;d see on that Mac.</li><li>Run and stop tab shortcuts like the dev server, and see which ports they&#x27;re on.</li><li>⌥⌘N opens Brain Dump for that Mac, and ⌘T, ⇧⌘T and ⇧⌘N act on that project instead of the last one on this Mac.</li><li>The Changes panel looks like it does for local projects: grouped by folder, with the branch header showing ahead/behind and push state. Refresh and the compare-against picker work too.</li><li>Work there uses the same orange working animation as work here. The blue Mac name is the only sign a project is remote.</li></ul>
+<p>Update Workbench on both Macs for all of this.</p>
+<h3>Brain Dump</h3>
+<p>Send Tasks is now called Brain Dump, and its button sits in the top bar next to the sidebar toggle. Agents with long prompts now start reliably.</p>
+<h3>Easier setup</h3>
+<p>The welcome notices when Claude Code is installed but not signed in and offers a sign-in window right there (also in Settings). It also warns you before you continue without a tool Workbench needs.</p>
+<h3>Anonymous usage data</h3>
+<p>Workbench now shares anonymous counts of what you use, like how many agents you start, to help improve it. Never your code, prompts, project names, or location. Turn it off any time with <strong>Share Anonymous Usage Data</strong> in Settings.</p>
+      ]]></description>
+      <enclosure url="https://github.com/mattbirchler/bench-releases/releases/download/v0.7.16-39/Workbench-0.7.16-39.zip" type="application/octet-stream" sparkle:edSignature="x+MRmLcdKdEnwSYiB7FGi1C99K2B1cjtqDps2GFsDE+4Xe1f+DtzaCDB92wSHqv5HJ3XJiGbYrMVCAptD1C7Ag==" length="12614961"/>
+    </item>
+    <item>
+      <title>Workbench 0.7.15</title>
+      <pubDate>Mon, 02 Nov 2026 02:04:00 GMT</pubDate>
+      <sparkle:version>38</sparkle:version>
+      <sparkle:shortVersionString>0.7.15</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
+      <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
+      <description><![CDATA[
+<h3>Projects on your other Macs show what&#x27;s going on</h3>
+<p>When you work on a project that lives on another Mac, the sidebar now shows as much as it does for projects on this Mac:</p>
+<ul><li><strong>Hover card:</strong> rest on a remote project to see what you asked, what Claude last said, its task list, its latest actions, and its sub-agents, plus the branch, pull request, and last deploy.</li><li><strong>More in each row:</strong> in the Standard layout, busy rows list the last few things Claude did, waiting rows show its question with Allow and Deny, and finished rows show the recap.</li><li><strong>Task list and agents in the chat:</strong> with the right panel hidden, the chat pins Claude&#x27;s task list or its sub-agents above the message box.</li></ul>
+<p>Update Workbench on both Macs to get all of it. A Mac on an older version still works, it just shows less.</p>
+<h3>Clearer progress everywhere</h3>
+<ul><li>Steps read in plain words. &quot;Ran git log --oneline -30&quot; now reads &quot;Showed recent commits&quot;. Permission prompts still show the exact command, so you always see what you&#x27;re allowing.</li><li>A busy project&#x27;s hover card starts with the work under way: your prompt, Claude&#x27;s latest note, its steps, and its recent actions.</li><li>Clicking anywhere on a sidebar row opens the project, even while its hover card is showing.</li></ul>
+<h3>A cleaner Send Tasks screen</h3>
+<p>Each task is now a simple card with the project&#x27;s icon, its branch, and the full prompt, which you can edit in place. Tasks Claude couldn&#x27;t match to a project are marked so you can pick one.</p>
+<h3>One strip of meters</h3>
+<p>CPU, memory, and your plan limits now sit together as one row of small rings at the bottom of the sidebar. They stay grey until something needs your attention.</p>
+<h3>Removed</h3>
+<p>The morning summary (&quot;Since Yesterday&quot; and the Overview summary card) is gone. It wasn&#x27;t pulling its weight.</p>
+      ]]></description>
+      <enclosure url="https://github.com/mattbirchler/bench-releases/releases/download/v0.7.15-38/Workbench-0.7.15-38.zip" type="application/octet-stream" sparkle:edSignature="AIsimo9+gtVpWgftN3/vdfxVhUpA1VPDULVqVBeGbBf9+vGzcqcw+4eDm7jSg6jXt59Es1mNNJNRYYMiGX7DAA==" length="12088507"/>
+    </item>
+    <item>
+      <title>Workbench 0.7.14</title>
+      <pubDate>Sun, 01 Nov 2026 18:41:50 GMT</pubDate>
+      <sparkle:version>37</sparkle:version>
+      <sparkle:shortVersionString>0.7.14</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
+      <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
+      <description><![CDATA[
+<h3>A roomier project list</h3>
+<p>The sidebar has a new <strong>Standard</strong> layout with room to see what each agent is up to without opening it:</p>
+<ul><li><strong>While Claude works:</strong> the step it&#x27;s on, the tool it&#x27;s running, and the last few things it did, with how long ago each one ran.</li><li><strong>When it needs you:</strong> its question and the command it wants to run, with <strong>Allow</strong> and <strong>Deny</strong> buttons right in the row.</li><li><strong>When it&#x27;s done:</strong> a fuller recap and how many lines changed, so you can decide whether to look now.</li></ul>
+<p>The layout you&#x27;ve been using is now called <strong>Compact</strong>. It&#x27;s still there for long project lists, and if you already have projects you&#x27;ll stay on it until you switch. Switch any time in <strong>View › Project List</strong> (Option-Command-1 for Standard, Option-Command-2 for Compact).</p>
+<h3>Phone notifications with no setup</h3>
+<p>Your iPhone used to need an Apple developer key on your Mac before it could get notifications. Not anymore: turn on notifications in Workbench on your phone and they just work.</p>
+<p>Notifications are also private now. Your Mac encrypts what each one says, and only your paired phone can read it. This needs the new TestFlight build of Workbench for iPhone. Older phone builds still get notifications, just without the encryption.</p>
+      ]]></description>
+      <enclosure url="https://github.com/mattbirchler/bench-releases/releases/download/v0.7.14-37/Workbench-0.7.14-37.zip" type="application/octet-stream" sparkle:edSignature="F0Mc+rbs18divvVnJBNFXeDXjxebFbNr/dseu6M3W4ALkvqDlcdqt/BbpTMS2QkyJv1Y26sICvxJB7uhIl9+Bw==" length="12032879"/>
+    </item>
+    <item>
+      <title>Workbench 0.7.12</title>
+      <pubDate>Sun, 01 Nov 2026 16:14:37 GMT</pubDate>
+      <sparkle:version>35</sparkle:version>
+      <sparkle:shortVersionString>0.7.12</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
+      <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
+      <description><![CDATA[
+<h3>Send Tasks moved to the Overview</h3>
+<p><strong>Send Tasks has a home that matches what it does.</strong> The button that splits one message into tasks for several projects used to sit in the project tab bar, next to controls that only act on the current project, which made it look like a per-project action. It now lives at the top of the Overview, the page that spans every project. The Overview&#x27;s empty state offers it too, so when nothing is running you can fan work out from right there.</p>
+<p>The File menu command and ⌥⌘N still open it from anywhere.</p>
+      ]]></description>
+      <enclosure url="https://github.com/mattbirchler/bench-releases/releases/download/v0.7.12-35/Workbench-0.7.12-35.zip" type="application/octet-stream" sparkle:edSignature="UmduTRKLacUyf29MsEO8qm9Z0uYhbWF/2eHNcERLqj376VLVAuVA0xeKnp9Pazx3aguaKfnO7Z8X/LHWNeE4AA==" length="11977618"/>
+    </item>
+    <item>
+      <title>Workbench 0.7.11</title>
+      <pubDate>Sun, 01 Nov 2026 13:20:44 GMT</pubDate>
+      <sparkle:version>34</sparkle:version>
+      <sparkle:shortVersionString>0.7.11</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
+      <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
+      <description><![CDATA[
+<h3>Sections you can tell apart</h3>
+<p><strong>Your current work stands out.</strong> Pinned and Active now sit together on a slightly raised panel at the top of the sidebar, so what you&#x27;re working on reads as one block. The Add Project button moved onto the first section&#x27;s title.</p>
+<p><strong>Recent is compact.</strong> The last day&#x27;s projects use smaller rows without a status line, under a &quot;Last day&quot; label, so more fit and they read as a step down from what&#x27;s active. Using one moves it back up to Active.</p>
+<p><strong>Inactive is quieter.</strong> Folded-away projects are compact and dimmed until you pick one.</p>
+<p>The iPhone app gets the same treatment in its next TestFlight build: compact, lighter rows for Recent and Inactive, and pinned projects keep their card when you reorder them.</p>
+      ]]></description>
+      <enclosure url="https://github.com/mattbirchler/bench-releases/releases/download/v0.7.11-34/Workbench-0.7.11-34.zip" type="application/octet-stream" sparkle:edSignature="TkIagqzZqvKFjRMeDMq8kVhAaVlc6AN6DQ3ldnDBC+9BOcVVLfGHU57E+JhdrL28+UTAFunDXu0UsCXtDa7NDQ==" length="11975759"/>
+    </item>
+    <item>
+      <title>Workbench 0.7.10</title>
+      <pubDate>Sun, 01 Nov 2026 12:26:19 GMT</pubDate>
+      <sparkle:version>33</sparkle:version>
+      <sparkle:shortVersionString>0.7.10</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
+      <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
+      <description><![CDATA[
+<h3>A calmer activity meter</h3>
+<p><strong>The CPU and memory meter is easier to follow.</strong> The bars at the foot of the sidebar now update every 10 seconds instead of every few, and every 30 seconds while Workbench is behind other windows.</p>
+<p><strong>The project list in its card holds still.</strong> Resting the pointer on the meter still shows which projects are using your Mac, but the list refreshes every 10 seconds and is sorted by memory, which stays steady, instead of CPU, which swings from moment to moment. CPU numbers appear about 2 seconds after the card opens.</p>
+      ]]></description>
+      <enclosure url="https://github.com/mattbirchler/bench-releases/releases/download/v0.7.10-33/Workbench-0.7.10-33.zip" type="application/octet-stream" sparkle:edSignature="Tu7wKUK6wYCM6zXLm5WLzMFEs++6GmACTec6uDFg8DnePqwRkf8IdjXNs2HfpUAr+Hd5FLthR8615nsHzkvaAw==" length="11973972"/>
+    </item>
+    <item>
+      <title>Workbench 0.7.9</title>
+      <pubDate>Sun, 01 Nov 2026 12:08:37 GMT</pubDate>
+      <sparkle:version>32</sparkle:version>
+      <sparkle:shortVersionString>0.7.9</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
+      <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
+      <description><![CDATA[
+<h3>Sections, ⌘K, Send Tasks, and a Mac meter</h3>
+<p><strong>Your projects now sit in four sections.</strong> Pinned holds what you&#x27;ve pinned. Active holds projects where Claude is working or waiting on you, or that you used in the last 6 hours. Recent holds the last day&#x27;s work, and everything older folds away under Inactive. Projects in Active keep their place while you work instead of jumping to the top with every message. The &quot;Keep projects active for&quot; setting is gone, since these windows replace it.</p>
+<p><strong>Restarting no longer makes every project look busy.</strong> Workbench used to count a relaunch, when every Claude tab picks up its session again, as you using each project. It now goes by the last real message in each conversation, and the first launch of this version tidies up times that earlier restarts got wrong.</p>
+<p><strong>⌘K jumps anywhere.</strong> Press ⌘K, even from inside a terminal, type a few letters of a project, worktree branch, or menu command, and press Return. Picking a project with no tabs starts Claude there.</p>
+<p><strong>Send one message, start several agents.</strong> Send Tasks to Projects (⌥⌘N, or the orange button next to +) takes one message describing work across your projects. Claude splits it into one task per project, and you check each card (project, branch, and the exact prompt) before starting them all with ⌘↩. Each agent gets its own worktree.</p>
+<p><strong>See how hard your Mac is working.</strong> Two small bars at the foot of the sidebar show CPU and memory. They stay grey while things are fine and warm up under load. Rest the pointer on them to see which projects are using the most. It&#x27;s built to cost almost nothing, and it stops while Workbench is hidden. You can turn it off in Settings › General.</p>
+<p>The iPhone app shows the same four sections once its next update arrives. Until then it keeps its current two groups.</p>
+      ]]></description>
+      <enclosure url="https://github.com/mattbirchler/bench-releases/releases/download/v0.7.9-32/Workbench-0.7.9-32.zip" type="application/octet-stream" sparkle:edSignature="iBsSyme5yJkWOY5oNxrp1fPKjynLcy0cqXJ+dMpz2ueUjO8LponEkx5+ze2ebTM7UCpQrGO3hm6QgPqN/KazBQ==" length="11973694"/>
+    </item>
+    <item>
+      <title>Workbench 0.7.8</title>
+      <pubDate>Sat, 31 Oct 2026 18:27:53 GMT</pubDate>
+      <sparkle:version>31</sparkle:version>
+      <sparkle:shortVersionString>0.7.8</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
+      <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
+      <description><![CDATA[
+<h3>A faster phone</h3>
+<p>This update is mostly for the iPhone app, which gets a new build alongside it. Install both to get the full effect.</p>
+<p><strong>Conversations open and update without stalling on the phone.</strong> Workbench now sends the phone small copies of the screenshots in a conversation instead of the full pictures, and the whole picture only when you open one. A long session that used to arrive as several megabytes arrives as a few hundred kilobytes. It also sends the last stretch of a conversation first, with earlier messages a tap away, instead of everything at once.</p>
+<p><strong>The Mac&#x27;s chat view is a little lighter too.</strong> Replies are parsed once rather than every time the conversation redraws, and rows that haven&#x27;t changed are left alone.</p>
+<p>Phones on the previous build keep working exactly as before. The new behavior switches on once the phone app updates.</p>
+      ]]></description>
+      <enclosure url="https://github.com/mattbirchler/bench-releases/releases/download/v0.7.8-31/Workbench-0.7.8-31.zip" type="application/octet-stream" sparkle:edSignature="k1Wef0LDYjhBGTcaMs7ZZohdAOeYad3xxy4q5PwRD6ESMNqO7AYofbnA863aBUvCVsSYVLFOpElRRKhNN8nYBQ==" length="11788358"/>
+    </item>
+    <item>
+      <title>Workbench 0.7.7</title>
+      <pubDate>Sat, 31 Oct 2026 16:15:59 GMT</pubDate>
+      <sparkle:version>30</sparkle:version>
+      <sparkle:shortVersionString>0.7.7</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
+      <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
+      <description><![CDATA[
+<p>Workbench 0.7.7 makes restarting, like for an update, much safer when you have several Claude sessions going. This update is the first that can do this, so it starts working from your next restart after installing it.</p>
+<ul><li><strong>Every conversation comes back on its own.</strong> After a restart, all your Claude tabs pick their conversations back up right away, not just the one on screen. They show up in Overview, on your phone, and in notifications without you clicking through each one.</li><li><strong>Pick up interrupted work in one click.</strong> If Claude was in the middle of something when Workbench quit, that tab now says the restart stopped it, with a Continue button. Continue asks Claude to carry on where it left off and sends any messages you had queued. The sidebar marks those projects so you can find them.</li><li><strong>Drafts are kept.</strong> Text you typed but hadn&#x27;t sent is still there after a restart, and so is an agent&#x27;s first task if Claude hadn&#x27;t started on it yet.</li><li><strong>Restart When Claude Is Done.</strong> When an update is ready and Claude is busy, Restart to Update now names the busy tabs and offers to wait. Workbench restarts by itself as soon as Claude finishes everywhere.</li><li><strong>A clearer progress bar.</strong> A busy project&#x27;s checklist now shows as a bar inside its sidebar row, with a segment for each step and a count like 3/7, instead of a thin line along the edge.</li><li><strong>Open buttons on published pages.</strong> When Claude publishes an artifact, its card in the conversation has an Open button again, on your Mac and your phone, and the page shows up in the Artifacts list.</li></ul>
+      ]]></description>
+      <enclosure url="https://github.com/mattbirchler/bench-releases/releases/download/v0.7.7-30/Workbench-0.7.7-30.zip" type="application/octet-stream" sparkle:edSignature="TOdquIfVnt25tErQm1bcfFNeiNzjVryDq581n9qSAhyRF8hVz/y9ZWPQWehEIkpRxe/4aC8rWKbQ/bf5T6+ICw==" length="11741766"/>
+    </item>
+    <item>
+      <title>Workbench 0.7.6</title>
+      <pubDate>Sat, 31 Oct 2026 15:13:37 GMT</pubDate>
+      <sparkle:version>29</sparkle:version>
+      <sparkle:shortVersionString>0.7.6</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
+      <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
+      <description><![CDATA[
+<p>Workbench 0.7.6 brings the cleaner project list from 0.7.5 to your iPhone.</p>
+<ul><li><strong>Your phone&#x27;s project cards match the Mac sidebar.</strong> Each card shows one line under the project name: what Claude is doing, or else the one thing that matters most, like failing checks or a failed deploy (in red), a deploy in progress, an open pull request, or a branch that isn&#x27;t your default. Projects with nothing going on show just their name.</li><li><strong>Deploys on your phone.</strong> Your Mac now sends deploy status to the phone, so you can see a deploy in progress or a failed one right on the project list.</li></ul>
+<p>Get the matching iPhone app from the latest TestFlight build.</p>
+      ]]></description>
+      <enclosure url="https://github.com/mattbirchler/bench-releases/releases/download/v0.7.6-29/Workbench-0.7.6-29.zip" type="application/octet-stream" sparkle:edSignature="+wwBENvILlAIyphlXvO/X91n8RShKCNXByzisd544SJlev12Z2AcNA53fR1rBd72fDLke9TU585W/aOogV6sAw==" length="11707777"/>
+    </item>
+    <item>
+      <title>Workbench 0.7.5</title>
+      <pubDate>Sat, 31 Oct 2026 15:04:53 GMT</pubDate>
+      <sparkle:version>28</sparkle:version>
+      <sparkle:shortVersionString>0.7.5</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
+      <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
+      <description><![CDATA[
+<p>Workbench 0.7.5 cleans up the project sidebar so it&#x27;s easier to read at a glance.</p>
+<ul><li><strong>One status line per project.</strong> Instead of the branch, pull request, checks, and deploy all squeezed onto one line, each project now shows the one thing that matters most: what Claude is doing, a problem like failing checks or a failed deploy (in red), a deploy in progress, an open pull request, or a branch that isn&#x27;t your default. Projects with nothing going on take up a single line.</li><li><strong>Details on hover.</strong> Rest the pointer on a project to see everything else: its branch, pull request and checks, the last deploy, local servers, and its folder. Click the pull request, deploy, or a server to open it.</li><li><strong>A quieter right edge.</strong> Just the activity dot now. The pin and server icons moved into the details card.</li></ul>
+      ]]></description>
+      <enclosure url="https://github.com/mattbirchler/bench-releases/releases/download/v0.7.5-28/Workbench-0.7.5-28.zip" type="application/octet-stream" sparkle:edSignature="XvRqZZbtLlhkiRekqgHx8pecNwvd96DDymAM0nsnRuo4qIV9gVogP7zL3235YFZGOzbO8gcHGeEvTkopgcnRDg==" length="11688532"/>
+    </item>
+    <item>
+      <title>Workbench 0.7.4</title>
+      <pubDate>Sat, 31 Oct 2026 14:09:22 GMT</pubDate>
+      <sparkle:version>27</sparkle:version>
+      <sparkle:shortVersionString>0.7.4</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
+      <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
+      <description><![CDATA[
+<p>Workbench 0.7.4 brings more of your Mac to your iPhone. With the latest TestFlight build of Workbench for iPhone, your phone can now:</p>
+<ul><li><strong>Show what Claude Code has cost you.</strong> The phone&#x27;s new Settings screen has a Usage and Costs page with the last 30 days at API prices, broken down by model, the same as the Usage page on your Mac.</li><li><strong>Show the morning summary.</strong> Your Mac&#x27;s daily summary of what Claude got done appears at the top of the phone&#x27;s project list.</li><li><strong>Pick which notifications you get.</strong> Turn off any kind on the phone (Claude needs you, Claude finished, pull request checks, deploys, or the morning summary) and your Mac stops sending it to that phone.</li><li><strong>See which Mac is which.</strong> The phone shows each paired Mac&#x27;s status and the version of Workbench it&#x27;s running.</li></ul>
+      ]]></description>
+      <enclosure url="https://github.com/mattbirchler/bench-releases/releases/download/v0.7.4-27/Workbench-0.7.4-27.zip" type="application/octet-stream" sparkle:edSignature="FPUJ5BdNAqXb1JYYKaoODwB2r8NmplZKIOv0hspoKggQNI9iCADi2bHhey1aow03vyC0udXtsxJo7ZPufbTKDw==" length="11678046"/>
+    </item>
+    <item>
+      <title>Workbench 0.7.3</title>
+      <pubDate>Sat, 31 Oct 2026 13:13:51 GMT</pubDate>
+      <sparkle:version>26</sparkle:version>
+      <sparkle:shortVersionString>0.7.3</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
+      <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
+      <description><![CDATA[
+<h3>Settings, rebuilt</h3>
+<p>Settings now opens right in the Workbench window instead of a separate one. Press Command-comma and the sidebar turns into Settings&#x27; sections, with Back at the top to return to your projects. Each section follows your terminal theme like the rest of the app, and every setting explains what it does right underneath.</p>
+<p>The sections are General, Claude (chat or terminal tabs, recaps, and the morning summary, with a button to write one now), Usage, Shortcuts, iPhone, Setup, and Updates. Usage and Costs lives in Settings now; Shift-Command-U and the plan rings in the sidebar still take you straight there.</p>
+      ]]></description>
+      <enclosure url="https://github.com/mattbirchler/bench-releases/releases/download/v0.7.3-26/Workbench-0.7.3-26.zip" type="application/octet-stream" sparkle:edSignature="dZPHyT5NMVGNs0rocfR5W93xHgKYtJnG5giRXdMOOMJ/qRI9YAjcAY1PG8m2PWCYLpSAywAbL7+maIC9zsFHAQ==" length="11633366"/>
+    </item>
+    <item>
+      <title>Workbench 0.7.2</title>
+      <pubDate>Sat, 31 Oct 2026 12:36:26 GMT</pubDate>
+      <sparkle:version>25</sparkle:version>
+      <sparkle:shortVersionString>0.7.2</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
+      <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
+      <description><![CDATA[
+<h3>Recaps of what Claude did</h3>
+<p>When Claude finishes a turn where it did some work, Workbench now writes a sentence about what got done, like &quot;Fixed the login crash and opened PR #12. The build passes.&quot; Recaps show in the Overview, under a project in the sidebar that finished while you were looking elsewhere, and on your iPhone in notifications and Live Activities. A small, fast Claude model writes them on your own Claude plan, using very little of it, and they never show up in your past sessions. Turn them off in Settings &gt; General.</p>
+<h3>A morning summary</h3>
+<p>Each morning at 8, Workbench sums up what Claude got done across all your projects since the day before: one line per project, plus anything left open. It sits at the top of the Overview next to pull requests whose checks failed or that are ready to merge, and arrives as a notification on your Mac and iPhone. Pick the time or turn it off in Settings &gt; General, or choose View &gt; Write Morning Summary Now any time.</p>
+<h3>Usage and costs</h3>
+<p>A new Usage and Costs page (Shift-Command-U, or click the plan rings at the bottom of the sidebar) shows how many tokens your Claude Code sessions on this Mac have used and what they would cost at Claude API prices: a daily chart by model, what prompt caching saved you, and breakdowns by model and project, with your plan&#x27;s limits up top. It follows your terminal theme&#x27;s colors. Claude Code clears out its old logs after about a month, so Workbench keeps its own daily totals and your history grows from here.</p>
+      ]]></description>
+      <enclosure url="https://github.com/mattbirchler/bench-releases/releases/download/v0.7.2-25/Workbench-0.7.2-25.zip" type="application/octet-stream" sparkle:edSignature="jbcu87tcgLuIq/rACogRQ+LVF+PJ14qb8GWxs9ICO+2YwjbZHS/vPREy94hw459vnbC8gSlONwBmNgKovtfNCA==" length="11622228"/>
+    </item>
+    <item>
+      <title>Workbench 0.7.1</title>
+      <pubDate>Sat, 31 Oct 2026 12:31:53 GMT</pubDate>
+      <sparkle:version>24</sparkle:version>
+      <sparkle:shortVersionString>0.7.1</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
+      <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
+      <description><![CDATA[
+<h3>See your deploys land</h3>
+<p>After a pull request merges, Workbench follows the deploy of that change and shows how it went: Deploying, Deployed, or Deploy failed, right beside the branch in the sidebar and in the Overview. Click it to open your host&#x27;s page for that deploy. When it finishes, you get a notification on your Mac, and on your iPhone if it&#x27;s paired.</p>
+<p>It works with hosts that report deploys to GitHub, like Railway, Vercel, Netlify, and Render. There&#x27;s nothing to set up or sign in to beyond the GitHub CLI you already use for pull requests.</p>
+<h3>Fixes</h3>
+<p>Setup no longer says Tailscale isn&#x27;t running when Workbench was opened from the Finder or the Dock.</p>
+      ]]></description>
+      <enclosure url="https://github.com/mattbirchler/bench-releases/releases/download/v0.7.1-24/Workbench-0.7.1-24.zip" type="application/octet-stream" sparkle:edSignature="jd1Xfi7bQ9ncJ0qVpBayu9yXF+T/qbl3TJSz0T4cD6LIqOhaw2L9evrJOdhIzn/juPYIr1RADTlEX8LRgp14AQ==" length="11463619"/>
+    </item>
+    <item>
+      <title>Workbench 0.7</title>
+      <pubDate>Sat, 31 Oct 2026 02:45:58 GMT</pubDate>
+      <sparkle:version>23</sparkle:version>
+      <sparkle:shortVersionString>0.7</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
+      <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
+      <description><![CDATA[
+<h3>Bench is now Workbench</h3>
+<p>Same app, new name. You&#x27;ll see Workbench in the menu bar, the Dock, and throughout the app. Your projects, settings, iPhone pairing, and notifications all carry over, and nothing about how it works has changed. The app file in your Applications folder keeps its old name after this update; you can rename it to Workbench if you like. The <code>bench</code> command in your tabs still works the same way.</p>
+<h3>Name your projects</h3>
+<p>Projects no longer have to go by their folder&#x27;s name. Right-click one in the sidebar and choose Rename… to give it any name you like. Press Return to save or Escape to cancel, and choose Use Folder Name to go back. Agents working on a branch of the project pick up the new name, and so do your iPhone, iPad, and other Macs.</p>
+      ]]></description>
+      <enclosure url="https://github.com/mattbirchler/bench-releases/releases/download/v0.7-23/Workbench-0.7-23.zip" type="application/octet-stream" sparkle:edSignature="pWhBYoY9nYr7qIuVYdDLedEk0W5+dFfOlJ4clhDT0aKXQq0t02UsOox59JTsFWCpvragP55Jkk7tD1DS/ob+Aw==" length="11436322"/>
+    </item>
+    <item>
+      <title>Bench 0.6.4</title>
+      <pubDate>Sat, 31 Oct 2026 01:06:51 GMT</pubDate>
+      <sparkle:version>22</sparkle:version>
+      <sparkle:shortVersionString>0.6.4</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
+      <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
+      <description><![CDATA[
+<h3>Much lighter on your Mac</h3>
+<p>Bench now uses a small fraction of the CPU it did before. The sidebar&#x27;s animations (a working project&#x27;s sparkles, the clouds for work on another Mac, the glow when Claude is waiting, and Claude&#x27;s spinning symbol) used to be redrawn by Bench many times a second, and with a few projects busy that added up to about a quarter of a CPU core all day. macOS now plays them on its own. They look exactly the same, and Bench drops to around 1 to 5 percent while it&#x27;s showing status. Better for your battery, and quieter fans.</p>
+      ]]></description>
+      <enclosure url="https://github.com/mattbirchler/bench-releases/releases/download/v0.6.4-22/Bench-0.6.4-22.zip" type="application/octet-stream" sparkle:edSignature="82aOPITrRJDgxLc3uqg8i573Cxc56RA+VFiYK7g/rAYVbl2G5A1Hwfyj8xxiK3OuW+542bmi5iNWE4fJnrSVBw==" length="11414481"/>
+    </item>
+    <item>
+      <title>Bench 0.6.3</title>
+      <pubDate>Fri, 30 Oct 2026 22:42:10 GMT</pubDate>
+      <sparkle:version>21</sparkle:version>
+      <sparkle:shortVersionString>0.6.3</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
+      <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
+      <description><![CDATA[
+<h3>Slash commands in the chat</h3>
+<p>Type / in the chat view and Bench suggests matching commands, including your own and your plugins&#x27;. Use the arrow keys to pick one, Tab to fill it in, and Return to run it. Commands that open a picker, like /model, go to the terminal, where the picker shows.</p>
+<p>This also brings slash command suggestions to the iPhone and iPad app.</p>
+<h3>Drag images into the chat</h3>
+<p>Drop image files anywhere on the chat view to attach them to your next message, the same as pasting. Other kinds of files are turned away.</p>
+<h3>Tell your other Macs apart</h3>
+<p>When the sidebar shows projects on another Mac, drifting clouds and that Mac&#x27;s name sit behind them, so you always know you&#x27;re not working on this one.</p>
+<h3>Also</h3>
+<p>The Claude mark in an empty chat is sharp again.</p>
+      ]]></description>
+      <enclosure url="https://github.com/mattbirchler/bench-releases/releases/download/v0.6.3-21/Bench-0.6.3-21.zip" type="application/octet-stream" sparkle:edSignature="H+v9s148zuQHWhBj+G5wHRdr5++ngcAIYFCHUx/pk5bec5HIuSod5bhlpEYDqLjwn8t7XlYHkYl7tN8/Dwf+Aw==" length="11409283"/>
+    </item>
+    <item>
+      <title>Bench 0.6.2</title>
+      <pubDate>Fri, 30 Oct 2026 14:01:56 GMT</pubDate>
+      <sparkle:version>20</sparkle:version>
+      <sparkle:shortVersionString>0.6.2</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
+      <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
+      <description><![CDATA[
+<h3>Chat really is the default when you pick it</h3>
+<p>If you set Settings &gt; General &gt; Show new Claude tabs as to Chat, every new Claude tab now opens as a chat. Before, it only applied to tabs from the + button and ⌘T: a new project&#x27;s first tab, and the tab for a new agent on a branch, still opened as a terminal.</p>
+      ]]></description>
+      <enclosure url="https://github.com/mattbirchler/bench-releases/releases/download/v0.6.2-20/Bench-0.6.2-20.zip" type="application/octet-stream" sparkle:edSignature="fFtmupSLam6Ak8pNFA+08auYC0PPmcazS2jhBtrZ7uVrOMaHhvIQBZKZpJEUVq5Nc6lQOGnUEmrcS/ve0WXvCA==" length="11351638"/>
+    </item>
+    <item>
+      <title>Bench 0.6.1</title>
+      <pubDate>Fri, 30 Oct 2026 13:45:27 GMT</pubDate>
+      <sparkle:version>19</sparkle:version>
+      <sparkle:shortVersionString>0.6.1</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
+      <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
+      <description><![CDATA[
+<h3>Tables look right in the chat view</h3>
+<p>Tables in Claude&#x27;s replies now use the full width of the chat, like they do in the terminal. Short columns stay compact, long text wraps neatly inside its column, and rows no longer overlap each other. A table only scrolls sideways when it has more columns than can fit.</p>
+      ]]></description>
+      <enclosure url="https://github.com/mattbirchler/bench-releases/releases/download/v0.6.1-19/Bench-0.6.1-19.zip" type="application/octet-stream" sparkle:edSignature="Abtjv5GCh2fxvbP8BMo3o0Q4i48W206WunpDMoSja0RVl1Y4dP1MdIifhKpOhL6zWu+JMe1X+Qwltdb6lBLZBg==" length="11351563"/>
+    </item>
+    <item>
+      <title>Bench 0.6.0</title>
+      <pubDate>Fri, 30 Oct 2026 13:29:07 GMT</pubDate>
+      <sparkle:version>18</sparkle:version>
+      <sparkle:shortVersionString>0.6.0</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
+      <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
+      <description><![CDATA[
+<h3>Every page Claude makes, one click away</h3>
+<p>When Claude publishes an artifact for you (a dashboard, a mockup, a write-up), Bench now keeps track of it.</p>
+<ul><li><strong>An Artifacts tab</strong> in the right panel, next to Changes and Files, lists every page Claude has published for the project, across all its conversations. Newest first, with which version it&#x27;s on and which conversation made it. Click one to open it in your browser, or hover for Copy Link.</li><li><strong>A card in the chat</strong> whenever Claude publishes or updates a page, with an Open button. No more digging links out of replies.</li><li><strong>On your iPhone</strong>, the ••• menu in a conversation has Artifacts too. Tap a page to open it in the Claude app or Safari.</li></ul>
+<h3>Folders without git look right</h3>
+<p>A project that isn&#x27;t a git repository used to show a lonely &quot;Not a Git Repository&quot; message floating in the right panel. Now it gets a small note at the top with the project&#x27;s files right below.</p>
+      ]]></description>
+      <enclosure url="https://github.com/mattbirchler/bench-releases/releases/download/v0.6.0-18/Bench-0.6.0-18.zip" type="application/octet-stream" sparkle:edSignature="DMn4I6KjD3yv+OPhqHPkwhtuwnuGX0NZbAGgu0K0qQnlBwiLFHfIzRUk/fo8rz6euoRajGfx09knHUkQo7oADg==" length="11343562"/>
+    </item>
+    <item>
+      <title>Bench 0.5.9</title>
+      <pubDate>Fri, 30 Oct 2026 12:37:39 GMT</pubDate>
+      <sparkle:version>17</sparkle:version>
+      <sparkle:shortVersionString>0.5.9</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
+      <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
+      <description><![CDATA[
+<h3>Switch models right from the chat view</h3>
+<p>Picking a model in the chat view now just works. Before, Claude asked &quot;Switch model?&quot; in its terminal, out of sight, and the chat view got stuck until you went to the terminal to answer.</p>
+<ul><li>On a long conversation, the chat view asks first and explains the cost: the next reply re-reads the whole conversation on the new model, so it&#x27;s slower and uses more of your limits. Short conversations switch right away.</li><li>Works from your iPhone too.</li><li>Typing <code>/model</code> in the terminal still gets Claude&#x27;s usual question.</li><li>Claude tabs that were already open pick this up after they restart.</li></ul>
+      ]]></description>
+      <enclosure url="https://github.com/mattbirchler/bench-releases/releases/download/v0.5.9-17/Bench-0.5.9-17.zip" type="application/octet-stream" sparkle:edSignature="DdnmeuLtrGQl+xDeoxeQT1kSxW1iV2KqZ/M9708Nt9rUsbtl07c5I5fGTPZoMtJzhRiezd/xX2jr/ry7m5DDBw==" length="11255415"/>
+    </item>
+    <item>
+      <title>Bench 0.5.8</title>
+      <pubDate>Fri, 30 Oct 2026 12:15:56 GMT</pubDate>
+      <sparkle:version>16</sparkle:version>
+      <sparkle:shortVersionString>0.5.8</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
+      <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
+      <description><![CDATA[
+<h3>Your Claude plan&#x27;s limits, right in the sidebar</h3>
+<p>Three small rings at the bottom of the sidebar show how much of your 5-hour, weekly, and per-model (like Fable) limits you&#x27;ve used. No status line setup needed.</p>
+<ul><li><strong>Pace tick:</strong> a small tick on each ring marks how far into that window you are. If the ring has passed its tick, you&#x27;re using that limit faster than it refills.</li><li><strong>Hover</strong> to see exact percentages and how long until each limit resets. <strong>Click</strong> for the details.</li><li>Your own status line keeps working exactly as before.</li><li>Turn the rings or the ticks off in Settings &gt; General.</li><li>Paired iPhones show the same rings above the project list.</li></ul>
+<h3>Also</h3>
+<ul><li>File changes in the chat view show as solid blocks again, instead of rows of rounded lines.</li></ul>
+      ]]></description>
+      <enclosure url="https://github.com/mattbirchler/bench-releases/releases/download/v0.5.8-16/Bench-0.5.8-16.zip" type="application/octet-stream" sparkle:edSignature="POkmpQDflaOCJg3QSheEX3uTOZ1L5VRvAokeZbccNK1D8T4I3ZBxHXJTgLh0BiAuFUe4bqx9P6c6edfE1jUKBQ==" length="11249269"/>
+    </item>
+    <item>
+      <title>Bench 0.5.7</title>
+      <pubDate>Thu, 29 Oct 2026 23:18:53 GMT</pubDate>
+      <sparkle:version>15</sparkle:version>
+      <sparkle:shortVersionString>0.5.7</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
+      <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
+      <description><![CDATA[
+<p>Bench 0.5.7 adds a start page for your projects and a new welcome for first launch.</p>
+<ul><li><strong>A start page for every project.</strong> A project with no tabs open now shows its icon, a big Start Claude button, Shell and Agent on a Branch, your dev server and shortcuts, and your last few conversations to pick back up in a click. Projects on your other Macs get the same page.</li><li><strong>The + button opens a New Tab page.</strong> Instead of a small menu, + shows the start page in place of your current tab. Pick anything, or click another tab, to close it. ⌘T still opens Claude right away.</li><li><strong>A new welcome.</strong> First launch now walks you through checking your Mac&#x27;s tools, choosing whether new Claude tabs open as a terminal or a chat, matching your terminal theme, adding projects (suggested from folders you&#x27;ve already used Claude Code in), and pairing your iPhone. See it any time with Help &gt; Welcome to Bench.</li><li><strong>Other Macs&#x27; projects fill the window.</strong> The view for a project on another Mac no longer shrinks to a strip in the middle.</li></ul>
+      ]]></description>
+      <enclosure url="https://github.com/mattbirchler/bench-releases/releases/download/v0.5.7-15/Bench-0.5.7-15.zip" type="application/octet-stream" sparkle:edSignature="QatOtgZQbsSssOcdobOCMSTBXSiKKs3Y+pSds5ZAb43ZIdMAE+E9DCX8WlYQu2ejL0TMEyRFMdnWW/DI9BxuAg==" length="11193996"/>
+    </item>
+    <item>
+      <title>Bench 0.5.6</title>
+      <pubDate>Thu, 29 Oct 2026 21:32:44 GMT</pubDate>
+      <sparkle:version>14</sparkle:version>
+      <sparkle:shortVersionString>0.5.6</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
+      <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
+      <description><![CDATA[
+<p>Bench 0.5.6 makes the sidebar sort itself, and lets you send queued messages right away.</p>
+<ul><li><strong>Active projects take care of themselves.</strong> Projects you&#x27;ve worked in lately show under Active, most recent first. Sending Claude a prompt, opening a tab or starting an agent counts, and so does work Claude Code remembers from outside Bench. After a few days without use (3 by default, set in Settings &gt; General) a project moves to Inactive, and it comes back as soon as you use it again.</li><li><strong>Pin to Top.</strong> Right-click a project and choose Pin to Top to keep it at the top of Active. Drag pinned projects to put them in your order. Move to Inactive and Make Active are still there too.</li><li><strong>The iPhone app matches.</strong> With the latest TestFlight build, your phone shows the same Active list and a folding Inactive section, with Pin to Top and Move to Inactive when you long-press a project.</li><li><strong>Send queued messages now.</strong> A message you queued while Claude was busy has a Send Now button, which stops the step Claude is on and hands it your message, like Ctrl+Return in the terminal. Control-Return in the chat view&#x27;s message box does the same.</li><li><strong>Compacting no longer stretches the window.</strong> Running Compact from the chat view kept the content from fitting the window until it finished. Fixed.</li></ul>
+      ]]></description>
+      <enclosure url="https://github.com/mattbirchler/bench-releases/releases/download/v0.5.6-14/Bench-0.5.6-14.zip" type="application/octet-stream" sparkle:edSignature="9zXTELKJF6RQPnkSV0qOBS3tHbMZydbIZj3roNgplxyoOZFH0BmY2q6DgTTuEt/FH4xenccnU7c6Ejxz52i1CQ==" length="11001825"/>
+    </item>
+    <item>
+      <title>Bench 0.5.5</title>
+      <pubDate>Thu, 29 Oct 2026 20:50:16 GMT</pubDate>
+      <sparkle:version>13</sparkle:version>
+      <sparkle:shortVersionString>0.5.5</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
+      <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
+      <description><![CDATA[
+<p>Bench 0.5.5 adds a few touches to the chat view&#x27;s message box.</p>
+<ul><li><strong>Claude&#x27;s suggested next message.</strong> After a turn, Claude Code often guesses what you&#x27;ll say next and shows it faintly in its terminal. That guess now shows faintly in the chat view&#x27;s empty message box too. Press Right Arrow or Tab to fill it in, then Return to send. On iPhone it&#x27;s a chip you can tap.</li><li><strong>Shift-Return adds a line.</strong> Shift-Return (or Option-Return) starts a new line in the message box instead of sending.</li><li><strong>Context reads with a slash,</strong> like &quot;64k / 1M&quot;.</li></ul>
+      ]]></description>
+      <enclosure url="https://github.com/mattbirchler/bench-releases/releases/download/v0.5.5-13/Bench-0.5.5-13.zip" type="application/octet-stream" sparkle:edSignature="JCuz/lbX6ExSR0t8jKtxiCiTjhXtEw0kPTGY7jtz7OKwIOSUKb86GfgYUQOYRCCGUPyIcCQdldzU0sjxHujmBQ==" length="10964161"/>
+    </item>
+    <item>
+      <title>Bench 0.5.4</title>
+      <pubDate>Thu, 29 Oct 2026 19:21:24 GMT</pubDate>
+      <sparkle:version>12</sparkle:version>
+      <sparkle:shortVersionString>0.5.4</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
+      <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
+      <description><![CDATA[
+<p>Bench 0.5.4 makes the chat view quicker, smoother, and better at showing what Claude is up to.</p>
+<ul><li><strong>See Claude&#x27;s subagents.</strong> When Claude sends out agents, each gets a card in the chat with what it&#x27;s for and what it&#x27;s doing right now. While they run, they also show in the right sidebar under the checklist, so they don&#x27;t scroll away. When a background agent or command finishes, a quiet line in the chat says so.</li><li><strong>Sending feels instant.</strong> Your message shows the moment you press Return, and new messages slide in while the conversation glides up to make room.</li><li><strong>See and change the model.</strong> The model Claude is using shows next to the context meter, as soon as a session starts. Click it to switch to Fable, Opus, Sonnet or Haiku.</li><li><strong>Edit or remove queued messages.</strong> A message you sent while Claude was busy now has Edit and Remove under it. The other queued messages stay queued.</li><li><strong>Compact or clear without typing.</strong> The new / menu next to the paperclip runs Compact Conversation or Clear Conversation.</li><li><strong>Copy a message.</strong> Hover over a message and click the copy button beside it.</li><li><strong>Your draft stays put.</strong> Text and pictures in the message box are still there when you switch projects and come back.</li><li><strong>Picture previews.</strong> Pictures you attach or paste show as thumbnails instead of file names.</li><li><strong>Right-click changed files.</strong> Files in the Changes sidebar have a menu to open them, show them in Finder, or copy their full or relative path. The Files tab can copy either path too.</li><li><strong>Simpler context meter.</strong> Context use is now just text, like &quot;64k of 1M&quot;, which turns orange and then red as it fills.</li></ul>
+      ]]></description>
+      <enclosure url="https://github.com/mattbirchler/bench-releases/releases/download/v0.5.4-12/Bench-0.5.4-12.zip" type="application/octet-stream" sparkle:edSignature="4Yg3oEfvqmF02bk4JXLnJnomfyeHbLxY5Wd5MMr0lVUINGASVe9rVgkLWzUg3uC2iveGkwGsBM6zBXuRVLZxDw==" length="10960139"/>
+    </item>
+    <item>
+      <title>Bench 0.5.3</title>
+      <pubDate>Thu, 29 Oct 2026 02:26:45 GMT</pubDate>
+      <sparkle:version>11</sparkle:version>
+      <sparkle:shortVersionString>0.5.3</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
+      <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
+      <description><![CDATA[
+<p>Bench 0.5.3 makes the chat view easier to follow while Claude works.</p>
+<ul><li><strong>The chat stays at the bottom.</strong> New text and tool steps used to pile up out of sight while Claude worked on a long turn. Now the chat follows along as the conversation grows. Scroll up to read something earlier and it stays put, with a button to jump back to the latest. Sending a message always brings you back down.</li><li><strong>See messages you&#x27;ve queued.</strong> A message you send while Claude is busy now shows up right away as a Queued bubble under what Claude is doing. It becomes a normal message once Claude reads it. Before, it didn&#x27;t appear until then, which could be a whole turn later.</li><li><strong>Paste images into the chat.</strong> Press Command-V in the message box to attach a screenshot, a copied image, or image files copied in Finder. Text still pastes as text.</li></ul>
+      ]]></description>
+      <enclosure url="https://github.com/mattbirchler/bench-releases/releases/download/v0.5.3-11/Bench-0.5.3-11.zip" type="application/octet-stream" sparkle:edSignature="ucLuOXJpNzgX5LZ3gHvMYXiHp4VObYkQyQmwxPbFUn+X5fXcZ4GwOvhiAdjgR3KDy3YkM2yfv6owXdqSOEbCBw==" length="10813100"/>
+    </item>
+    <item>
+      <title>Bench 0.5.2</title>
+      <pubDate>Thu, 29 Oct 2026 01:40:51 GMT</pubDate>
+      <sparkle:version>10</sparkle:version>
+      <sparkle:shortVersionString>0.5.2</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
+      <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
+      <description><![CDATA[
+<p>Bench 0.5.2 opens long conversations much faster.</p>
+<ul><li><strong>Big chats open in a moment.</strong> Long Claude sessions write transcripts of hundreds of megabytes. The chat view used to read all of it before showing anything, which could take several seconds. Now it reads from the end, just far enough to show the recent conversation, so even the biggest sessions open in well under a second. The top of the chat says when older messages are left out, and nothing in the transcript is changed.</li><li><strong>Faster on your phone and other Macs too.</strong> They get the same speedup when they open a long session on this Mac.</li></ul>
+      ]]></description>
+      <enclosure url="https://github.com/mattbirchler/bench-releases/releases/download/v0.5.2-10/Bench-0.5.2-10.zip" type="application/octet-stream" sparkle:edSignature="UkwQ+iHUBwruvIjq5MQtt2YAKpngWXoyggOTeNQtxPOarbJtZRnpkbxKClfjQQcJ90JNS3djoSVeOWsjJkEgBg==" length="10787780"/>
+    </item>
+    <item>
+      <title>Bench 0.5.1</title>
+      <pubDate>Wed, 28 Oct 2026 17:57:19 GMT</pubDate>
+      <sparkle:version>9</sparkle:version>
+      <sparkle:shortVersionString>0.5.1</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
+      <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
+      <description><![CDATA[
+<p>Bench 0.5.1 brings the chat view&#x27;s step cards to your phone, and lets the phone dress in your terminal&#x27;s colors.</p>
+<ul><li><strong>Your phone in your Mac&#x27;s colors.</strong> The Bench iPhone app (1.1 build 7 and later) can take on the background and text colors of your Ghostty theme, light or dark. You can turn this off from the phone&#x27;s menu.</li><li><strong>Edits, commands and Stop on the phone.</strong> The phone now shows the lines Claude changed, whether each command worked and what it printed, and a Stop button while Claude is working. This needs the new phone build too.</li><li><strong>Other Macs get the same.</strong> When you watch a Claude session on another Mac, you see command results and can stop Claude from there.</li><li><strong>Stopped commands say so.</strong> A command you stopped or denied now reads &quot;Stopped&quot; instead of &quot;Failed&quot;.</li></ul>
+      ]]></description>
+      <enclosure url="https://github.com/mattbirchler/bench-releases/releases/download/v0.5.1-9/Bench-0.5.1-9.zip" type="application/octet-stream" sparkle:edSignature="D5URCa8kR3fjMvmgYW95DH8z/UoZ4paC3T4tjVn/R5UFTqvf1/RGELBiMrhZ8uql+Hloc/ly5dFb1OuwXM4aAg==" length="10785167"/>
+    </item>
+    <item>
+      <title>Bench 0.5</title>
+      <pubDate>Wed, 28 Oct 2026 17:15:34 GMT</pubDate>
+      <sparkle:version>8</sparkle:version>
+      <sparkle:shortVersionString>0.5</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
+      <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
+      <description><![CDATA[
+<p>Bench 0.5 lets you read and run any Claude tab as a chat, right on your Mac.</p>
+<ul><li><strong>Chat or terminal, per tab.</strong> Switch a Claude tab between its terminal and a chat with the buttons in the tab bar, or View &gt; Show as Chat (⌥⌘T). Claude keeps running in the terminal either way, so the raw terminal is always one click away. Settings &gt; General picks which one new Claude tabs start in.</li><li><strong>In your terminal&#x27;s colors.</strong> The chat uses your Ghostty theme, light or dark, so it looks like part of Bench rather than a separate app.</li><li><strong>See what Claude did.</strong> Files it read sit on a quiet timeline, and you can click one to open it. Edits show the lines that changed. Commands show whether they worked and the last lines they printed.</li><li><strong>Where you&#x27;re reading.</strong> The end of the conversation shows what Claude is doing or that it&#x27;s waiting on you, with a timer and a Stop button.</li><li><strong>Answer with the keyboard.</strong> When Claude asks to run something, Return allows it and Escape denies it, just like in the terminal. Questions and permissions get cards right above the message box.</li></ul>
+      ]]></description>
+      <enclosure url="https://github.com/mattbirchler/bench-releases/releases/download/v0.5-8/Bench-0.5-8.zip" type="application/octet-stream" sparkle:edSignature="++UfkUVEDdsU/eUWWZrQU1W2rNVffbphFZjN+yHGrweuUqzgj5f9D9MulMySPoe54rOXaP5ZEf6UYsmw1AEADg==" length="10766058"/>
+    </item>
+    <item>
+      <title>Bench 0.4.2</title>
+      <pubDate>Wed, 28 Oct 2026 14:42:33 GMT</pubDate>
+      <sparkle:version>7</sparkle:version>
+      <sparkle:shortVersionString>0.4.2</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
+      <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
+      <description><![CDATA[
+<p>Bench 0.4.2 makes answering Claude from your phone or another Mac smoother.</p>
+<ul><li><strong>Trust a new folder from anywhere.</strong> When Claude starts in a folder it hasn&#x27;t opened before, it asks whether you trust it before doing anything else. That question used to show up only in the Mac&#x27;s terminal, so a session started from your phone got stuck. Now it appears as a card you can answer from your phone or another Mac. Bench only passes your answer along. It never trusts a folder for you.</li><li><strong>Answers take effect right away.</strong> After you allow or deny a permission from another device, the card goes away as soon as Bench has your answer. Before, it stayed until Claude moved on, which made it look like the tap hadn&#x27;t worked. Answered questions clear the same way, and the tab stops showing orange on the Mac.</li></ul>
+<p>Trusting a folder from your phone needs the latest Bench beta for iPhone.</p>
+      ]]></description>
+      <enclosure url="https://github.com/mattbirchler/bench-releases/releases/download/v0.4.2-7/Bench-0.4.2-7.zip" type="application/octet-stream" sparkle:edSignature="KlCS984mWL/BiBBReSAJPp8sH8ZLP9RQTgqmzvJIPOY8GAD+WA+QDwyMHuu5mw2HxRo1kMEpHAYBNg317472DA==" length="10665084"/>
+    </item>
+    <item>
+      <title>Bench 0.4.1</title>
+      <pubDate>Wed, 28 Oct 2026 12:30:58 GMT</pubDate>
+      <sparkle:version>6</sparkle:version>
+      <sparkle:shortVersionString>0.4.1</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
+      <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
+      <description><![CDATA[
+<p>Bench 0.4.1 fixes two problems some people saw after updating to 0.4.</p>
+<ul><li><strong>Your Active projects stay Active.</strong> Restarting Bench soon after opening it could move every project to Inactive. Bench now keeps your Active list no matter when you quit or update.</li><li><strong>⌘1 to ⌘9 always work.</strong> If your Active list was empty when Bench opened, the shortcuts for jumping between Active projects didn&#x27;t come back after you marked projects Active again. They now follow the list as it changes.</li></ul>
+<p>If your projects moved to Inactive after the 0.4 update, mark them Active once more and they&#x27;ll stay that way.</p>
+      ]]></description>
+      <enclosure url="https://github.com/mattbirchler/bench-releases/releases/download/v0.4.1-6/Bench-0.4.1-6.zip" type="application/octet-stream" sparkle:edSignature="shprsBdXL6BapcI02AQR7/0WIGHUoQZdrMA9Uh2DjF5cE0LrCE16KiwEL1HWyhGNcKsFDMOOJRC2A1bE/iFpDQ==" length="10647640"/>
+    </item>
+    <item>
+      <title>Bench 0.4</title>
+      <pubDate>Wed, 28 Oct 2026 12:02:28 GMT</pubDate>
+      <sparkle:version>5</sparkle:version>
+      <sparkle:shortVersionString>0.4</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
+      <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
+      <description><![CDATA[
+<p>Bench 0.4 tells you what&#x27;s new, answers Claude&#x27;s questions from anywhere, and gives the terminal a softer edge.</p>
+<p><strong>See what&#x27;s new.</strong> When an update is ready, the button at the bottom of the sidebar shows what&#x27;s in it before you restart. After Bench updates, a What&#x27;s New window lists everything that changed since the version you last used. You can open it any time from Bench &gt; What&#x27;s New in Bench.</p>
+<p><strong>Answer Claude&#x27;s questions from another Mac.</strong> When Claude asks you a multiple-choice question, you can now answer it while watching the session from another Mac: pick an option, tick several where it allows, or write your own answer. Bench enters it on the Mac where Claude is running. The tab also turns orange as soon as Claude asks, instead of a few seconds later.</p>
+<p><strong>Compacting is easy to spot.</strong> While Claude compacts a conversation you&#x27;re watching from another Mac, a banner says so, and the conversation shows a clear &quot;Conversation compacted&quot; card afterward instead of a line of small gray text.</p>
+<p>Answering questions and the compacting banner come to the iPhone app in its next update.</p>
+<p><strong>A rounded terminal.</strong> The terminal, diffs, and files now sit in the window as a card with rounded corners, below a tab bar that matches the sidebars.</p>
+<p>Claude tabs that are already open pick up question and compacting detection the next time Claude starts in them.</p>
+      ]]></description>
+      <enclosure url="https://github.com/mattbirchler/bench-releases/releases/download/v0.4-5/Bench-0.4-5.zip" type="application/octet-stream" sparkle:edSignature="Znb7iLb2Qzqub6NPzQ5iszWU1ndY8hVJNwKPsnrAISHNTF3KhdAUNvPgkLiepIyXXMPvSpQzbUImkhf/t1V2BA==" length="10647829"/>
+    </item>
+    <item>
+      <title>Bench 0.3.1</title>
+      <pubDate>Tue, 27 Oct 2026 22:42:01 GMT</pubDate>
+      <sparkle:version>4</sparkle:version>
+      <sparkle:shortVersionString>0.3.1</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
+      <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
+      <description><![CDATA[
+<p>Bench 0.3.1 makes the window match your terminal.</p>
+<p><strong>Matches your terminal theme.</strong> The sidebar, toolbar, changes panel, diffs, and files now use the colors of your Ghostty theme, and the window goes light or dark to match it. If your theme switches between light and dark with the system, Bench follows along. Prefer the system look? Turn off &quot;Match the terminal theme&quot; in Settings &gt; General.</p>
+<p><strong>Also:</strong></p>
+<ul><li>The button that shows and hides the changes panel is back on the right side of the toolbar, above the panel it opens.</li><li>The app icon&#x27;s chevron no longer shows a thin line through it.</li></ul>
+      ]]></description>
+      <enclosure url="https://github.com/mattbirchler/bench-releases/releases/download/v0.3.1-4/Bench-0.3.1-4.zip" type="application/octet-stream" sparkle:edSignature="iScxIfaIZEvO8ElzM+GEMmH/3gmlXeZpX+5vsDJ9Y8mbQ0UcjR6CB6S3nrzow8V9wuwb9vL3bOYgGnnzEgcLAA==" length="10550634"/>
+    </item>
+    <item>
+      <title>Bench 0.3</title>
+      <pubDate>Tue, 27 Oct 2026 22:08:09 GMT</pubDate>
+      <sparkle:version>3</sparkle:version>
+      <sparkle:shortVersionString>0.3</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
+      <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
+      <description><![CDATA[
+<p>Bench 0.3 gets Bench ready for other people to use, and adds a few things you&#x27;ll notice right away.</p>
+<p><strong>Your own tab shortcuts.</strong> Add one-click tabs for commands you run often in Settings &gt; Shortcuts. They show up at the right of the tab bar and in the + menu, and can be limited to one project or to projects with a certain file. JavaScript projects also get a dev server button that runs <code>dev</code> with the project&#x27;s package manager.</p>
+<p><strong>Setup checklist.</strong> Bench now checks for Claude Code, git, the GitHub CLI, and Tailscale, and shows what it found with links to anything missing. It appears once on first launch and lives in Settings &gt; Setup. Bench also finds these tools the same way your shell does, so tools installed outside Homebrew work too.</p>
+<p><strong>Safer agent cleanup.</strong> When an agent&#x27;s pull request merges, Bench only removes its worktree if nothing would be lost: no uncommitted or unpushed work. Removed worktrees go to the Trash. Automatic cleanup is now a setting in Settings &gt; General, and it&#x27;s off by default.</p>
+<p><strong>Updates ask first.</strong> New installs ask before checking for updates. Installing an update while the Mac is idle is now a setting in Settings &gt; Updates, off by default.</p>
+<p><strong>iPhone companion.</strong></p>
+<ul><li>Bench no longer replaces an existing Tailscale Serve setup. If something else is using it, Bench uses a /bench path instead.</li><li>The phone can only read files that show up in the project&#x27;s file list.</li></ul>
+<p><strong>Also:</strong></p>
+<ul><li>Bench &gt; Acknowledgements credits Ghostty, Sparkle, and the other open source projects Bench is built on.</li><li>Bench saves less of what Claude passes to its tools. Whole file contents no longer sit in Bench&#x27;s support folder.</li></ul>
+      ]]></description>
+      <enclosure url="https://github.com/mattbirchler/bench-releases/releases/download/v0.3-3/Bench-0.3-3.zip" type="application/octet-stream" sparkle:edSignature="melvtervr/qpz62LYUUhXzH4pWYw2JMIXGed9QPYKfJUYqDi6yvwBpXxc2goDWg1grjMuHB9FHU+f7NZ9y8cCg==" length="10542926"/>
+    </item>
+    <item>
+      <title>Bench 0.2</title>
+      <pubDate>Tue, 27 Oct 2026 20:17:01 GMT</pubDate>
+      <sparkle:version>2</sparkle:version>
+      <sparkle:shortVersionString>0.2</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
+      <description><![CDATA[
+<p>This is the first version of Bench that keeps itself up to date.</p>
+<ul><li><strong>Automatic updates.</strong> New versions download in the background. They install when you quit Bench or click Restart to Update at the bottom of the sidebar. If Claude is busy, Bench asks before restarting, and Claude tabs pick up their conversations afterward. A Mac nobody is using installs updates by itself after 30 minutes with nothing running.</li><li><strong>Files sidebar.</strong> The right sidebar has a Changes / Files switch. Files shows the project&#x27;s folders and updates as files come and go. Click a file to open it in a tab with line numbers that reloads as Claude edits it. This works for projects on your other Macs too.</li><li><strong>Your messages in remote conversations.</strong> Messages you send while Claude is busy, and messages that start with a paste, now show up when you watch a session from another Mac or your iPhone.</li></ul>
+<p>Settings has a new Updates tab with the version and a switch for automatic checks.</p>
+      ]]></description>
+      <enclosure url="https://github.com/mattbirchler/bench-releases/releases/download/v0.2-2/Bench-0.2-2.zip" type="application/octet-stream" sparkle:edSignature="/A3eVbjcFxLcA3uFTWCi9LHf+NPeAv7e/+CQRBS5FwUHt0vPzM7B7sJroIbZR9o2KFS87fNkW+8UAaLyj0YzAA==" length="10389735"/>
+    </item>
+  </channel>
+</rss>
