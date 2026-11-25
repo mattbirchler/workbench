@@ -100,7 +100,8 @@ struct OverviewView: View {
                 .environment(\.companionPalette, TerminalTheme.shared.chatPalette)
             } else {
                 ScrollView {
-                    LazyVGrid(columns: [GridItem(.adaptive(minimum: 380), spacing: 14)], spacing: 14) {
+                    // Cards start at the top of their row, not centered in it.
+                    LazyVGrid(columns: [GridItem(.adaptive(minimum: 380), spacing: 14, alignment: .top)], spacing: 14) {
                         ForEach(items) { item in
                             OverviewCard(item: item, monitor: monitors.monitor(for: item.project)) {
                                 store.selectedProjectID = item.project.id
@@ -205,11 +206,15 @@ private struct OverviewCard: View {
             .accessibilityAddTraits(.isButton)
             .accessibilityHint("Opens this tab")
             activityBox
+            // Cards in a row share its height; the footer sits at the bottom
+            // so the context meters line up across the row. (A Spacer here
+            // would add the stack's spacing to every card.)
             footer
+                .frame(maxHeight: .infinity, alignment: .bottom)
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 14)
-        .frame(maxWidth: .infinity, alignment: .topLeading)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .background {
             ZStack {
                 RoundedRectangle(cornerRadius: 12, style: .continuous)
