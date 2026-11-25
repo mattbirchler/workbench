@@ -62,15 +62,50 @@ struct RemoteFileView: View {
     let path: String
 
     private var client: CompanionClient? { macs.client(for: host) }
+    private var content: FileContent? { client?.fileContents["\(projectID):\(path)"] }
+
+    private var drafts: RemoteFileDrafts { .shared }
+    private var file: RemoteFileDrafts.File { .init(host: host, projectID: projectID, path: path) }
+    private var draft: FileDraft? { drafts.draft(for: file) }
+    private var isEdited: Bool { draft?.isEdited ?? false }
+
+    /// What the tab shows: the text being edited, over what the other Mac
+    /// last sent.
+    private var shown: FileContent? {
+        guard let draft else { return content }
+        if case .text = content { return .text(draft.text) }
+        // Unsaved edits to a file that has since gone stay on screen.
+        return draft.isEdited ? .text(draft.text) : content
+    }
 
     var body: some View {
-        let content = client?.fileContents["\(projectID):\(path)"]
         VStack(spacing: 0) {
-            FileHeader(path: path, content: content) { EmptyView() }
+            FileHeader(path: path, content: shown, badge: isEdited ? "Edited" : nil) {
+                if isEdited {
+                    Button("Save") { drafts.save(file) }
+                        .controlSize(.small)
+                        .help("Save your changes to \(macs.name(for: host)) (⌘S)")
+                }
+            } actions: {
+                EmptyView()
+            }
             Divider()
-            FileContentView(content: content, path: path)
+            if let conflict = draft?.conflict {
+                FileConflictBanner(conflict: conflict, reload: { drafts.reload(file) }, discard: discardEdits,
+                                   keepMine: { drafts.keepMine(file) })
+                Divider()
+            }
+            // An older Workbench there can't save, so its files stay read only.
+            FileContentView(content: shown, path: path,
+                            editor: client?.canEditFiles == true ? FileEditor(edit: edit) : nil)
         }
         .background(Color(nsColor: .textBackgroundColor))
+        .onDisappear { drafts.release(file) }
+        .task(id: content) {
+            // Nothing sent yet isn't the same as the file being gone.
+            guard let content else { return }
+            drafts.fileRead(Self.text(of: content), for: file)
+        }
         .task {
             guard let client else { return }
             client.watchFiles(projectID: projectID)
@@ -81,6 +116,23 @@ struct RemoteFileView: View {
             guard client?.status == .connected else { return }
             client?.requestFile(projectID: projectID, path: path)
         }
+    }
+
+    private static func text(of content: FileContent?) -> String? {
+        if case .text(let text) = content { return text }
+        return nil
+    }
+
+    private func edit(_ text: String) {
+        // The draft is let go of when the tab is switched away from.
+        if draft == nil { drafts.fileRead(Self.text(of: content) ?? "", for: file) }
+        drafts.edit(text, for: file)
+    }
+
+    /// Drops the edits and shows the file as it is on the other Mac.
+    private func discardEdits() {
+        drafts.discard(file)
+        drafts.fileRead(Self.text(of: content), for: file)
     }
 
     private struct Revision: Equatable {

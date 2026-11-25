@@ -84,7 +84,13 @@ public struct FileDraft: Equatable, Sendable {
 
     /// The editor's text was written to disk.
     public mutating func didSave() {
-        saved = text
+        didSave(text)
+    }
+
+    /// `written` reached the disk a moment ago, as when another Mac saves
+    /// it for us. Anything typed since is still unsaved.
+    public mutating func didSave(_ written: String) {
+        saved = written
         conflict = nil
         keptAfterGone = false
     }

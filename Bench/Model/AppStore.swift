@@ -783,7 +783,7 @@ final class AppStore {
 
     /// How a project was added, for analytics.
     enum ProjectSource: String {
-        case welcome, drop, folderPicker = "folder_picker", benchCommand = "bench_command"
+        case welcome, drop, folderPicker = "folder_picker", benchCommand = "bench_command", otherMac = "other_mac"
     }
 
     enum AddOutcome {

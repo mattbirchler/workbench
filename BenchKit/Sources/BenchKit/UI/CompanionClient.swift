@@ -612,6 +612,53 @@ public final class CompanionClient {
         send(.readFile(projectID: projectID, path: path))
     }
 
+    // MARK: Adding projects
+
+    /// True once the Mac can add a folder as a project for us.
+    public var canAddProjects: Bool { macFeatures.contains(CompanionFeature.addProject) }
+
+    /// The folder last asked for with `browseFolder`.
+    public private(set) var folder: FolderListing?
+    /// The Mac's answer to `addProject`.
+    public private(set) var addedProject: (path: String, projectID: UUID?, problem: String?)?
+
+    /// Asks for the folders inside a folder on the Mac; nil is its home folder.
+    public func browseFolder(_ path: String?) {
+        guard canAddProjects else { return }
+        send(.browseFolder(path: path))
+    }
+
+    /// Asks the Mac to add a folder as a project.
+    public func addProject(path: String) {
+        guard canAddProjects else { return }
+        addedProject = nil
+        send(.addProject(path: path))
+    }
+
+    /// Forgets the last folder and answer, when the picker closes.
+    public func clearAddProject() {
+        folder = nil
+        addedProject = nil
+    }
+
+    // MARK: Editing files
+
+    /// True once the Mac can save a file we edited.
+    public var canEditFiles: Bool { macFeatures.contains(CompanionFeature.editFiles) }
+
+    /// The Mac's answer to `saveFile`: the project, the path, and why it
+    /// couldn't, or nil once it's on disk.
+    @ObservationIgnored public var onFileSaved: ((UUID, String, String?) -> Void)?
+
+    /// Asks the Mac to replace a text file with `text`. False when it
+    /// can't be asked right now.
+    @discardableResult
+    public func saveFile(projectID: UUID, path: String, text: String) -> Bool {
+        guard canEditFiles, status == .connected else { return false }
+        send(.writeFile(projectID: projectID, path: path, text: text))
+        return true
+    }
+
     // MARK: Reviewing code
 
     /// True once the Mac colors code, sends diffs with the whole file
@@ -1006,6 +1053,12 @@ public final class CompanionClient {
             if artifacts[projectID] != links { artifacts[projectID] = links }
         case .started(let projectID, let sessionID):
             started = (projectID, sessionID)
+        case .folder(let listing):
+            folder = listing
+        case .projectAdded(let path, let projectID, let problem):
+            addedProject = (path, projectID, problem)
+        case .fileSaved(let projectID, let path, let problem):
+            onFileSaved?(projectID, path, problem)
         case .problem(let text):
             lastProblem = text
         case .theme(let colors):

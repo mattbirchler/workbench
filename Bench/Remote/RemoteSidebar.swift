@@ -164,8 +164,12 @@ struct RemoteProjectList: View {
     /// The order just dragged into, shown until that Mac's next snapshot
     /// agrees, so rows don't snap back for a second.
     @State private var pendingOrder: [UUID]?
+    @State private var showsAddProject = false
 
     private var client: CompanionClient? { macs.client(for: host) }
+    /// Whether that Mac can add a folder as a project for us.
+    private var canAdd: Bool { client?.canAddProjects == true && client?.status == .connected }
+    private var addHelp: String { "Add a Project on \(macs.name(for: host))" }
 
     var body: some View {
         ScrollView {
@@ -181,7 +185,8 @@ struct RemoteProjectList: View {
                         VStack(spacing: 2) {
                             ForEach(Array(current.enumerated()), id: \.element.title) { index, section in
                                 SectionTitle(title: section.title, symbol: section.title == "Pinned" ? "pin.fill" : nil,
-                                             isLoading: index == 0 && isConnecting)
+                                             addsProject: index == 0 && canAdd, isLoading: index == 0 && isConnecting,
+                                             add: { showsAddProject = true }, addHelp: addHelp)
                                 rows(section.projects, compact: false, client: client, snapshot: snapshot)
                             }
                         }
@@ -189,7 +194,9 @@ struct RemoteProjectList: View {
                     }
                     if !recent.isEmpty {
                         // Inset to line up with the tray's titles and icons above.
-                        SectionTitle(title: "Recent", hint: snapshot.recentHint, isLoading: current.isEmpty && isConnecting)
+                        SectionTitle(title: "Recent", hint: snapshot.recentHint, addsProject: current.isEmpty && canAdd,
+                                     isLoading: current.isEmpty && isConnecting,
+                                     add: { showsAddProject = true }, addHelp: addHelp)
                             .padding(.horizontal, 10)
                         VStack(spacing: 1) {
                             rows(recent, compact: true, client: client, snapshot: snapshot)
@@ -198,7 +205,8 @@ struct RemoteProjectList: View {
                         .padding(.bottom, 4)
                     }
                     if current.isEmpty && recent.isEmpty {
-                        SectionTitle(title: "Projects", isLoading: isConnecting)
+                        SectionTitle(title: "Projects", addsProject: canAdd, isLoading: isConnecting,
+                                     add: { showsAddProject = true }, addHelp: addHelp)
                             .padding(.horizontal, 6)
                         Text(snapshot.projects.isEmpty
                              ? "No projects in Workbench on \(macs.name(for: host))"
@@ -241,6 +249,9 @@ struct RemoteProjectList: View {
             selectFirstIfNeeded()
         }
         .onAppear(perform: selectFirstIfNeeded)
+        .sheet(isPresented: $showsAddProject) {
+            AddRemoteProjectSheet(host: host)
+        }
     }
 
     private var isConnecting: Bool { client?.status == .connecting }

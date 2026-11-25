@@ -134,3 +134,17 @@ import Testing
     draft.diskRead("restored\n")
     #expect(draft.conflict == .changed("restored\n"))
 }
+
+@Test func aSaveThatLandsLaterKeepsWhatWasTypedSince() {
+    var draft = FileDraft("one\n")
+    draft.edit("two\n")
+    // Sent to be saved, then more typing before the answer came back.
+    draft.edit("two\nthree\n")
+    draft.didSave("two\n")
+    #expect(draft.saved == "two\n")
+    #expect(draft.isEdited)
+    // The file arriving as it was saved isn't a conflict.
+    draft.diskRead("two\n")
+    #expect(draft.conflict == nil)
+    #expect(draft.text == "two\nthree\n")
+}

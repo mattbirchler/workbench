@@ -122,7 +122,7 @@ final class DemoServer {
             place(id) { $0.section = active ? .active : .inactive }
         case .hello, .ping, .unwatchChanges, .unwatchFiles, .registerPush, .notificationPrefs, .registerActivity, .registerActivityStart, .registerDashboard, .features, .takeBackQueue, .sendQueueNow, .image, .earlierTranscript, .setBaseRef, .refreshChanges, .closeSession, .removeAgent, .runShortcut, .stopShortcut, .dismissSideQuestion,
              .renameProject, .setProjectIcon, .showHiddenWorktrees, .removeProject, .hideExternalWorktree, .setNotifiesPhone,
-             .setClaudeAccount, .setPermissionMode:
+             .setClaudeAccount, .setPermissionMode, .writeFile, .browseFolder, .addProject:
             break
         }
     }
