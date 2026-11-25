@@ -42,6 +42,9 @@ import UniformTypeIdentifiers
     /// The project's files, for `@` suggestions, or nil while they load
     /// or where they can't be listed.
     var projectFiles: [String]? { get }
+    /// The folder `@` paths like `../` count from, on this Mac. Nil where
+    /// the session is on another Mac, whose folders can't be read from here.
+    var folderRoot: String? { get }
     /// The `/btw` side question showing above the message box, if any.
     var sideQuestion: SideQuestion? { get }
     /// Asks a side question about the conversation, where that's
@@ -91,6 +94,7 @@ struct RemoteChatSource: ChatSource {
         return all.filter { !$0.opensInTerminal }
     }
     var projectFiles: [String]? { client?.filePaths[projectID] }
+    var folderRoot: String? { nil }
     var sendQueueNow: (() -> Void)? {
         guard let client, client.canSendNow else { return nil }
         let id = sessionID
@@ -591,6 +595,7 @@ private struct ChatBody: View {
                          runCommand: { source.reply($0.command, attachments: []) },
                          commands: source.showTerminal == nil ? source.slashCommands.filter { !$0.opensInTerminal } : source.slashCommands.map(\.inLocalChat),
                          files: source.projectFiles ?? [],
+                         folderRoot: source.folderRoot,
                          runInTerminal: source.showTerminal.map { show in
                              { text in source.reply(text, attachments: []); show() }
                          },
@@ -1179,6 +1184,9 @@ private struct Composer: View {
     var commands: [SlashCommand] = []
     /// The project's files, suggested after an `@`.
     var files: [String] = []
+    /// Where `@../` and the like count from, for listing folders outside
+    /// the project. Nil where they can't be listed.
+    var folderRoot: String?
     /// Types a command that opens a picker into the terminal, and shows it.
     var runInTerminal: ((String) -> Void)?
     /// Runs a command the chat handles itself, in this Mac's own chats.
@@ -1205,6 +1213,8 @@ private struct Composer: View {
     @State private var commandList: [SlashCommand] = []
     /// The files and folders `@` can name, worked out once per listing.
     @State private var mentionList: [FileMention] = []
+    /// Reads the folders `@~/`, `@../` and the like point into.
+    @State private var folders = MentionFolders()
     /// Where the cursor is in the draft (a UTF-16 offset), -1 while text
     /// is selected, or nil when it isn't known and taken to be at the end.
     @State private var caret: Int?
@@ -1275,7 +1285,7 @@ private struct Composer: View {
 
     private var suggestions: Suggestions? {
         guard dismissedFor != draft else { return nil }
-        return Suggestions.find(draft: draft, caret: draftCaret, commands: commandList, files: mentionList)
+        return Suggestions.find(draft: draft, caret: draftCaret, commands: commandList, files: mentionList, folders: folders)
     }
 
     /// True once the draft starts with `!`, even before the command. The
@@ -1716,6 +1726,7 @@ private struct Composer: View {
         .onChange(of: commands) { _, new in commandList = new }
         .onAppear { mentionList = FileMention.all(from: files) }
         .onChange(of: files) { _, new in mentionList = FileMention.all(from: new) }
+        .onChange(of: folderRoot, initial: true) { _, new in folders.root = new }
         .onAppear(perform: watchPastes)
         .onAppear { suggestion = session.canReply ? session.suggestion : nil }
         .onChange(of: session.suggestion) { _, new in suggestion = session.canReply ? new : nil }
@@ -1736,6 +1747,7 @@ private struct Composer: View {
         let sendRightAway = sendRightAway
         let commandList = $commandList
         let mentionList = $mentionList
+        let folders = folders
         let highlighted = $highlighted
         let dismissedFor = $dismissedFor
         let modelPicker = $modelPicker
@@ -1784,7 +1796,7 @@ private struct Composer: View {
                modifiers.subtracting([.numericPad, .function]).isEmpty,
                let found = Suggestions.find(draft: draft.wrappedValue,
                                             caret: Self.caret(in: event.window).map { $0 < 0 ? $0 : $0 + ComposerDraft.hiddenPrefixLength(in: draft.wrappedValue) },
-                                            commands: commandList.wrappedValue, files: mentionList.wrappedValue) {
+                                            commands: commandList.wrappedValue, files: mentionList.wrappedValue, folders: folders) {
                 let index = min(highlighted.wrappedValue, found.count - 1)
                 var sending: Bool?
                 switch event.keyCode {
@@ -2522,7 +2534,7 @@ private struct Suggestions: Equatable {
 
     /// Nil when there's nothing to suggest. With no `caret`, the cursor is
     /// taken to be at the end.
-    static func find(draft: String, caret: Int?, commands: [SlashCommand], files: [FileMention]) -> Suggestions? {
+    static func find(draft: String, caret: Int?, commands: [SlashCommand], files: [FileMention], folders: MentionFolders) -> Suggestions? {
         guard let token = ComposerToken.at(caret ?? draft.utf16.count, in: draft) else { return nil }
         switch token.kind {
         case .command:
@@ -2532,13 +2544,41 @@ private struct Suggestions: Equatable {
             return found.isEmpty ? nil : Suggestions(token: token, list: .commands(found))
         case .file:
             let query = token.query.hasPrefix("\"") ? String(token.query.dropFirst()) : token.query
-            let found = FileMention.matches(query: query, in: files)
+            // A path outside the project, like `~/` or `../`, isn't in its
+            // listing, so what's in that folder on disk is suggested.
+            let found = MentionFolder(query: query).map { $0.matches(in: folders.entries(in: $0)) }
+                ?? FileMention.matches(query: query, in: files)
             return found.isEmpty ? nil : Suggestions(token: token, list: .files(found))
         }
     }
 }
 
-/// The project's files and folders matching what's typed after an `@`,
+/// Reads the folders that `@` paths outside the project point into, like
+/// `~/` or `../app/`, as Claude Code's own picker does. The suggestions are
+/// worked out a few times a key, so the last folder read is kept a moment.
+private final class MentionFolders {
+    /// The folder relative paths count from, or nil to read nothing, for
+    /// a session on another Mac.
+    var root: String?
+    private var last: (path: String, read: Date, entries: [FileMention])?
+
+    /// What's in `folder`, each named on its own.
+    func entries(in folder: MentionFolder) -> [FileMention] {
+        guard let root, let path = folder.path(root: root) else { return [] }
+        if let last, last.path == path, Date().timeIntervalSince(last.read) < 2 { return last.entries }
+        let names = (try? FileManager.default.contentsOfDirectory(atPath: path)) ?? []
+        let entries = names.map { name in
+            // Follows links, so a link to a folder opens like one.
+            var isFolder: ObjCBool = false
+            _ = FileManager.default.fileExists(atPath: (path as NSString).appendingPathComponent(name), isDirectory: &isFolder)
+            return FileMention(path: name, isDirectory: isFolder.boolValue)
+        }
+        last = (path, Date(), entries)
+        return entries
+    }
+}
+
+/// The files and folders matching what's typed after an `@`,
 /// floating above the message box.
 private struct FileSuggestions: View {
     @Environment(\.companionPalette) private var palette
