@@ -75,6 +75,7 @@ struct SessionRoute: Hashable {
 
 struct SessionView: View {
     @Environment(CompanionClient.self) private var client
+    @Environment(Navigator.self) private var navigator
     let projectID: UUID
     let sessionID: UUID
     @State private var draft: String
@@ -88,7 +89,7 @@ struct SessionView: View {
     @State private var answersSent = 0
     /// The messages as turns, with what you just sent merged in. Grouped
     /// once per change, not once per draw.
-    @State private var conversation = Conversation()
+    @State private var conversation = Conversation(tracksChanges: true)
     /// Ends the watch when the screen is popped. `onDisappear` fired on a
     /// push too, so coming back from a file read the whole conversation again.
     @State private var lease = SessionLease()
@@ -315,6 +316,19 @@ struct SessionView: View {
                              earlier: client.earlierPages[sessionID] ?? .none,
                              loadEarlier: { client.requestEarlier(sessionID: sessionID) })
                 .equatable()
+                // A finished turn lists the files it changed. Tapping one
+                // goes to the project's changes, where its diff is.
+                .environment(\.turnReview, turnReview)
+        }
+    }
+
+    private var turnReview: TurnReviewActions? {
+        guard let project, project.isGit != false, !client.isShowingSaved else { return nil }
+        let navigator = navigator, projectID = projectID
+        return TurnReviewActions(root: project.path) { _, _ in
+            navigator.push(ChangesRoute(projectID: projectID))
+        } reviewAll: { _ in
+            navigator.push(ChangesRoute(projectID: projectID))
         }
     }
 
@@ -451,11 +465,22 @@ private struct ConversationList: View, Equatable {
         .environment(\.chatTimingID, sessionID)
     }
 
+    @Environment(\.turnReview) private var turnReview
+
+    /// A turn's row, with the files its turn changed under it when it's
+    /// the last row of a finished turn that changed some.
     private func row(_ turn: TranscriptTurn, lastShown: String?) -> some View {
-        TranscriptTurnView(turn: turn, isLive: isWorking && turn.id == lastShown)
-            .equatable()
-            .id(turn.id)
-            .transition(ChatMotion.row(for: turn))
+        let changes = turnReview == nil ? nil : conversation.changes[turn.id].flatMap { $0.isLatest && isBusy ? nil : $0 }
+        return VStack(alignment: .leading, spacing: 14) {
+            TranscriptTurnView(turn: turn, isLive: isWorking && turn.id == lastShown)
+                .equatable()
+            if let changes {
+                TurnChangesCard(changes: changes)
+                    .transition(.opacity)
+            }
+        }
+        .id(turn.id)
+        .transition(ChatMotion.row(for: turn))
     }
 }
 
