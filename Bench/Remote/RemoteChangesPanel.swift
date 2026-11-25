@@ -5,10 +5,12 @@ import SwiftUI
 /// a project on this Mac, fed by what the other Mac sends.
 struct RemoteChangesPanel: View {
     @Environment(RemoteMacs.self) private var macs
+    @Environment(ClaudeActions.self) private var actions
     let host: String
     let projectID: UUID
 
     private var client: CompanionClient? { macs.client(for: host) }
+    private var project: CompanionProject? { client?.snapshot?.projects.first { $0.id == projectID } }
     private var changes: ChangesSnapshot? { client?.changes[projectID] }
     /// An older Mac can't take refreshes or base changes.
     private var canControl: Bool { client?.canControlBranches == true }
@@ -28,7 +30,10 @@ struct RemoteChangesPanel: View {
                         selectedDiffID: selectedDiffID,
                         openDiff: { macs.openDiff(host: host, projectID: projectID, change: $0) },
                         refresh: canControl ? { client?.refreshChanges(projectID: projectID) } : nil,
-                        chooseBase: canControl ? { client?.setBaseRef(projectID: projectID, ref: $0) } : nil
+                        chooseBase: canControl ? { client?.setBaseRef(projectID: projectID, ref: $0) } : nil,
+                        // This Mac's buttons, sent to an agent on that one.
+                        actions: actions.all,
+                        pullRequest: project?.pullRequest.map(PullRequestInfo.init)
                     ) { file in
                         Button("Show Changes") { macs.openDiff(host: host, projectID: projectID, change: file) }
                         if file.kind != .deleted {
@@ -38,6 +43,8 @@ struct RemoteChangesPanel: View {
                         CopyPathButtons(path: file.path, root: nil)
                     } openFile: { file in
                         macs.openFile(host: host, projectID: projectID, path: file.path)
+                    } runAction: { prompt in
+                        run(prompt)
                     }
                 }
             } else {
@@ -49,6 +56,27 @@ struct RemoteChangesPanel: View {
             if client?.status == .connected { client?.watchChanges(projectID: projectID) }
         }
         .onDisappear { client?.unwatchChanges(projectID: projectID) }
+    }
+
+    /// Sends an action's prompt to an agent in this project on the other
+    /// Mac: the one whose tab is open here, or else its newest, or a new
+    /// tab when it has none. Returns why it couldn't.
+    private func run(_ prompt: String) -> String? {
+        guard let client, client.status == .connected else { return "Not connected to \(macs.name(for: host))." }
+        let key = RemoteMacs.key(host: host, projectID: projectID)
+        let sessions = project?.sessions ?? []
+        var open: UUID?
+        if case .session(let id) = macs.openTabs[key] { open = id }
+        guard let target = sessions.first(where: { $0.id == open }) ?? sessions.last else {
+            client.newClaudeTab(projectID: projectID, prompt: prompt)
+            return nil
+        }
+        guard target.canReply else {
+            return target.replyProblem ?? "\(target.agentTitle) can't take a message right now."
+        }
+        macs.openTabs[key] = .session(target.id)
+        client.reply(sessionID: target.id, text: prompt)
+        return nil
     }
 
     /// The diff tab showing in this project, if one is.
