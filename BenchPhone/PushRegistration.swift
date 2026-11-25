@@ -20,6 +20,7 @@ final class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCent
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil) -> Bool {
         UNUserNotificationCenter.current().delegate = self
+        NotificationAnswers.register()
         #if DEBUG
         // Testing sealed notifications in the simulator: quiet permission
         // with no prompt, then the delivered notifications' words written to
@@ -72,6 +73,19 @@ final class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCent
         let session = (info["session"] as? String).flatMap(UUID.init(uuidString:))
         let url = (info["url"] as? String).flatMap(URL.init(string:))
         let host = info["host"] as? String
+        // A button on the notification: answer from here, without opening
+        // the app. iOS keeps the app running until this returns.
+        if let answer = NotificationAnswers.answer(for: response), let session {
+            let thread = response.notification.request.content.threadIdentifier
+            let projectText = info["project"] as? String
+            await MainActor.run { Analytics.capture(.notificationAnswered) }
+            let problem = await NotificationAnswers.send(answer, sessionID: session, host: host,
+                                                         client: Self.client, pairing: Self.pairing)
+            if let problem {
+                await NotificationAnswers.report(problem, thread: thread, project: projectText, session: session.uuidString, host: host)
+            }
+            return
+        }
         await MainActor.run {
             Analytics.capture(.notificationOpened)
             // The notification may be from a Mac other than the one we're

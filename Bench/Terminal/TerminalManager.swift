@@ -304,7 +304,8 @@ final class TerminalSession: TerminalSurfaceDelegate {
             if !userCanSee { Chime.play(.needsYou) }
             if !NSApp.isActive {
                 let name = manager?.store?.projects.first { $0.id == projectID }?.name ?? "Workbench"
-                manager?.notifier.notifyWaiting(project: name, tabID: tabID, projectID: projectID, agent: (agent ?? Agents.standard).name, question: details?.question)
+                manager?.notifier.notifyWaiting(project: name, tabID: tabID, projectID: projectID, agent: (agent ?? Agents.standard).name, question: details?.question,
+                                                  allowOrDeny: details?.isAllowOrDeny == true)
                 NSApp.requestUserAttention(.informationalRequest)
             }
         } else if wasWaiting {

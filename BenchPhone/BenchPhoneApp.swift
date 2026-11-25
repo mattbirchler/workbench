@@ -26,6 +26,9 @@ struct BenchPhoneApp: App {
         client.onSend = { PhoneAnalytics.log($0) }
         _client = State(initialValue: client)
         AppDelegate.client = client
+        // Here rather than when the first screen appears: a button on a
+        // notification can start the app with no screen at all.
+        AppDelegate.pairing = pairing
         #if DEBUG
         // The chat timing log to a file too, where a simulator's can be read.
         if let documents = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first {
