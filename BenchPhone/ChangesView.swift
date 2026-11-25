@@ -70,6 +70,8 @@ struct ChangesView: View {
                 LoadingState(text: "Reading the repository")
             }
         }
+        // What to do with the work next: Commit, Push, Open PR.
+        .safeAreaInset(edge: .bottom, spacing: 0) { ChangesActionBar(projectID: projectID) }
         .scrollContentBackground(.hidden)
         .background(PhoneTheme.canvas)
         .navigationTitle("Changes")
