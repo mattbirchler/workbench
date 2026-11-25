@@ -379,6 +379,7 @@ struct ProjectsView: View {
                     sessionLink(item) {
                         SessionRowView(project: item.project, session: item.session,
                                        icon: client.icons[item.project.parentID ?? item.project.id],
+                                       parentName: item.project.parentID.flatMap { id in client.snapshot?.projects.first { $0.id == id }?.name },
                                        selected: isSelected(item.project.id, session: item.session.id))
                     }
                     .listRowBackground(rowBackground(tint: tinted ? color : nil, selected: isSelected(item.project.id, session: item.session.id)))
@@ -507,7 +508,9 @@ struct ProjectsView: View {
             Button { navigator.open(projectID: item.project.id, sessionID: item.session.id) } label: { row() }
                 .buttonStyle(.plain)
         } else {
+            // No chevron: the card is the button, and the row keeps the width.
             NavigationLink(value: SessionRoute(projectID: item.project.id, sessionID: item.session.id)) { row() }
+                .navigationLinkIndicatorVisibility(.hidden)
         }
     }
 
@@ -786,6 +789,8 @@ private struct SessionRowView: View {
     let project: CompanionProject
     let session: CompanionSession
     let icon: Data?
+    /// The project a worktree belongs to, by name.
+    var parentName: String?
     var selected = false
 
     private var tint: Color? { PhoneTheme.color(for: session.activity) }
@@ -802,7 +807,10 @@ private struct SessionRowView: View {
             }
             .frame(width: 40, height: 40)
             VStack(alignment: .leading, spacing: 2) {
-                HStack(spacing: 5) {
+                // The name, what tells this session from its neighbors, then
+                // the clock and the mark at the end, where digits line up
+                // down the list.
+                HStack(alignment: .firstTextBaseline, spacing: 5) {
                     if project.isWorktree {
                         Image(systemName: "arrow.triangle.branch")
                             .font(.caption2.weight(.semibold))
@@ -813,39 +821,36 @@ private struct SessionRowView: View {
                         .foregroundStyle(PhoneTheme.ink)
                         .lineLimit(1)
                         .layoutPriority(1)
-                    if let tab = tabLabel {
-                        Text("·").foregroundStyle(PhoneTheme.inkMuted)
-                        Text(tab)
-                            .font(.subheadline)
+                    if let detail {
+                        Text(detail.text)
+                            .font(detail.isBranch ? .caption.monospaced() : .subheadline)
                             .foregroundStyle(PhoneTheme.inkMuted)
                             .lineLimit(1)
+                            .truncationMode(.middle)
                     }
-                }
-                HStack(alignment: .firstTextBaseline, spacing: 6) {
+                    Spacer(minLength: 6)
                     if let since = session.since, [.working, .remoteWorking, .waiting].contains(session.activity) {
                         ActiveTimer(since: since, activity: session.activity)
+                            .font(.footnote)
+                    } else if session.activity == .done, let stopped = session.stoppedAt {
+                        Age(date: stopped)
+                            .font(.footnote.monospacedDigit())
+                            .foregroundStyle(PhoneTheme.inkMuted)
                     }
-                    // What Claude is doing changes by the second, so one
-                    // line; a question or a summary is worth two.
-                    Text(line)
-                        .foregroundStyle(session.activity == .done ? PhoneTheme.inkMuted : PhoneTheme.ink.opacity(0.8))
-                        .lineLimit([.working, .remoteWorking].contains(session.activity) ? 1 : 2)
+                    ActivityMark(activity: session.activity, size: 13)
+                        .alignmentGuide(.firstTextBaseline) { $0[.bottom] - 2 }
                 }
-                .font(.subheadline)
+                // What Claude is doing changes by the second, so one
+                // line; a question or a summary is worth two.
+                Text(line)
+                    .font(.subheadline)
+                    .foregroundStyle(session.activity == .done ? PhoneTheme.inkMuted : PhoneTheme.ink.opacity(0.8))
+                    .lineLimit([.working, .remoteWorking].contains(session.activity) ? 1 : 2)
                 // The Mac's step bar: a segment per step, the current one glowing.
                 if let items = session.checklist, !items.isEmpty,
                    [.working, .remoteWorking, .waiting].contains(session.activity) {
                     ChecklistStepsBar(items: items, activity: session.activity)
                         .padding(.top, 4)
-                }
-            }
-            Spacer(minLength: 8)
-            VStack(alignment: .trailing, spacing: 5) {
-                ActivityMark(activity: session.activity, size: 15)
-                if session.activity == .done, let stopped = session.stoppedAt {
-                    Age(date: stopped)
-                        .font(.caption2.monospacedDigit())
-                        .foregroundStyle(PhoneTheme.inkMuted)
                 }
             }
         }
@@ -863,6 +868,15 @@ private struct SessionRowView: View {
     private var tabLabel: String? {
         guard project.sessions.count > 1, session.title != "Claude", !session.title.isEmpty else { return nil }
         return session.title
+    }
+
+    /// Beside the name: the tab when the project has several, else the
+    /// branch (a worktree's name is its branch already, so it gets the
+    /// project it belongs to).
+    private var detail: (text: String, isBranch: Bool)? {
+        if let tab = tabLabel { return (tab, false) }
+        if project.isWorktree { return parentName.map { ($0, false) } }
+        return project.branch.map { ($0, true) }
     }
 
     private var line: String {
