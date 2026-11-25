@@ -85,6 +85,9 @@ struct SessionView: View {
     /// the header, which does the switching, and the message box, which
     /// shows the model.
     @State private var switchingModel: ModelChoice?
+    /// True once an `@` has been typed here, when the project's files are
+    /// asked for so they can be suggested.
+    @State private var watchesFiles = false
     /// Counts answers to Claude's questions, for the tap that goes with each.
     @State private var answersSent = 0
     /// The messages as turns, with what you just sent merged in. Grouped
@@ -196,18 +199,7 @@ struct SessionView: View {
                             .shadow(color: .black.opacity(0.18), radius: 16, y: 6)
                             .transition(ChatMotion.card)
                     }
-                    if let session {
-                        ComposeBar(session: session, draft: $draft, attachments: $attachments, focused: $composing,
-                                   modelRequest: $modelRequest, showsModels: $showsModels,
-                                   switchingModel: switchingModel,
-                                   setMode: session.permissionMode == nil ? nil : { client.setPermissionMode(sessionID: sessionID, mode: $0) },
-                                   commands: (client.slashCommands[projectID] ?? []).filter { !$0.opensInTerminal },
-                                   stop: client.canInterrupt ? { client.interrupt(sessionID: sessionID) } : nil) { send() }
-                            .onChange(of: draft) { old, text in
-                                clearDictationEcho(text, was: old)
-                                continueList(text, was: old)
-                            }
-                    }
+                    if let session { composeBar(session) }
                 }
                 .frame(maxWidth: Self.column)
                 .frame(maxWidth: .infinity)
@@ -320,6 +312,29 @@ struct SessionView: View {
                 // goes to the project's changes, where its diff is.
                 .environment(\.turnReview, turnReview)
         }
+    }
+
+    /// The message box, apart from the screen's body, which is already as
+    /// much as the compiler will type-check.
+    private func composeBar(_ session: CompanionSession) -> some View {
+        let setMode: ((PermissionMode) -> Void)? = session.permissionMode == nil ? nil
+            : { client.setPermissionMode(sessionID: sessionID, mode: $0) }
+        let stop: (() -> Void)? = client.canInterrupt ? { client.interrupt(sessionID: sessionID) } : nil
+        let commands = (client.slashCommands[projectID] ?? []).filter { !$0.opensInTerminal }
+        return ComposeBar(session: session, draft: $draft, attachments: $attachments, focused: $composing,
+                          modelRequest: $modelRequest, showsModels: $showsModels,
+                          switchingModel: switchingModel, setMode: setMode, files: mentionFiles,
+                          commands: commands, stop: stop) { send() }
+            .onChange(of: draft) { old, text in
+                clearDictationEcho(text, was: old)
+                continueList(text, was: old)
+            }
+            .modifier(MentionFiles(projectID: projectID, draft: draft, isWatching: $watchesFiles))
+    }
+
+    /// The project's files, once an `@` has asked for them.
+    private var mentionFiles: [String] {
+        watchesFiles ? (client.filePaths[projectID] ?? []) : []
     }
 
     private var turnReview: TurnReviewActions? {
@@ -867,6 +882,82 @@ private struct SessionHaptics: ViewModifier {
     }
 }
 
+/// Asks the Mac for the project's files the first time an `@` is typed,
+/// so they can be suggested, and stops when the message box goes away.
+private struct MentionFiles: ViewModifier {
+    @Environment(CompanionClient.self) private var client
+    let projectID: UUID
+    let draft: String
+    @Binding var isWatching: Bool
+
+    func body(content: Content) -> some View {
+        content
+            .onChange(of: draft, initial: true) { _, text in
+                guard !isWatching, client.canBrowseFiles, FileMention.token(in: text) != nil else { return }
+                isWatching = true
+                client.watchFiles(projectID: projectID)
+            }
+            .onDisappear {
+                guard isWatching else { return }
+                isWatching = false
+                client.unwatchFiles(projectID: projectID)
+            }
+    }
+}
+
+extension FileMention {
+    /// The `@` word at the end of what's typed. The phone's field doesn't
+    /// say where its cursor is, so it's taken to be at the end, where you
+    /// are while typing.
+    static func token(in text: String) -> ComposerToken? {
+        guard let token = ComposerToken.at(text.utf16.count, in: text), token.kind == .file else { return nil }
+        return token
+    }
+}
+
+/// Files and folders that finish the `@` word being typed. Tap one to
+/// put it in the message.
+private struct FileSuggestions: View {
+    let mentions: [FileMention]
+    let pick: (FileMention) -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            ForEach(Array(mentions.enumerated()), id: \.element.id) { index, mention in
+                if index > 0 { Divider().padding(.leading, 14) }
+                Button { pick(mention) } label: {
+                    HStack(alignment: .firstTextBaseline, spacing: 8) {
+                        Image(systemName: mention.isDirectory ? "folder" : "doc")
+                            .font(.footnote)
+                            .foregroundStyle(PhoneTheme.inkMuted)
+                            .frame(width: 18)
+                        Text(mention.isDirectory ? mention.name + "/" : mention.name)
+                            .font(.system(.subheadline, design: .monospaced).weight(.semibold))
+                            .foregroundStyle(PhoneTheme.ink)
+                            .lineLimit(1)
+                        if !mention.folder.isEmpty {
+                            Text(mention.folder)
+                                .font(.system(.caption, design: .monospaced))
+                                .foregroundStyle(PhoneTheme.inkMuted)
+                                .lineLimit(1)
+                                .truncationMode(.head)
+                        }
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 10)
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(mention.path)
+                .accessibilityHint(mention.isDirectory ? "Puts this folder in the message" : "Puts this file in the message")
+            }
+        }
+        .padding(.vertical, 4)
+        .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+    }
+}
+
 private extension View {
     /// A small capsule in the message box: the model, the permission mode.
     func composerPill(fill: Color, stroke: Color? = nil) -> some View {
@@ -1317,6 +1408,10 @@ private struct ComposeBar: View {
     var switchingModel: ModelChoice?
     /// Switches the permission mode. Nil when the session reports none.
     var setMode: ((PermissionMode) -> Void)?
+    /// The project's files, suggested after an `@`. Empty until one is typed.
+    var files: [String] = []
+    /// The files and folders `@` can name, worked out once per listing.
+    @State private var mentionList: [FileMention] = []
     /// Slash commands to suggest while you type one.
     var commands: [SlashCommand] = []
     /// Stops Claude, when the Mac can.
@@ -1421,6 +1516,13 @@ private struct ComposeBar: View {
                         return
                     }
                     draft = command.completion
+                    focused.wrappedValue = true
+                }
+                .glassList()
+            } else if session.canReply, let token = mentionToken,
+                      case let matches = FileMention.matches(query: token.query, in: mentionList, limit: 5), !matches.isEmpty {
+                FileSuggestions(mentions: matches) { mention in
+                    draft.replaceSubrange(token.range, with: mention.insertion)
                     focused.wrappedValue = true
                 }
                 .glassList()
@@ -1529,6 +1631,8 @@ private struct ComposeBar: View {
         .animation(.snappy, value: ComposerDraft.mode(of: draft))
         .animation(.snappy, value: SlashCommand.matches(for: draft, in: commands, limit: 5)?.isEmpty ?? true)
         .animation(.snappy, value: showsModels)
+        .animation(.snappy, value: mentionToken?.query)
+        .onChange(of: files, initial: true) { _, paths in mentionList = FileMention.all(from: paths) }
         .onChange(of: showsModels) { _, shows in
             guard shows else { return }
             pickerEffort = session.effortLevel
@@ -1541,6 +1645,14 @@ private struct ComposeBar: View {
         }
         .onChange(of: field) { _, text in fieldChanged(to: text) }
         .onChange(of: draft, initial: true) { _, new in draftChanged(to: new) }
+    }
+
+    /// The `@` word being typed at the end of a message, which the
+    /// project's files can finish. Not in a shell command or a side
+    /// question, where an `@` is just an `@`.
+    private var mentionToken: ComposerToken? {
+        guard !isShellCommand, !isSideQuestion, !mentionList.isEmpty else { return nil }
+        return FileMention.token(in: draft)
     }
 
     /// The model and the permission mode sit in the box, under what you
