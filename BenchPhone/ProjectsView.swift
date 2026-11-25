@@ -37,6 +37,9 @@ struct ProjectsView: View {
     /// "ungrouped" for Ungrouped. Comma-separated.
     @AppStorage("collapsedGroups") private var collapsedGroups = ""
     @State private var query = ""
+    /// False until the first list has been drawn and had a moment to
+    /// settle, so its arrival isn't animated.
+    @State private var hasSettled = false
     @Environment(\.horizontalSizeClass) private var sizeClass
     @State private var columns = ProjectsView.debugShowsInspector ? NavigationSplitViewVisibility.detailOnly : .all
     /// The window's width, to tell when the sidebar has to cover the chat
@@ -261,6 +264,16 @@ struct ProjectsView: View {
                 heldSnapshot = nil
             }
         }
+        // The first list isn't animated in. The row animations below also
+        // caught the list's own first layout, so it grew open from nothing,
+        // and one taller than the screen came to rest scrolled, with the
+        // top card under the title.
+        .transaction { if !hasSettled { $0.animation = nil } }
+        .task(id: board != nil) {
+            guard board != nil, !hasSettled else { return }
+            try? await Task.sleep(for: .milliseconds(700))
+            hasSettled = true
+        }
         .animation(.snappy(duration: 0.25), value: heldSnapshot == nil)
         .animation(.snappy(duration: 0.25), value: pendingPlacement)
         .sensoryFeedback(.impact(weight: .light), trigger: placementTaps)
@@ -281,6 +294,11 @@ struct ProjectsView: View {
         // Counted from the Mac's live list, not the rows on screen, so
         // clearing a search or reconnecting doesn't set it off.
         .sensoryFeedback(.impact(weight: .light), trigger: needingYou) { old, new in
+            guard let old, let new else { return false }
+            return !new.isSubset(of: old)
+        }
+        // And a firmer one when a session finishes while you're looking.
+        .sensoryFeedback(.success, trigger: finished) { old, new in
             guard let old, let new else { return false }
             return !new.isSubset(of: old)
         }
@@ -350,6 +368,13 @@ struct ProjectsView: View {
             .filter { $0.activity == .waiting || $0.activity == .attention }.map(\.id))
     }
 
+    /// The tabs that have finished, or nil while the list is an old one
+    /// or hasn't arrived.
+    private var finished: Set<UUID>? {
+        guard !client.isShowingSaved, client.status == .connected, let snapshot = client.snapshot else { return nil }
+        return Set(snapshot.projects.flatMap(\.sessions).filter { $0.activity == .done }.map(\.id))
+    }
+
     /// Pins or unpins, moving the row right away.
     private func pin(_ project: CompanionProject, _ pinned: Bool) {
         placementTaps += 1
@@ -379,9 +404,11 @@ struct ProjectsView: View {
                     sessionLink(item) {
                         SessionRowView(project: item.project, session: item.session,
                                        icon: client.icons[item.project.parentID ?? item.project.id],
+                                       parentName: item.project.parentID.flatMap { id in client.snapshot?.projects.first { $0.id == id }?.name },
                                        selected: isSelected(item.project.id, session: item.session.id))
                     }
-                    .listRowBackground(rowBackground(tint: tinted ? color : nil, selected: isSelected(item.project.id, session: item.session.id)))
+                    .listRowBackground(rowBackground(tint: tinted ? color : nil, selected: isSelected(item.project.id, session: item.session.id),
+                                                     breathes: tinted, finishedAt: item.session.activity == .done ? item.session.stoppedAt : nil))
                     .swipeActions(edge: .leading) { placementButtons(item.project, leading: true) }
                     .swipeActions(edge: .trailing, allowsFullSwipe: false) { placementButtons(item.project, leading: false) }
                     .contextMenu { placementMenu(item.project, session: item.session) }
@@ -413,7 +440,7 @@ struct ProjectsView: View {
                 let key = entry.group.id.uuidString
                 Section {
                     if !isFolded(key) {
-                        ForEach(entry.projects) { project in projectRow(project) }
+                        ForEach(entry.projects) { project in projectRow(project, in: entry.projects) }
                     }
                 } header: {
                     FoldingHeader(title: entry.group.name, count: entry.projects.count,
@@ -424,7 +451,7 @@ struct ProjectsView: View {
         if !ungrouped.isEmpty {
             Section {
                 if !isFolded("ungrouped") {
-                    ForEach(ungrouped) { project in projectRow(project, compact: true) }
+                    ForEach(ungrouped) { project in projectRow(project, in: ungrouped, compact: true) }
                 }
             } header: {
                 FoldingHeader(title: "Ungrouped", count: ungrouped.count, collapsed: foldBinding("ungrouped"))
@@ -451,7 +478,7 @@ struct ProjectsView: View {
     private func activitySections(_ board: Board) -> some View {
         if !board.pinned.isEmpty {
             Section {
-                ForEach(board.pinned) { project in projectRow(project) }
+                ForEach(board.pinned) { project in projectRow(project, in: board.pinned) }
                     .reorderable()
                     // Reordering draws its own row background; put the card back.
                     .listRowBackground(PhoneTheme.surface)
@@ -466,7 +493,7 @@ struct ProjectsView: View {
                  (title: "Projects", projects: board.unsorted, compact: false)], id: \.title) { group in
             if !group.projects.isEmpty {
                 Section {
-                    ForEach(group.projects) { project in projectRow(project, compact: group.compact) }
+                    ForEach(group.projects) { project in projectRow(project, in: group.projects, compact: group.compact) }
                 } header: {
                     SectionHeader(title: group.title, color: nil, count: nil,
                                   hint: group.compact ? board.recentHint : nil)
@@ -476,7 +503,7 @@ struct ProjectsView: View {
         if !board.inactive.isEmpty {
             Section {
                 if !inactiveCollapsed {
-                    ForEach(board.inactive) { project in projectRow(project, compact: true, dimmed: true) }
+                    ForEach(board.inactive) { project in projectRow(project, in: board.inactive, compact: true, dimmed: true) }
                 }
             } header: {
                 FoldingHeader(title: "Inactive", count: board.inactive.count, collapsed: $inactiveCollapsed)
@@ -485,12 +512,15 @@ struct ProjectsView: View {
     }
 
     /// While offline, a row says how many prompts wait for the Mac.
-    private func projectRow(_ project: CompanionProject, compact: Bool = false, dimmed: Bool = false) -> some View {
+    /// `siblings` are the rows of its section: a worktree whose project is
+    /// among them hangs off it.
+    private func projectRow(_ project: CompanionProject, in siblings: [CompanionProject], compact: Bool = false, dimmed: Bool = false) -> some View {
         let selected = isSelected(project.id, session: nil)
+        let nested = project.isWorktree && siblings.contains { $0.id == project.parentID }
         let queued = client.isShowingSaved ? queue.items(projectID: project.id).filter { $0.status != .expired }.count : 0
         return projectLink(project.id) {
             ProjectRowView(project: project, icon: client.icons[project.parentID ?? project.id],
-                           selected: selected, compact: compact, queued: queued)
+                           selected: selected, compact: compact, nested: nested, queued: queued)
                 .opacity(dimmed && !selected ? 0.6 : 1)
         }
         .listRowBackground(rowBackground(tint: nil, selected: selected, light: compact))
@@ -507,7 +537,9 @@ struct ProjectsView: View {
             Button { navigator.open(projectID: item.project.id, sessionID: item.session.id) } label: { row() }
                 .buttonStyle(.plain)
         } else {
+            // No chevron: the card is the button, and the row keeps the width.
             NavigationLink(value: SessionRoute(projectID: item.project.id, sessionID: item.session.id)) { row() }
+                .navigationLinkIndicatorVisibility(.hidden)
         }
     }
 
@@ -519,6 +551,7 @@ struct ProjectsView: View {
                 .buttonStyle(.plain)
         } else {
             NavigationLink(value: id) { row() }
+                .navigationLinkIndicatorVisibility(.hidden)
         }
     }
 
@@ -528,10 +561,16 @@ struct ProjectsView: View {
 
     /// `light` is for Recent and Inactive: a fainter card than the ones
     /// above it.
-    private func rowBackground(tint: Color?, selected: Bool, light: Bool = false) -> some View {
+    /// A row waiting on you breathes, and one that just finished takes a
+    /// sweep of light, as the Mac's rows do.
+    private func rowBackground(tint: Color?, selected: Bool, light: Bool = false,
+                               breathes: Bool = false, finishedAt: Date? = nil) -> some View {
         ZStack {
             PhoneTheme.surface.opacity(light ? 0.45 : 1)
-            if let tint { tint.opacity(0.1) }
+            if let tint {
+                if breathes { BreathingTint(color: tint) } else { tint.opacity(0.1) }
+            }
+            if let finishedAt { FinishSweep(finishedAt: finishedAt) }
             if selected { PhoneTheme.ink.opacity(0.08) }
         }
     }
@@ -750,7 +789,7 @@ private struct SectionHeader: View {
     var hint: String?
 
     var body: some View {
-        HStack(spacing: 6) {
+        HStack(spacing: 7) {
             if let color {
                 Circle().fill(color).frame(width: 7, height: 7)
             }
@@ -760,23 +799,45 @@ private struct SectionHeader: View {
                     .rotationEffect(.degrees(45))
                     .foregroundStyle(PhoneTheme.inkMuted)
             }
-            Text(title)
-                .font(.footnote.weight(.semibold))
-                .foregroundStyle(PhoneTheme.ink)
+            Text(title).sectionEyebrow()
+            SectionHairline()
             if let count {
                 Text("\(count)")
-                    .font(.footnote.monospacedDigit())
+                    .font(.caption.monospacedDigit())
                     .foregroundStyle(PhoneTheme.inkMuted)
             }
             if let hint {
-                Spacer(minLength: 8)
                 Text(hint)
-                    .font(.footnote)
+                    .font(.caption)
                     .foregroundStyle(PhoneTheme.inkMuted)
             }
         }
         .textCase(nil)
         .padding(.leading, 2)
+        .accessibilityElement(children: .combine)
+        .accessibilityAddTraits(.isHeader)
+    }
+}
+
+/// The line a section's name runs into, out to its count.
+private struct SectionHairline: View {
+    var body: some View {
+        Rectangle()
+            .fill(PhoneTheme.hairline)
+            .frame(height: 1)
+            .frame(maxWidth: .infinity)
+    }
+}
+
+private extension Text {
+    /// A section's name: small, spaced capitals.
+    func sectionEyebrow() -> some View {
+        font(.caption2.weight(.semibold))
+            .tracking(1.1)
+            .textCase(.uppercase)
+            .foregroundStyle(PhoneTheme.ink.opacity(0.75))
+            .lineLimit(1)
+            .fixedSize()
     }
 }
 
@@ -786,6 +847,8 @@ private struct SessionRowView: View {
     let project: CompanionProject
     let session: CompanionSession
     let icon: Data?
+    /// The project a worktree belongs to, by name.
+    var parentName: String?
     var selected = false
 
     private var tint: Color? { PhoneTheme.color(for: session.activity) }
@@ -802,7 +865,10 @@ private struct SessionRowView: View {
             }
             .frame(width: 40, height: 40)
             VStack(alignment: .leading, spacing: 2) {
-                HStack(spacing: 5) {
+                // The name, what tells this session from its neighbors, then
+                // the clock and the mark at the end, where digits line up
+                // down the list.
+                HStack(alignment: .firstTextBaseline, spacing: 5) {
                     if project.isWorktree {
                         Image(systemName: "arrow.triangle.branch")
                             .font(.caption2.weight(.semibold))
@@ -813,33 +879,40 @@ private struct SessionRowView: View {
                         .foregroundStyle(PhoneTheme.ink)
                         .lineLimit(1)
                         .layoutPriority(1)
-                    if let tab = tabLabel {
-                        Text("·").foregroundStyle(PhoneTheme.inkMuted)
-                        Text(tab)
-                            .font(.subheadline)
+                    if let detail {
+                        Text(detail.text)
+                            .font(detail.isBranch ? .caption.monospaced() : .subheadline)
                             .foregroundStyle(PhoneTheme.inkMuted)
                             .lineLimit(1)
+                            .truncationMode(.middle)
                     }
-                }
-                HStack(alignment: .firstTextBaseline, spacing: 6) {
+                    Spacer(minLength: 6)
                     if let since = session.since, [.working, .remoteWorking, .waiting].contains(session.activity) {
                         ActiveTimer(since: since, activity: session.activity)
+                            .font(.footnote)
+                    } else if session.activity == .done, let stopped = session.stoppedAt {
+                        Age(date: stopped)
+                            .font(.footnote.monospacedDigit())
+                            .foregroundStyle(PhoneTheme.inkMuted)
                     }
-                    // What Claude is doing changes by the second, so one
-                    // line; a question or a summary is worth two.
-                    Text(line)
-                        .foregroundStyle(session.activity == .done ? PhoneTheme.inkMuted : PhoneTheme.ink.opacity(0.8))
-                        .lineLimit([.working, .remoteWorking].contains(session.activity) ? 1 : 2)
+                    ActivityMark(activity: session.activity, size: 13)
+                        .alignmentGuide(.firstTextBaseline) { $0[.bottom] - 2 }
                 }
-                .font(.subheadline)
-            }
-            Spacer(minLength: 8)
-            VStack(alignment: .trailing, spacing: 5) {
-                ActivityMark(activity: session.activity, size: 15)
-                if session.activity == .done, let stopped = session.stoppedAt {
-                    Age(date: stopped)
-                        .font(.caption2.monospacedDigit())
-                        .foregroundStyle(PhoneTheme.inkMuted)
+                // What Claude is doing changes by the second, so one
+                // line; a question or a summary is worth two.
+                Text(line)
+                    .font(.subheadline)
+                    .foregroundStyle(session.activity == .done ? PhoneTheme.inkMuted : PhoneTheme.ink.opacity(0.8))
+                    .lineLimit([.working, .remoteWorking].contains(session.activity) ? 1 : 2)
+                // The Mac's step bar: a segment per step, the current one glowing.
+                if let items = session.checklist, !items.isEmpty,
+                   [.working, .remoteWorking, .waiting].contains(session.activity) {
+                    ChecklistStepsBar(items: items, activity: session.activity)
+                        .padding(.top, 4)
+                }
+                if let pr = project.pullRequest {
+                    PullRequestChip(pr: pr)
+                        .padding(.top, 4)
                 }
             }
         }
@@ -857,6 +930,15 @@ private struct SessionRowView: View {
     private var tabLabel: String? {
         guard project.sessions.count > 1, session.title != "Claude", !session.title.isEmpty else { return nil }
         return session.title
+    }
+
+    /// Beside the name: the tab when the project has several, else the
+    /// branch (a worktree's name is its branch already, so it gets the
+    /// project it belongs to).
+    private var detail: (text: String, isBranch: Bool)? {
+        if let tab = tabLabel { return (tab, false) }
+        if project.isWorktree { return parentName.map { ($0, false) } }
+        return project.branch.map { ($0, true) }
     }
 
     private var line: String {
@@ -885,16 +967,23 @@ private struct ProjectRowView: View {
     var selected = false
     /// Recent and Inactive: a smaller icon and name, no status line.
     var compact = false
+    /// A worktree shown right under its project, tied to it by an elbow.
+    var nested = false
     /// Prompts waiting for the Mac, shown while it's offline.
     var queued = 0
 
     var body: some View {
         HStack(spacing: compact ? 10 : 12) {
+            if nested {
+                // An agent's row hangs off the project above it.
+                WorktreeConnector()
+                    .frame(width: compact ? 14 : 20, height: compact ? 28 : 40)
+            }
             CompanionProjectIcon(project: project, icon: icon, size: compact ? 22 : 32)
                 .frame(width: compact ? 28 : 40, height: compact ? 28 : 40)
             VStack(alignment: .leading, spacing: 2) {
                 HStack(spacing: 5) {
-                    if project.isWorktree {
+                    if project.isWorktree, !nested {
                         Image(systemName: "arrow.triangle.branch")
                             .font(.caption2.weight(.semibold))
                             .foregroundStyle(PhoneTheme.inkMuted)
@@ -930,6 +1019,24 @@ private struct ProjectRowView: View {
     }
 }
 
+/// The elbow that ties a worktree's row to its project: down from the row
+/// above, then across to the icon.
+private struct WorktreeConnector: View {
+    var body: some View {
+        GeometryReader { proxy in
+            Path { path in
+                let x = proxy.size.width * 0.3, mid = proxy.size.height / 2, radius: CGFloat = 5
+                path.move(to: CGPoint(x: x, y: -10))
+                path.addLine(to: CGPoint(x: x, y: mid - radius))
+                path.addQuadCurve(to: CGPoint(x: x + radius, y: mid), control: CGPoint(x: x, y: mid))
+                path.addLine(to: CGPoint(x: proxy.size.width + 4, y: mid))
+            }
+            .stroke(PhoneTheme.inkMuted.opacity(0.45), style: StrokeStyle(lineWidth: 1.5, lineCap: .round))
+        }
+        .accessibilityHidden(true)
+    }
+}
+
 /// "Inactive" with a count, folding the projects under it away. A dot
 /// shows when one of them needs you, so folding hides nothing urgent.
 /// A section's name and count, folding its rows away when tapped:
@@ -943,14 +1050,12 @@ private struct FoldingHeader: View {
         Button {
             collapsed.toggle()
         } label: {
-            HStack(spacing: 6) {
-                Text(title)
-                    .font(.footnote.weight(.semibold))
-                    .lineLimit(1)
+            HStack(spacing: 7) {
+                Text(title).sectionEyebrow()
+                SectionHairline()
                 Text("\(count)")
-                    .font(.footnote.monospacedDigit())
+                    .font(.caption.monospacedDigit())
                     .foregroundStyle(PhoneTheme.inkMuted)
-                Spacer(minLength: 0)
                 Image(systemName: "chevron.right")
                     .font(.footnote.weight(.semibold))
                     .rotationEffect(.degrees(collapsed ? 0 : 90))
@@ -1127,6 +1232,146 @@ private struct ProjectStatusLine: View {
                 }
             }
         case .branch: ("arrow.triangle.branch", PhoneTheme.inkMuted)
+        }
+    }
+}
+
+/// A session's pull request in a small capsule: its number and how its
+/// checks stand, like "#42 · 7/7 checks".
+private struct PullRequestChip: View {
+    let pr: CompanionPullRequest
+
+    var body: some View {
+        HStack(spacing: 4) {
+            Image(systemName: symbol)
+                .font(.caption2.weight(.semibold))
+                .foregroundStyle(color)
+            // The state colors are too light to read as small text on a
+            // light card, so the words stay in ink and the tint says it.
+            Text(text)
+                .font(.caption.weight(.medium).monospacedDigit())
+                .foregroundStyle(PhoneTheme.ink.opacity(0.85))
+                .lineLimit(1)
+        }
+        .padding(.horizontal, 8)
+        .padding(.vertical, 3)
+        .background(color.opacity(0.14), in: Capsule())
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(spoken)
+    }
+
+    private var text: String {
+        switch pr.state {
+        case .merged: return "#\(pr.number) merged"
+        case .closed: return "#\(pr.number) closed"
+        case .draft: return "#\(pr.number) draft"
+        case .open:
+            switch pr.checks {
+            case .failing:
+                let failing = pr.failingNames.count
+                return failing > 0 ? "#\(pr.number) · \(failing) failing" : "#\(pr.number) · checks failing"
+            case .passing, .pending:
+                return pr.totalCount > 0 ? "#\(pr.number) · \(pr.passedCount)/\(pr.totalCount) checks" : "#\(pr.number)"
+            case .none:
+                return "#\(pr.number)"
+            }
+        }
+    }
+
+    private var spoken: String {
+        switch pr.state {
+        case .merged: return "Pull request \(pr.number), merged"
+        case .closed: return "Pull request \(pr.number), closed"
+        case .draft: return "Pull request \(pr.number), draft"
+        case .open:
+            switch pr.checks {
+            case .failing: return "Pull request \(pr.number), checks failing"
+            case .passing, .pending:
+                return pr.totalCount > 0 ? "Pull request \(pr.number), \(pr.passedCount) of \(pr.totalCount) checks passed" : "Pull request \(pr.number)"
+            case .none: return "Pull request \(pr.number)"
+            }
+        }
+    }
+
+    private var symbol: String {
+        switch pr.state {
+        case .merged: "checkmark.circle.fill"
+        case .closed: "xmark.circle"
+        case .draft: "pencil.circle"
+        case .open:
+            switch pr.checks {
+            case .passing: "checkmark.circle.fill"
+            case .pending: "clock.fill"
+            case .failing: "xmark.circle.fill"
+            case .none: "arrow.triangle.pull"
+            }
+        }
+    }
+
+    private var color: Color {
+        switch pr.state {
+        case .merged: PhoneTheme.merged
+        case .closed, .draft: PhoneTheme.inkMuted
+        case .open:
+            switch pr.checks {
+            case .passing, .none: PhoneTheme.palette.done
+            case .pending: PhoneTheme.waiting
+            case .failing: PhoneTheme.error
+            }
+        }
+    }
+}
+
+/// The wash behind a row that's waiting on you, slowly rising and falling
+/// so it reads as asking. Still with Reduce Motion on.
+private struct BreathingTint: View {
+    let color: Color
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    var body: some View {
+        if reduceMotion {
+            color.opacity(0.1)
+        } else {
+            // Drawn from the clock, like ActivityMark, so no animation that
+            // never ends sits inside a list row.
+            TimelineView(.animation(minimumInterval: 1.0 / 20)) { context in
+                let phase = context.date.timeIntervalSinceReferenceDate.truncatingRemainder(dividingBy: 3.6) / 3.6
+                color.opacity(0.07 + 0.08 * (0.5 - 0.5 * cos(phase * 2 * .pi)))
+            }
+        }
+    }
+}
+
+/// One band of light across a row whose session just finished. Rows that
+/// finished a while ago, and Reduce Motion, get nothing.
+private struct FinishSweep: View {
+    let finishedAt: Date
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var position: CGFloat = -1
+    @State private var isSweeping = false
+
+    var body: some View {
+        GeometryReader { proxy in
+            if isSweeping {
+                LinearGradient(colors: [.clear, PhoneTheme.palette.done.opacity(0.28), .clear],
+                               startPoint: .leading, endPoint: .trailing)
+                    .frame(width: proxy.size.width * 0.6)
+                    .offset(x: position * proxy.size.width)
+                    .animation(.easeOut(duration: 1.1), value: position)
+            }
+        }
+        .clipped()
+        .allowsHitTesting(false)
+        .accessibilityHidden(true)
+        .task(id: finishedAt) {
+            guard !reduceMotion, Date.now.timeIntervalSince(finishedAt) < 6 else { return }
+            position = -0.6
+            isSweeping = true
+            // A beat, so the band is drawn at the start before it moves.
+            try? await Task.sleep(for: .milliseconds(50))
+            position = 1
+            try? await Task.sleep(for: .seconds(1.2))
+            isSweeping = false
         }
     }
 }

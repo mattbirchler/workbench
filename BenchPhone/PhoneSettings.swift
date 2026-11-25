@@ -157,6 +157,9 @@ struct PhoneSettings: View {
                 ForEach(MacTheme.Source.allCases) { Text($0.title).tag($0) }
             }
             .pickerStyle(.segmented)
+            .sensoryFeedback(.selection, trigger: theme.source)
+            .sensoryFeedback(.selection, trigger: theme.lightThemeID + theme.darkThemeID)
+            .sensoryFeedback(.selection, trigger: appIcon)
             if theme.source == .builtIn {
                 themeRow("Light Mode", BuiltInTheme.light, $theme.lightThemeID)
                 themeRow("Dark Mode", BuiltInTheme.dark, $theme.darkThemeID)

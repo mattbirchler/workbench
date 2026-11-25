@@ -15,6 +15,11 @@ struct PairView: View {
     @State private var problem: String?
 
     var body: some View {
+        pairingStack
+            .sensoryFeedback(.error, trigger: problem) { _, new in new != nil }
+    }
+
+    private var pairingStack: some View {
         NavigationStack {
             Group {
                 if isSheet {

@@ -61,6 +61,8 @@ struct BenchPhoneApp: App {
                 }
                 #endif
             }
+            // Pairing took: the list is about to take the pair screen's place.
+            .sensoryFeedback(.success, trigger: pairing.info != nil) { old, new in !old && new }
             .environment(pairing)
             .environment(client)
             .environment(navigator)

@@ -80,6 +80,8 @@ struct SessionView: View {
     @State private var draft: String
     @State private var attachments: [PendingAttachment]
     @State private var problem: String?
+    /// Counts answers to Claude's questions, for the tap that goes with each.
+    @State private var answersSent = 0
     /// The messages as turns, with what you just sent merged in. Grouped
     /// once per change, not once per draw.
     @State private var conversation = Conversation()
@@ -149,6 +151,7 @@ struct SessionView: View {
 
     var body: some View {
         conversationView
+            .modifier(SessionHaptics(answersSent: answersSent, activity: session?.activity, model: session?.model))
             // The bar lives in the scroll view's safe area, so the scroll
             // view knows where its visible bottom is: the last message
             // lands above the bar, not under it, and the bar's height can
@@ -160,6 +163,7 @@ struct SessionView: View {
                     // counted on it), else the agents, else a note.
                     if let session, let questions = session.questions {
                         QuestionCard(questions: questions, plan: PlanText.forApproval(questions, in: messages), agentName: session.agentTitle) { answers in
+                            answersSent += 1
                             client.answerQuestions(sessionID: sessionID, answers: answers)
                         }
                         .id(questions)
@@ -813,6 +817,27 @@ struct AgentsBar: View {
     }
 }
 
+/// The taps a session gives while you watch it: an answer sent, the turn
+/// ending, the model changing. Apart from the screen's body, which is
+/// already as much as the compiler will type-check.
+private struct SessionHaptics: ViewModifier {
+    let answersSent: Int
+    let activity: ActivityKind?
+    let model: String?
+
+    func body(content: Content) -> some View {
+        content
+            .sensoryFeedback(.success, trigger: answersSent)
+            .sensoryFeedback(.success, trigger: activity) { (old: ActivityKind?, new: ActivityKind?) -> Bool in
+                guard let old, let new else { return false }
+                return new == ActivityKind.done && (old == ActivityKind.working || old == ActivityKind.remoteWorking)
+            }
+            .sensoryFeedback(.selection, trigger: model) { (old: String?, new: String?) -> Bool in
+                old != nil && new != nil
+            }
+    }
+}
+
 /// Claude's checklist, pinned above the message box like the terminal's.
 /// Folded, it's one line: how long the turn has run, the current step, and
 /// steps done over a progress bar. Tap to open the whole list above it.
@@ -827,6 +852,11 @@ struct ChecklistBar: View {
     private var tint: Color { PhoneTheme.color(for: session.activity) ?? PhoneTheme.hairline }
 
     var body: some View {
+        // A soft tick as each step is checked off.
+        card.sensoryFeedback(.impact(flexibility: .soft, intensity: 0.7), trigger: items.doneCount) { old, new in new > old }
+    }
+
+    private var card: some View {
         VStack(spacing: 0) {
             if expanded {
                 ChecklistRows(items: items, textSize: 15, spacing: 9)
@@ -857,16 +887,15 @@ struct ChecklistBar: View {
                                 .foregroundStyle(PhoneTheme.inkMuted)
                                 .accessibilityLabel("\(running) agents working")
                         }
-                        Text("\(items.doneCount)/\(items.count)")
-                            .monospaced()
-                            .foregroundStyle(PhoneTheme.inkMuted)
                         Image(systemName: "chevron.up")
                             .font(.caption.weight(.semibold))
                             .foregroundStyle(PhoneTheme.inkMuted)
                             .rotationEffect(.degrees(expanded ? 180 : 0))
                     }
                     .font(.subheadline)
-                    ChecklistProgressBar(progress: items.progress)
+                    // The same segments as the project list and the Mac, with
+                    // the count at the end.
+                    ChecklistStepsBar(items: items, activity: session.activity)
                 }
                 .padding(.horizontal, 14)
                 .padding(.vertical, 12)
