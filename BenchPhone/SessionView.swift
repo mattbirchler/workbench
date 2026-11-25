@@ -960,10 +960,11 @@ private struct FileSuggestions: View {
 
 private extension View {
     /// A small capsule in the message box: the model, the permission mode.
-    func composerPill(fill: Color, stroke: Color? = nil) -> some View {
+    /// `shrinks` lets its words be cut short when there's no room for them.
+    func composerPill(fill: Color, stroke: Color? = nil, shrinks: Bool = false) -> some View {
         font(.caption.weight(.medium))
             .lineLimit(1)
-            .fixedSize()
+            .fixedSize(horizontal: !shrinks, vertical: true)
             .padding(.horizontal, 9)
             .padding(.vertical, 5)
             .background(fill, in: Capsule())
@@ -978,6 +979,8 @@ private extension View {
 private struct ModePill: View {
     let mode: PermissionMode
     let set: (PermissionMode) -> Void
+    /// Only its symbol, where there's no room for its name.
+    var compact = false
     @State private var switching: PermissionMode?
 
     private var shown: PermissionMode { switching ?? mode }
@@ -1002,8 +1005,10 @@ private struct ModePill: View {
             HStack(spacing: 4) {
                 Image(systemName: shown.symbol)
                     .imageScale(.small)
-                Text(shown.name)
-                    .contentTransition(.opacity)
+                if !compact {
+                    Text(shown.name)
+                        .contentTransition(.opacity)
+                }
                 if switching != nil {
                     ProgressView().controlSize(.mini)
                 } else {
@@ -1668,20 +1673,33 @@ private struct ComposeBar: View {
         return session.permissionMode.flatMap(PermissionMode.init(rawValue:))
     }
 
+    /// Both pills in full where they fit. On a narrow screen (an iPhone
+    /// Duo's outer display, with its bar of buttons down the side) the
+    /// mode gives up its name first, and then the model's name is cut
+    /// short: pills that insisted on their width pushed the whole screen
+    /// off its left edge.
     private var pills: some View {
+        ViewThatFits(in: .horizontal) {
+            pillRow(compactMode: false, shrinks: false)
+            pillRow(compactMode: true, shrinks: false)
+            pillRow(compactMode: true, shrinks: true)
+        }
+    }
+
+    private func pillRow(compactMode: Bool, shrinks: Bool) -> some View {
         HStack(spacing: 6) {
             if session.model != nil || session.canRunCommand {
-                modelPill
+                modelPill(shrinks: shrinks)
             }
             if let mode, let setMode {
-                ModePill(mode: mode, set: setMode)
+                ModePill(mode: mode, set: setMode, compact: compactMode)
             }
             Spacer(minLength: 0)
         }
     }
 
     /// The model. Tap for the same list `/model` opens.
-    private var modelPill: some View {
+    private func modelPill(shrinks: Bool) -> some View {
         let costly = ModelChoice.usesLimitsFaster(model: session.model, switching: switchingModel)
         let current = switchingModel?.name ?? session.model
         return Button {
@@ -1706,7 +1724,7 @@ private struct ComposeBar: View {
             }
             .animation(.easeInOut(duration: 0.15), value: current)
             .composerPill(fill: costly ? ModelChoice.costlyColor.opacity(0.16) : PhoneTheme.ink.opacity(0.07),
-                          stroke: costly ? ModelChoice.costlyColor.opacity(0.35) : nil)
+                          stroke: costly ? ModelChoice.costlyColor.opacity(0.35) : nil, shrinks: shrinks)
         }
         .buttonStyle(.plain)
         .accessibilityLabel("Model \(current ?? "unknown")")

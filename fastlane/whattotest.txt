@@ -10,4 +10,6 @@ New in this build: answering from notifications, widgets, and git actions from t
 
 • Commit, Push and Open PR. The Changes screen has a bar at the bottom for the next step. It asks the project's agent to do it, shows how it's going, and ends with the result. Tap a pull request card to open it.
 
+• Fixed: on a narrow screen (an iPhone Duo's outer display) the model and permission pills pushed the whole chat off the left edge. The permission pill now shrinks to its symbol when there isn't room.
+
 Things to look for: notification buttons that don't show or don't reach the Mac, an Allow that answers the wrong question, widgets that stay empty after you've opened the app, dashboard colors that are hard to read on your wallpaper, and git actions that finish without saying how they went.
