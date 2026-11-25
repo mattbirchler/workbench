@@ -414,7 +414,7 @@ struct ProjectsView: View {
                 let key = entry.group.id.uuidString
                 Section {
                     if !isFolded(key) {
-                        ForEach(entry.projects) { project in projectRow(project) }
+                        ForEach(entry.projects) { project in projectRow(project, in: entry.projects) }
                     }
                 } header: {
                     FoldingHeader(title: entry.group.name, count: entry.projects.count,
@@ -425,7 +425,7 @@ struct ProjectsView: View {
         if !ungrouped.isEmpty {
             Section {
                 if !isFolded("ungrouped") {
-                    ForEach(ungrouped) { project in projectRow(project, compact: true) }
+                    ForEach(ungrouped) { project in projectRow(project, in: ungrouped, compact: true) }
                 }
             } header: {
                 FoldingHeader(title: "Ungrouped", count: ungrouped.count, collapsed: foldBinding("ungrouped"))
@@ -452,7 +452,7 @@ struct ProjectsView: View {
     private func activitySections(_ board: Board) -> some View {
         if !board.pinned.isEmpty {
             Section {
-                ForEach(board.pinned) { project in projectRow(project) }
+                ForEach(board.pinned) { project in projectRow(project, in: board.pinned) }
                     .reorderable()
                     // Reordering draws its own row background; put the card back.
                     .listRowBackground(PhoneTheme.surface)
@@ -467,7 +467,7 @@ struct ProjectsView: View {
                  (title: "Projects", projects: board.unsorted, compact: false)], id: \.title) { group in
             if !group.projects.isEmpty {
                 Section {
-                    ForEach(group.projects) { project in projectRow(project, compact: group.compact) }
+                    ForEach(group.projects) { project in projectRow(project, in: group.projects, compact: group.compact) }
                 } header: {
                     SectionHeader(title: group.title, color: nil, count: nil,
                                   hint: group.compact ? board.recentHint : nil)
@@ -477,7 +477,7 @@ struct ProjectsView: View {
         if !board.inactive.isEmpty {
             Section {
                 if !inactiveCollapsed {
-                    ForEach(board.inactive) { project in projectRow(project, compact: true, dimmed: true) }
+                    ForEach(board.inactive) { project in projectRow(project, in: board.inactive, compact: true, dimmed: true) }
                 }
             } header: {
                 FoldingHeader(title: "Inactive", count: board.inactive.count, collapsed: $inactiveCollapsed)
@@ -486,12 +486,15 @@ struct ProjectsView: View {
     }
 
     /// While offline, a row says how many prompts wait for the Mac.
-    private func projectRow(_ project: CompanionProject, compact: Bool = false, dimmed: Bool = false) -> some View {
+    /// `siblings` are the rows of its section: a worktree whose project is
+    /// among them hangs off it.
+    private func projectRow(_ project: CompanionProject, in siblings: [CompanionProject], compact: Bool = false, dimmed: Bool = false) -> some View {
         let selected = isSelected(project.id, session: nil)
+        let nested = project.isWorktree && siblings.contains { $0.id == project.parentID }
         let queued = client.isShowingSaved ? queue.items(projectID: project.id).filter { $0.status != .expired }.count : 0
         return projectLink(project.id) {
             ProjectRowView(project: project, icon: client.icons[project.parentID ?? project.id],
-                           selected: selected, compact: compact, queued: queued)
+                           selected: selected, compact: compact, nested: nested, queued: queued)
                 .opacity(dimmed && !selected ? 0.6 : 1)
         }
         .listRowBackground(rowBackground(tint: nil, selected: selected, light: compact))
@@ -522,6 +525,7 @@ struct ProjectsView: View {
                 .buttonStyle(.plain)
         } else {
             NavigationLink(value: id) { row() }
+                .navigationLinkIndicatorVisibility(.hidden)
         }
     }
 
@@ -753,7 +757,7 @@ private struct SectionHeader: View {
     var hint: String?
 
     var body: some View {
-        HStack(spacing: 6) {
+        HStack(spacing: 7) {
             if let color {
                 Circle().fill(color).frame(width: 7, height: 7)
             }
@@ -763,23 +767,45 @@ private struct SectionHeader: View {
                     .rotationEffect(.degrees(45))
                     .foregroundStyle(PhoneTheme.inkMuted)
             }
-            Text(title)
-                .font(.footnote.weight(.semibold))
-                .foregroundStyle(PhoneTheme.ink)
+            Text(title).sectionEyebrow()
+            SectionHairline()
             if let count {
                 Text("\(count)")
-                    .font(.footnote.monospacedDigit())
+                    .font(.caption.monospacedDigit())
                     .foregroundStyle(PhoneTheme.inkMuted)
             }
             if let hint {
-                Spacer(minLength: 8)
                 Text(hint)
-                    .font(.footnote)
+                    .font(.caption)
                     .foregroundStyle(PhoneTheme.inkMuted)
             }
         }
         .textCase(nil)
         .padding(.leading, 2)
+        .accessibilityElement(children: .combine)
+        .accessibilityAddTraits(.isHeader)
+    }
+}
+
+/// The line a section's name runs into, out to its count.
+private struct SectionHairline: View {
+    var body: some View {
+        Rectangle()
+            .fill(PhoneTheme.hairline)
+            .frame(height: 1)
+            .frame(maxWidth: .infinity)
+    }
+}
+
+private extension Text {
+    /// A section's name: small, spaced capitals.
+    func sectionEyebrow() -> some View {
+        font(.caption2.weight(.semibold))
+            .tracking(1.1)
+            .textCase(.uppercase)
+            .foregroundStyle(PhoneTheme.ink.opacity(0.75))
+            .lineLimit(1)
+            .fixedSize()
     }
 }
 
@@ -909,16 +935,23 @@ private struct ProjectRowView: View {
     var selected = false
     /// Recent and Inactive: a smaller icon and name, no status line.
     var compact = false
+    /// A worktree shown right under its project, tied to it by an elbow.
+    var nested = false
     /// Prompts waiting for the Mac, shown while it's offline.
     var queued = 0
 
     var body: some View {
         HStack(spacing: compact ? 10 : 12) {
+            if nested {
+                // An agent's row hangs off the project above it.
+                WorktreeConnector()
+                    .frame(width: compact ? 14 : 20, height: compact ? 28 : 40)
+            }
             CompanionProjectIcon(project: project, icon: icon, size: compact ? 22 : 32)
                 .frame(width: compact ? 28 : 40, height: compact ? 28 : 40)
             VStack(alignment: .leading, spacing: 2) {
                 HStack(spacing: 5) {
-                    if project.isWorktree {
+                    if project.isWorktree, !nested {
                         Image(systemName: "arrow.triangle.branch")
                             .font(.caption2.weight(.semibold))
                             .foregroundStyle(PhoneTheme.inkMuted)
@@ -954,6 +987,24 @@ private struct ProjectRowView: View {
     }
 }
 
+/// The elbow that ties a worktree's row to its project: down from the row
+/// above, then across to the icon.
+private struct WorktreeConnector: View {
+    var body: some View {
+        GeometryReader { proxy in
+            Path { path in
+                let x = proxy.size.width * 0.3, mid = proxy.size.height / 2, radius: CGFloat = 5
+                path.move(to: CGPoint(x: x, y: -10))
+                path.addLine(to: CGPoint(x: x, y: mid - radius))
+                path.addQuadCurve(to: CGPoint(x: x + radius, y: mid), control: CGPoint(x: x, y: mid))
+                path.addLine(to: CGPoint(x: proxy.size.width + 4, y: mid))
+            }
+            .stroke(PhoneTheme.inkMuted.opacity(0.45), style: StrokeStyle(lineWidth: 1.5, lineCap: .round))
+        }
+        .accessibilityHidden(true)
+    }
+}
+
 /// "Inactive" with a count, folding the projects under it away. A dot
 /// shows when one of them needs you, so folding hides nothing urgent.
 /// A section's name and count, folding its rows away when tapped:
@@ -967,14 +1018,12 @@ private struct FoldingHeader: View {
         Button {
             collapsed.toggle()
         } label: {
-            HStack(spacing: 6) {
-                Text(title)
-                    .font(.footnote.weight(.semibold))
-                    .lineLimit(1)
+            HStack(spacing: 7) {
+                Text(title).sectionEyebrow()
+                SectionHairline()
                 Text("\(count)")
-                    .font(.footnote.monospacedDigit())
+                    .font(.caption.monospacedDigit())
                     .foregroundStyle(PhoneTheme.inkMuted)
-                Spacer(minLength: 0)
                 Image(systemName: "chevron.right")
                     .font(.footnote.weight(.semibold))
                     .rotationEffect(.degrees(collapsed ? 0 : 90))
