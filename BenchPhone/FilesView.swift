@@ -26,12 +26,12 @@ struct FilesView: View {
     var body: some View {
         Group {
             if !client.canBrowseFiles {
-                ContentUnavailableView("Update Workbench on your Mac", systemImage: "folder",
-                                       description: Text("This Mac's version of Workbench can't share its files yet."))
+                EmptyStateScaffold(title: "Update Workbench on your Mac",
+                                   message: "This Mac's version of Workbench can't share its files yet.", symbol: "folder")
             } else if let tree {
                 let entries = tree.children[folder] ?? []
                 if entries.isEmpty {
-                    ContentUnavailableView("No files", systemImage: "folder")
+                    EmptyStateScaffold(title: "No files", symbol: "folder")
                 } else {
                     List {
                         Group {
@@ -112,17 +112,17 @@ struct FileScreen: View {
                         Image(uiImage: image).resizable().scaledToFit().padding(12)
                     }
                 } else {
-                    ContentUnavailableView("Can't show this image", systemImage: "photo")
+                    EmptyStateScaffold(title: "Can't show this image", symbol: "photo")
                 }
             case .binary(let size)?:
-                ContentUnavailableView("Not a text file", systemImage: "doc",
-                                       description: Text(ByteCountFormatter.string(fromByteCount: Int64(size), countStyle: .file)))
+                EmptyStateScaffold(title: "Not a text file",
+                                   message: ByteCountFormatter.string(fromByteCount: Int64(size), countStyle: .file), symbol: "doc")
             case .tooLarge(let size)?:
-                ContentUnavailableView("Too large to show", systemImage: "doc",
-                                       description: Text(ByteCountFormatter.string(fromByteCount: Int64(size), countStyle: .file)))
+                EmptyStateScaffold(title: "Too large to show",
+                                   message: ByteCountFormatter.string(fromByteCount: Int64(size), countStyle: .file), symbol: "doc")
             case .missing?:
-                ContentUnavailableView("File not found", systemImage: "questionmark.folder",
-                                       description: Text("It may have been moved or deleted on your Mac."))
+                EmptyStateScaffold(title: "File not found", message: "It may have been moved or deleted on your Mac.",
+                                   symbol: "questionmark.folder")
             case nil:
                 LoadingState()
             }

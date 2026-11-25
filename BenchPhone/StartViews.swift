@@ -68,8 +68,9 @@ struct PastSessionsView: View {
         Group {
             if let sessions {
                 if sessions.isEmpty {
-                    ContentUnavailableView("No past sessions", systemImage: "clock.arrow.circlepath",
-                                           description: Text("Conversations in this project show up here once there are some."))
+                    EmptyStateScaffold(title: "No past sessions",
+                                       message: "Conversations in this project show up here once there are some.",
+                                       symbol: "clock.arrow.circlepath")
                 } else {
                     List(filtered(sessions)) { session in
                         Button {

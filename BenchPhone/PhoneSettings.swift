@@ -442,8 +442,8 @@ struct PhoneUsageScreen: View {
                 }
                 .padding(16)
             } else {
-                ContentUnavailableView("No usage yet", systemImage: "chart.bar.xaxis",
-                                       description: Text("Workbench on your Mac is still reading Claude Code's logs."))
+                EmptyStateScaffold(title: "No usage yet", message: "Workbench on your Mac is still reading Claude Code's logs.",
+                                   symbol: "chart.bar.xaxis")
                     .padding(.top, 80)
             }
         }

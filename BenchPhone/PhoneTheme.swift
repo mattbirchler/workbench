@@ -212,6 +212,35 @@ enum Device {
     static var thisName: String { "This \(name)" }
 }
 
+/// The picture for an empty state with no drawing of its own: an SF Symbol
+/// in a soft circle of the accent. It settles into place as the state
+/// arrives, unless motion is reduced.
+struct EmptyStateSymbol: View {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    let name: String
+    let appeared: Bool
+
+    var body: some View {
+        Image(systemName: name)
+            .font(.system(size: 30, weight: .medium))
+            .foregroundStyle(PhoneTheme.accent)
+            .frame(width: 84, height: 84)
+            .background(PhoneTheme.accent.opacity(0.14), in: Circle())
+            .overlay(Circle().strokeBorder(PhoneTheme.accent.opacity(0.22), lineWidth: 1))
+            .scaleEffect(appeared || reduceMotion ? 1 : 0.9)
+            .animation(.spring(duration: 0.4, bounce: 0.25), value: appeared)
+    }
+}
+
+extension EmptyStateScaffold where Illustration == EmptyStateSymbol, Accessory == EmptyView {
+    /// The app's empty state with a symbol for its picture, so screens
+    /// without an illustration still share the type and spacing of the
+    /// ones that have one.
+    init(title: String, message: String = "", symbol: String, size: Size = .regular) {
+        self.init(title: title, message: message, size: size) { EmptyStateSymbol(name: symbol, appeared: $0) }
+    }
+}
+
 /// The main button on a screen: a capsule in the accent, about 50 points
 /// tall and as wide as it's allowed, dimmed while it can't be used.
 /// `fullWidth: false` is the same button at the size of its label, for
