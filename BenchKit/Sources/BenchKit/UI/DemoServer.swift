@@ -370,7 +370,8 @@ final class DemoServer {
                              AgentStatus(toolUseID: "a2bt", description: "Check images and icons for dark variants", type: "Explore",
                                          isFinished: true, isRunning: false, steps: 9,
                                          startedAt: .now.addingTimeInterval(-39 * minute), finishedAt: .now.addingTimeInterval(-38 * minute - 40))],
-                    suggestion: "merge the PR")]),
+                    suggestion: "merge the PR")],
+                uncommittedAdditions: 124, uncommittedDeletions: 18),
             CompanionProject(
                 id: website, name: "Website", repoName: "website", path: "~/Code/website", branch: "pricing-page",
                 activity: .waiting,
@@ -395,7 +396,7 @@ final class DemoServer {
             CompanionProject(
                 id: blog, name: "Blog", repoName: "blog", path: "~/Code/blog", branch: "main", activity: .idle,
                 deploy: CompanionDeploy(state: .deploying, prNumber: 18, place: "blog / production", url: nil),
-                defaultBranch: "main"),
+                defaultBranch: "main", uncommittedAdditions: 9, uncommittedDeletions: 2),
         ]
 
         for index in projects.indices where !projects[index].isWorktree {
