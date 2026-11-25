@@ -1,17 +1,17 @@
-New in this build: the project list shows more, and the app gives more feedback.
+New in this build: answer from the project list, a clearer session screen, and redone secondary screens.
 
-• Step progress on rows. When an agent is working through a checklist, its row in the project list shows the same segmented bar as the Mac: one segment per step, the current one glowing, and a count like 2/5. The checklist bar inside a chat uses the same segments.
+• Answer without opening the session. A row waiting on permission shows the command with Deny and Allow right on it. A row with a plain question shows its answers as buttons. The permission card inside a chat has the same larger buttons, plus "Reply instead".
 
-• Roomier rows. The timer moved up beside the name and the arrows on the right are gone, so the current step has the whole row and should no longer be cut off. The branch shows beside the project's name.
+• The project list leads with what needs you. The title is now a headline like "2 need you" with the rest underneath. Tap the usage strip for the full plan usage details. When your Mac offers Brain Dump, a bar at the bottom starts new work (the brain button in the toolbar is gone).
 
-• Pull requests on busy rows. A session with a pull request shows its number and how its checks stand, like "#42 · 3/3 checks".
+• Session header. The name and branch are on one row and the status has a full line of its own, with how full the context is on the right. It should no longer be cut down to a word or two.
 
-• New section headers, and agents on a branch now hang under their project when both are quiet.
+• Model and permission mode in the message box. The model moved from the header into the box, next to a new pill that switches the permission mode (Ask, Accept edits, Plan and so on). While Claude is working the box says "Queue a message".
 
-• More taps. You should feel one when a session finishes while you're looking, a soft tick as each step completes, and taps when you answer a question, start an agent, switch model or theme, or pair.
+• Changed files. A finished turn lists the files it changed under it, with line counts. Tap one, or Review, to go to the project's changes.
 
-• Rows waiting on you breathe slowly, and a row gets a sweep of light when its session finishes.
+• Type @ in a message to get suggestions for the project's files and folders.
 
-• Fixed: the project list could open slightly scrolled, with the usage card tucked under the title.
+• New Agent is a full page with the task first, Files can search the whole project, Past Sessions rows are cards, and the empty states on these screens match the rest of the app.
 
-Things to look for: rows that look cramped or cut off with long project or branch names, any tap that feels like too much, and whether the list still opens at the very top every time.
+Things to look for: tapping Allow or Deny by accident while scrolling the list, the permission mode pill not catching up after you switch, @ suggestions that are slow or missing in a big project, and anything cramped in the new header with long project or branch names.
