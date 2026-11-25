@@ -302,6 +302,8 @@ final class AgentNotifier: NSObject, UNUserNotificationCenterDelegate {
     var openTab: ((UUID, UUID) -> Void)?
     var openOverview: (() -> Void)?
     var openQueuedPrompts: (() -> Void)?
+    /// Opens a session on another Mac: its host, project and session.
+    var openRemote: ((String, UUID, UUID) -> Void)?
     private var askedPermission = false
 
     override init() {
@@ -328,6 +330,18 @@ final class AgentNotifier: NSObject, UNUserNotificationCenterDelegate {
         content.userInfo = ["tab": tabID.uuidString, "project": projectID.uuidString]
         // Reusing the tab's id replaces an older alert for the same tab.
         center.add(UNNotificationRequest(identifier: tabID.uuidString, content: content, trigger: nil))
+    }
+
+    /// An agent on another Mac is waiting on you. Tapping it opens that
+    /// session here.
+    func notifyRemoteWaiting(mac: String, host: String, alert: RemoteAttention.Alert) {
+        let content = UNMutableNotificationContent()
+        content.title = "\(alert.agent) needs you on \(mac)"
+        content.body = alert.question.map { "\(alert.project): \($0)" } ?? "Waiting for your permission in \(alert.project)."
+        content.sound = .default
+        content.userInfo = ["remoteHost": host, "project": alert.projectID.uuidString, "session": alert.sessionID.uuidString]
+        // Reusing the session's id replaces an older alert for it.
+        center().add(UNNotificationRequest(identifier: alert.sessionID.uuidString, content: content, trigger: nil))
     }
 
     /// Claude finished while you were away. Only the phone hears about
@@ -421,6 +435,12 @@ final class AgentNotifier: NSObject, UNUserNotificationCenterDelegate {
         }
         if let url = (info["url"] as? String).flatMap(URL.init(string:)) {
             await MainActor.run { ArtifactLinks.open(url) }
+            return
+        }
+        if let host = info["remoteHost"] as? String,
+           let project = (info["project"] as? String).flatMap(UUID.init(uuidString:)),
+           let session = (info["session"] as? String).flatMap(UUID.init(uuidString:)) {
+            await MainActor.run { openRemote?(host, project, session) }
             return
         }
         guard let tab = (info["tab"] as? String).flatMap(UUID.init(uuidString:)),

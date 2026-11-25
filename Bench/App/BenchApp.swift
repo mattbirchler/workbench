@@ -30,7 +30,7 @@ struct BenchApp: App {
     @State private var requests: ProjectRequests
     @State private var feedbackAgent: FeedbackAgent
     @State private var offlineQueue: OfflineQueue
-    @State private var remoteMacs = RemoteMacs()
+    @State private var remoteMacs: RemoteMacs
     @State private var whatsNew = WhatsNew()
 
     init() {
@@ -164,6 +164,30 @@ struct BenchApp: App {
         store.tabIsWorking = { [weak terminals] id in terminals?.tabIsWorking(id) ?? false }
         _store = State(initialValue: store)
         _terminals = State(initialValue: terminals)
+        let macs = RemoteMacs()
+        _remoteMacs = State(initialValue: macs)
+        // An agent on another Mac needs you: the same tone and banner as
+        // one on this Mac, by the same rules (see `setClaudeState`).
+        macs.onWaiting = { [weak store, weak terminals, weak macs] host, alert in
+            guard let store, let terminals, let macs else { return }
+            let key = RemoteMacs.key(host: host, projectID: alert.projectID)
+            let open = macs.openTabs[key]
+            let isLooking = NSApp.isActive && !store.showsPage
+                && store.selectedRemote == RemoteSelection(host: host, projectID: alert.projectID)
+                && (open == nil || open == .session(alert.sessionID))
+            if !isLooking { Chime.play(.needsYou) }
+            if !NSApp.isActive {
+                terminals.notifier.notifyRemoteWaiting(mac: macs.name(for: host), host: host, alert: alert)
+                NSApp.requestUserAttention(.informationalRequest)
+            }
+        }
+        macs.onWaitingEnded = { [weak terminals] sessionID in terminals?.notifier.clear(tabID: sessionID) }
+        terminals.notifier.openRemote = { [weak store, weak macs] host, projectID, sessionID in
+            guard let store, let macs, macs.client(for: host) != nil else { return }
+            macs.openTabs[RemoteMacs.key(host: host, projectID: projectID)] = .session(sessionID)
+            store.selectedRemote = RemoteSelection(host: host, projectID: projectID)
+            NSApp.activate()
+        }
         let pullRequests = PullRequests()
         pullRequests.onChecksFinished = { [weak terminals] projectID, project, pr, waiting in
             terminals?.notifier.notifyChecks(project: project, projectID: projectID, pr: pr, waitingToMerge: waiting)

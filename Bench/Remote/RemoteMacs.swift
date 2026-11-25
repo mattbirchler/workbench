@@ -48,6 +48,14 @@ final class RemoteMacs {
     /// host. Only shown while that Mac isn't connected.
     private var tailnetProblems: [String: String] = [:]
     @ObservationIgnored private var lastTailnetCheck = Date.distantPast
+    /// Which sessions on each Mac are waiting on you, by host, to notice
+    /// when one starts.
+    @ObservationIgnored private var attention: [String: RemoteAttention] = [:]
+    /// A session on another Mac has started waiting on you. Set by the app,
+    /// which notifies or chimes as it does for this Mac's tabs.
+    @ObservationIgnored var onWaiting: ((_ host: String, _ alert: RemoteAttention.Alert) -> Void)?
+    /// It stopped waiting, so a notification about it is out of date.
+    @ObservationIgnored var onWaitingEnded: ((_ sessionID: UUID) -> Void)?
 
     private static let file = BenchPaths.support.appendingPathComponent("remote-macs.json")
 
@@ -96,6 +104,7 @@ final class RemoteMacs {
         macs.removeAll { $0.host == host }
         clients[host]?.disconnect()
         clients[host] = nil
+        attention[host] = nil
         for key in shells.keys where key.hasPrefix(host + "|") { closeShell(key: key) }
         openTabs = openTabs.filter { !$0.key.hasPrefix(host + "|") }
         diffTabs = diffTabs.filter { !$0.key.hasPrefix(host + "|") }
@@ -172,6 +181,29 @@ final class RemoteMacs {
                                                 CompanionFeature.imagePreviews, CompanionFeature.keepalive, CompanionFeature.sideQuestions])
         clients[mac.host] = client
         client.connect(mac.info)
+        watchSessions(of: client, host: mac.host)
+    }
+
+    /// Looks at a Mac's sessions each time its list changes, until the Mac
+    /// is forgotten or paired again (which makes a new client).
+    private func watchSessions(of client: CompanionClient, host: String) {
+        withObservationTracking {
+            _ = client.snapshot
+        } onChange: { [weak self, weak client] in
+            Task { @MainActor in
+                guard let self, let client, self.clients[host] === client else { return }
+                self.sessionsChanged(on: host, client: client)
+                self.watchSessions(of: client, host: host)
+            }
+        }
+    }
+
+    private func sessionsChanged(on host: String, client: CompanionClient) {
+        // A list saved from last time isn't what's happening now.
+        guard client.status == .connected, let snapshot = client.snapshot else { return }
+        let change = attention[host, default: RemoteAttention()].update(snapshot)
+        for alert in change.started { onWaiting?(host, alert) }
+        for sessionID in change.ended { onWaitingEnded?(sessionID) }
     }
 
     private func rememberNames() {
