@@ -132,7 +132,7 @@ final class CompanionServer {
                            CompanionFeature.imagePreviews, CompanionFeature.paging, CompanionFeature.sendTasks,
                            CompanionFeature.branchControls, CompanionFeature.agentLifecycle, CompanionFeature.shortcuts, CompanionFeature.dashboard,
                            CompanionFeature.codeReview, CompanionFeature.keepalive, CompanionFeature.offlineQueue,
-                           CompanionFeature.localNetwork, CompanionFeature.sideQuestions, CompanionFeature.editFiles]
+                           CompanionFeature.localNetwork, CompanionFeature.sideQuestions, CompanionFeature.editFiles, CompanionFeature.addProject]
 
     /// The port this server listens on: the app's, unless a test picks
     /// a free one of its own.
@@ -697,6 +697,27 @@ final class CompanionServer {
             guard client.isAuthorized else { return }
             snapshots.store.showHiddenWorktrees(of: id)
             tick()
+        case .browseFolder(let path):
+            guard client.isAuthorized else { return }
+            Task { [weak self, weak client] in
+                let listing = await Task.detached(priority: .userInitiated) {
+                    FolderListing.read(path, home: NSHomeDirectory())
+                }.value
+                guard let self, let client else { return }
+                send(.folder(listing), to: client)
+            }
+        case .addProject(let path):
+            guard client.isAuthorized else { return }
+            let full = FolderListing.expand(path, home: NSHomeDirectory())
+            // On its start page, as a project added there by hand would be
+            // without the agent tab: nothing starts until it's asked for.
+            switch snapshots.store.addProject(path: full, opensClaude: false, source: .otherMac) {
+            case .added(let project), .alreadyHere(let project):
+                tick()
+                send(.projectAdded(path: full, projectID: project.id, problem: nil), to: client)
+            case .notAFolder:
+                send(.projectAdded(path: full, projectID: nil, problem: "There's no folder at \(full) on this Mac."), to: client)
+            }
         case .removeProject(let id):
             guard client.isAuthorized, snapshots.store.project(id)?.isWorktree == false else { return }
             snapshots.store.removeProject(id)

@@ -476,6 +476,10 @@ struct SectionTitle: View {
     var hint: String?
     var addsProject = false
     var isLoading = false
+    /// What the Add Project button does in place of this Mac's folder
+    /// picker, and what its tooltip says, for another Mac's list.
+    var add: (() -> Void)?
+    var addHelp = "Add Project (⌘O)"
 
     var body: some View {
         HStack(spacing: 5) {
@@ -498,7 +502,7 @@ struct SectionTitle: View {
             }
             if addsProject {
                 Button {
-                    ProjectPicker.present(store: store)
+                    if let add { add() } else { ProjectPicker.present(store: store) }
                 } label: {
                     Image(systemName: "plus")
                         .font(.ui(size: 11, weight: .semibold))
@@ -506,7 +510,8 @@ struct SectionTitle: View {
                         .contentShape(Rectangle())
                 }
                 .buttonStyle(.borderless)
-                .help("Add Project (⌘O)")
+                .help(addHelp)
+                .accessibilityLabel("Add Project")
             }
         }
         .foregroundStyle(.secondary)
