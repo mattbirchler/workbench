@@ -60,9 +60,18 @@ struct ProjectMenu: ToolbarContent {
 struct PastSessionsView: View {
     @Environment(CompanionClient.self) private var client
     let projectID: UUID
-    @State private var search = ""
+    @State private var search = Self.sampleSearch
 
     private var sessions: [PastSessionSummary]? { client.pastSessions[projectID] }
+
+    /// For screenshots: BENCH_SEARCH starts the screen with a search typed.
+    private static var sampleSearch: String {
+        #if DEBUG
+        ProcessInfo.processInfo.environment["BENCH_SEARCH"] ?? ""
+        #else
+        ""
+        #endif
+    }
 
     var body: some View {
         Group {
@@ -72,37 +81,30 @@ struct PastSessionsView: View {
                                        message: "Conversations in this project show up here once there are some.",
                                        symbol: "clock.arrow.circlepath")
                 } else {
-                    List(filtered(sessions)) { session in
-                        Button {
-                            client.resume(projectID: projectID, sessionID: session.id)
-                        } label: {
-                            HStack(alignment: .top) {
-                                VStack(alignment: .leading, spacing: 3) {
-                                    Text(session.title ?? session.firstPrompt ?? "Untitled")
-                                        .font(.subheadline.weight(.semibold))
-                                        .foregroundStyle(PhoneTheme.ink)
-                                        .lineLimit(1)
-                                    if session.title != nil, let prompt = session.firstPrompt {
-                                        Text(prompt).font(.footnote).foregroundStyle(PhoneTheme.inkMuted).lineLimit(2)
-                                    }
-                                    HStack(spacing: 8) {
-                                        Text(session.modified, format: .relative(presentation: .named))
-                                        if let branch = session.branch {
-                                            Label(branch, systemImage: "arrow.triangle.branch").lineLimit(1)
+                    let shown = filtered(sessions)
+                    Group {
+                        if shown.isEmpty {
+                            EmptyStateScaffold(title: "No matches", message: "No past session mentions that in its title, prompts or branch.",
+                                               symbol: "magnifyingglass")
+                        } else {
+                            ScrollView {
+                                LazyVStack(spacing: 10) {
+                                    ForEach(shown) { session in
+                                        Button {
+                                            client.resume(projectID: projectID, sessionID: session.id)
+                                        } label: {
+                                            PastSessionCard(session: session)
                                         }
+                                        .buttonStyle(.cardPress)
                                     }
-                                    .font(.caption)
-                                    .foregroundStyle(PhoneTheme.inkMuted.opacity(0.7))
                                 }
-                                Spacer()
-                                Text(session.openTabID == nil ? "Resume" : "Open")
-                                    .font(.caption.weight(.medium))
-                                    .foregroundStyle(session.openTabID == nil ? PhoneTheme.accent : PhoneTheme.inkMuted)
+                                // On an iPad it stays a comfortable column instead of stretching.
+                                .frame(maxWidth: 640)
+                                .frame(maxWidth: .infinity)
+                                .padding(.horizontal, 16)
+                                .padding(.vertical, 12)
                             }
-                            .contentShape(Rectangle())
                         }
-                        .buttonStyle(.plain)
-                        .listRowBackground(PhoneTheme.surface)
                     }
                     .searchable(text: $search, prompt: "Titles and prompts")
                 }
@@ -110,7 +112,6 @@ struct PastSessionsView: View {
                 LoadingState()
             }
         }
-        .scrollContentBackground(.hidden)
         .background(PhoneTheme.canvas)
         .navigationTitle("Past Sessions")
         .navigationBarTitleDisplayMode(.inline)
@@ -126,6 +127,106 @@ struct PastSessionsView: View {
             [session.title, session.firstPrompt, session.lastPrompt, session.branch]
                 .contains { $0?.localizedCaseInsensitiveContains(query) == true }
         }
+    }
+}
+
+/// One past conversation: when it was last touched, what was first asked,
+/// and what else the Mac knows about it.
+private struct PastSessionCard: View {
+    let session: PastSessionSummary
+
+    /// What was first asked is what people remember a conversation by, so
+    /// it leads, with the title Claude gave it as the line under it.
+    private var headline: String { session.firstPrompt ?? session.title ?? "Untitled" }
+    private var subtitle: String? { session.firstPrompt == nil ? nil : session.title }
+    /// Where a long conversation ended up, when that isn't where it began.
+    private var lastPrompt: String? {
+        guard let last = session.lastPrompt, last != session.firstPrompt else { return nil }
+        return last
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            HStack(alignment: .firstTextBaseline, spacing: 8) {
+                (Text(session.modified, format: .relative(presentation: .named))
+                    + Text("  \u{00B7}  ")
+                    + Text(session.modified, format: .dateTime.month(.abbreviated).day()))
+                    .font(.system(.caption, design: .monospaced))
+                    .foregroundStyle(PhoneTheme.inkMuted)
+                    .lineLimit(1)
+                Spacer(minLength: 8)
+                if session.openTabID != nil {
+                    // Already in a tab on the Mac, so tapping goes to it
+                    // instead of starting it again.
+                    HStack(spacing: 5) {
+                        Circle().fill(PhoneTheme.done).frame(width: 6, height: 6)
+                        Text("Open on Mac")
+                    }
+                    .font(.caption.weight(.medium))
+                    .foregroundStyle(PhoneTheme.inkMuted)
+                }
+            }
+            Text(headline)
+                .font(.system(.body, design: .rounded, weight: .semibold))
+                .foregroundStyle(PhoneTheme.ink)
+                .lineLimit(2)
+                .multilineTextAlignment(.leading)
+                .padding(.top, 6)
+            if let subtitle {
+                Text(subtitle)
+                    .font(.subheadline)
+                    .foregroundStyle(PhoneTheme.inkMuted)
+                    .lineLimit(1)
+                    .padding(.top, 2)
+            }
+            if let lastPrompt {
+                HStack(alignment: .firstTextBaseline, spacing: 6) {
+                    Image(systemName: "arrow.turn.down.right")
+                        .font(.caption2.weight(.semibold))
+                        .accessibilityHidden(true)
+                    Text(lastPrompt).lineLimit(1)
+                }
+                .font(.footnote)
+                .foregroundStyle(PhoneTheme.inkMuted)
+                .padding(.top, 6)
+                .accessibilityElement(children: .combine)
+                .accessibilityLabel("Last message: \(lastPrompt)")
+            }
+            HStack(spacing: 8) {
+                if let branch = session.branch {
+                    HStack(spacing: 5) {
+                        Image(systemName: "arrow.triangle.branch")
+                            .font(.caption2.weight(.semibold))
+                            .accessibilityHidden(true)
+                        Text(branch)
+                            .font(.system(.caption, design: .monospaced))
+                            .lineLimit(1)
+                            .truncationMode(.middle)
+                    }
+                    .foregroundStyle(PhoneTheme.inkMuted)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(PhoneTheme.raised, in: Capsule())
+                    .accessibilityElement(children: .combine)
+                    .accessibilityLabel("Branch \(branch)")
+                }
+                Spacer(minLength: 8)
+                HStack(spacing: 4) {
+                    Text(session.openTabID == nil ? "Resume" : "Open")
+                    Image(systemName: "arrow.up.right")
+                        .font(.caption2.weight(.bold))
+                        .accessibilityHidden(true)
+                }
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(PhoneTheme.accent)
+            }
+            .padding(.top, 12)
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(PhoneTheme.surface, in: RoundedRectangle(cornerRadius: PhoneTheme.Radius.card, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: PhoneTheme.Radius.card, style: .continuous).strokeBorder(PhoneTheme.hairline))
+        .contentShape(RoundedRectangle(cornerRadius: PhoneTheme.Radius.card, style: .continuous))
     }
 }
 

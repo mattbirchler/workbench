@@ -118,13 +118,17 @@ struct BenchPhoneApp: App {
                 guard navigator.path.isEmpty, let name = ProcessInfo.processInfo.environment["BENCH_OPEN_PROJECT"],
                       let project = client.snapshot?.projects.first(where: { $0.name == name }) else { return }
                 navigator.open(projectID: project.id, sessionID: project.sessions.first?.id)
-                // BENCH_OPEN_SCREEN=changes|diff|commit|agent|files goes one screen
-                // further, and file:<path> opens that file.
+                // BENCH_OPEN_SCREEN=changes|diff|commit|agent|files|past goes one screen
+                // further, files:<folder> opens that folder, and file:<path>
+                // opens that file.
                 let screen = ProcessInfo.processInfo.environment["BENCH_OPEN_SCREEN"] ?? ""
                 switch screen {
                 case "changes", "diff", "commit": navigator.push(ChangesRoute(projectID: project.id))
                 case "agent": navigator.push(NewAgentRoute(projectID: project.id))
                 case "files": navigator.push(FilesRoute(projectID: project.id))
+                case "past": navigator.push(PastSessionsRoute(projectID: project.id))
+                case _ where screen.hasPrefix("files:"):
+                    navigator.push(FilesRoute(projectID: project.id, folder: String(screen.dropFirst(6))))
                 case _ where screen.hasPrefix("file:"):
                     navigator.push(FileRoute(projectID: project.id, path: String(screen.dropFirst(5))))
                 default: break
