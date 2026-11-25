@@ -15,6 +15,7 @@ struct ProjectsView: View {
     @Environment(ActivityManager.self) private var activities
     @Environment(QueueStore.self) private var queue
     @State private var showsSettings = false
+    @State private var showsUsage = false
     @State private var pendingAgentAction: AgentAction?
     /// When the morning summary you put away was written.
     @State private var reachability = MacReachability()
@@ -198,7 +199,10 @@ struct ProjectsView: View {
             }
             if let board {
                 if let usage = client.planUsage, query.isEmpty {
-                    PlanUsageStrip(usage: usage)
+                    // Tap for each limit by name, its pace and when it resets.
+                    Button { showsUsage = true } label: { PlanUsageStrip(usage: usage) }
+                        .buttonStyle(.cardPress)
+                        .accessibilityHint("Shows each limit and when it resets")
                         .plainRow()
                 }
                 if board.isEmpty {
@@ -307,15 +311,20 @@ struct ProjectsView: View {
         // So the queued counts are current while the Mac is away.
         .task(id: client.isShowingSaved) { if client.isShowingSaved { await queue.refresh() } }
         .modifier(SearchWhenMany(query: $query, enabled: (client.snapshot?.projects.count ?? 0) > 8))
-        .navigationTitle("Workbench")
-        .navigationSubtitle(subtitle)
+        // The title is the news: what needs you, in the largest type on
+        // the screen. The Mac's name and the rest sit under it.
+        .navigationTitle(headline.title)
+        .navigationSubtitle(headline.detail)
+        .safeAreaInset(edge: .bottom, spacing: 0) {
+            // New work starts at your thumb, not in a corner of the toolbar.
+            if client.canSendTasks, !saved {
+                NewWorkBar { navigator.showsSendTasks = true }
+                    .padding(.horizontal, 16)
+                    .padding(.bottom, 8)
+            }
+        }
         .agentActionConfirmation($pendingAgentAction)
         .toolbar {
-            if client.canSendTasks {
-                ToolbarItem(placement: .topBarLeading) {
-                    Button("Brain Dump", systemImage: "brain") { navigator.showsSendTasks = true }
-                }
-            }
             if activities.isAvailable {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button(activities.isShowing ? "Remove from Lock Screen" : "Show on Lock Screen", systemImage: "platter.filled.bottom.iphone") {
@@ -333,6 +342,12 @@ struct ProjectsView: View {
         }
         .sheet(isPresented: $navigator.showsSendTasks) {
             SendTasksView()
+        }
+        .sheet(isPresented: $showsUsage) {
+            if let usage = client.planUsage {
+                PlanUsageSheet(usage: usage)
+                    .presentationDetents([.medium, .large])
+            }
         }
         #if DEBUG
         // For screenshots: BENCH_OPEN_SETTINGS=1 opens Settings,
@@ -405,7 +420,9 @@ struct ProjectsView: View {
                         SessionRowView(project: item.project, session: item.session,
                                        icon: client.icons[item.project.parentID ?? item.project.id],
                                        parentName: item.project.parentID.flatMap { id in client.snapshot?.projects.first { $0.id == id }?.name },
-                                       selected: isSelected(item.project.id, session: item.session.id))
+                                       selected: isSelected(item.project.id, session: item.session.id),
+                                       answer: canAnswer(item.session) ? { client.answer(sessionID: item.session.id, allow: $0) } : nil,
+                                       pick: canAnswer(item.session) ? { client.answerQuestions(sessionID: item.session.id, answers: [CompanionAnswer(selected: [$0])]) } : nil)
                     }
                     .listRowBackground(rowBackground(tint: tinted ? color : nil, selected: isSelected(item.project.id, session: item.session.id),
                                                      breathes: tinted, finishedAt: item.session.activity == .done ? item.session.stoppedAt : nil))
@@ -417,6 +434,12 @@ struct ProjectsView: View {
                 SectionHeader(title: title, color: color, count: rows.count)
             }
         }
+    }
+
+    /// Whether a row can answer for its session: the Mac is there to hear
+    /// it. (`canReply` is about messages, and is off while a question is up.)
+    private func canAnswer(_ session: CompanionSession) -> Bool {
+        !client.isShowingSaved && client.status == .connected
     }
 
     /// Projects with nothing going on, in the Mac's sections: Pinned in
@@ -636,21 +659,25 @@ struct ProjectsView: View {
     /// Inactive don't apply then.
     private var usesGroups: Bool { client.snapshot?.groups != nil }
 
-    /// "Matt's MacBook Pro · 2 working, 1 needs you".
-    private var subtitle: String {
-        guard let snapshot = client.snapshot else { return client.macName ?? "" }
+    /// The screen's title and the line under it: "2 need you" over
+    /// "Matt's MacBook Pro · 1 working, 1 done". The most pressing count
+    /// leads, and the app's name stands in when there's nothing to count.
+    private var headline: (title: String, detail: String) {
+        func detail(_ words: String?) -> String { [client.macName, words].compactMap { $0 }.joined(separator: "  ·  ") }
+        guard let snapshot = client.snapshot else { return ("Workbench", client.macName ?? "") }
         // What its tabs were doing is old news.
-        if client.isShowingSaved { return [client.macName, "Offline"].compactMap { $0 }.joined(separator: "  ·  ") }
-        var parts: [String] = []
+        if client.isShowingSaved { return ("Workbench", detail("Offline")) }
         let sessions = snapshot.projects.flatMap(\.sessions)
         let waiting = sessions.filter { $0.activity == .waiting || $0.activity == .attention }.count
         let working = sessions.filter { $0.activity == .working || $0.activity == .remoteWorking }.count
         let done = sessions.filter { $0.activity == .done }.count
+        var parts: [String] = []
         if waiting > 0 { parts.append(waiting == 1 ? "1 needs you" : "\(waiting) need you") }
         if working > 0 { parts.append("\(working) working") }
         if done > 0 { parts.append("\(done) done") }
-        let summary = parts.isEmpty ? "All quiet" : parts.joined(separator: ", ")
-        return [client.macName, summary].compactMap { $0 }.joined(separator: "  ·  ")
+        guard let first = parts.first else { return ("All quiet", detail(nil)) }
+        let rest = parts.dropFirst().joined(separator: ", ")
+        return (first, detail(rest.isEmpty ? nil : rest))
     }
 }
 
@@ -850,10 +877,34 @@ private struct SessionRowView: View {
     /// The project a worktree belongs to, by name.
     var parentName: String?
     var selected = false
+    /// Answers an allow or deny from the row. Nil when it can't be sent
+    /// from here (the Mac is out of reach, or the session can't take it).
+    var answer: ((Bool) -> Void)?
+    /// Answers a question by the number of the option picked.
+    var pick: ((Int) -> Void)?
 
     private var tint: Color? { PhoneTheme.color(for: session.activity) }
 
     var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            summary
+                .accessibilityElement(children: .combine)
+                .accessibilityAddTraits(selected ? .isSelected : [])
+            // Answer from here, as on the Mac's sidebar: an allow or deny
+            // with its command, or a question with a few plain options.
+            if session.isAllowOrDeny, let answer {
+                if let command = session.command, !command.isEmpty {
+                    CommandBlock(command: command, lineLimit: 2)
+                }
+                PermissionButtons(session: session, compact: true, answer: answer)
+            } else if let question = session.quickQuestion, let pick {
+                QuickAnswers(session: session, question: question, pick: pick)
+            }
+        }
+        .padding(.vertical, 4)
+    }
+
+    private var summary: some View {
         HStack(spacing: 12) {
             ZStack {
                 if let tint {
@@ -916,9 +967,6 @@ private struct SessionRowView: View {
                 }
             }
         }
-        .padding(.vertical, 4)
-        .accessibilityElement(children: .combine)
-        .accessibilityAddTraits(selected ? .isSelected : [])
     }
 
     private var title: String {
@@ -948,6 +996,8 @@ private struct SessionRowView: View {
             if let host = session.remoteHost { text += " on \(host)" }
             return text
         case .waiting:
+            // The command has a block of its own under the row.
+            if session.isAllowOrDeny, answer != nil { return session.permissionTitle }
             return session.question ?? "Waiting for you"
         case .done:
             return session.summary?.split(whereSeparator: \.isNewline).first.map(String.init) ?? "Finished"
@@ -1460,6 +1510,98 @@ private struct PlanUsageStrip: View {
         }
         .lineLimit(1)
         .minimumScaleFactor(0.8)
+    }
+}
+
+/// Where new work starts: a glass bar at the foot of the list that opens
+/// Brain Dump, with the question it will ask as its placeholder.
+private struct NewWorkBar: View {
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 10) {
+                Image(systemName: "brain")
+                    .font(.body.weight(.medium))
+                    .foregroundStyle(PhoneTheme.inkMuted)
+                Text("Tell your agents what to do")
+                    .font(.body)
+                    .foregroundStyle(PhoneTheme.inkMuted)
+                    .lineLimit(1)
+                Spacer(minLength: 6)
+                Image(systemName: "arrow.up")
+                    .font(.footnote.weight(.bold))
+                    .foregroundStyle(PhoneTheme.onAccent)
+                    .frame(width: 30, height: 30)
+                    .background(PhoneTheme.accent, in: Circle())
+            }
+            .padding(.leading, 16)
+            .padding(.trailing, 8)
+            .frame(minHeight: 48)
+            .glassEffect(.regular.interactive(), in: .capsule)
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Brain Dump")
+        .accessibilityHint("Say what you want done across your projects")
+    }
+}
+
+/// Every plan limit by name: how much is used, how that compares with
+/// the time gone (the tick on the ring), and when it resets.
+private struct PlanUsageSheet: View {
+    let usage: PlanUsage
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        NavigationStack {
+            TimelineView(.periodic(from: .now, by: 30)) { context in
+                ScrollView {
+                    VStack(spacing: 10) {
+                        ForEach(usage.limits) { limit in
+                            HStack(spacing: 14) {
+                                UsageRing(limit: limit, now: context.date, size: 46, lineWidth: 5, showsPercent: true, showsPace: true)
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(limit.name)
+                                        .font(.system(.body, design: .rounded, weight: .semibold))
+                                        .foregroundStyle(PhoneTheme.ink)
+                                    Text(limit.isSpend ? limit.summary(at: context.date) : "\(Int(limit.percent(at: context.date).rounded()))% used")
+                                        .font(.subheadline.monospacedDigit())
+                                        .foregroundStyle(PhoneTheme.inkMuted)
+                                }
+                                Spacer(minLength: 8)
+                                if let left = limit.timeLeft(at: context.date) {
+                                    VStack(alignment: .trailing, spacing: 2) {
+                                        Text(left)
+                                            .font(.subheadline.weight(.semibold).monospacedDigit())
+                                            .foregroundStyle(PhoneTheme.ink)
+                                        Text("to reset")
+                                            .font(.caption)
+                                            .foregroundStyle(PhoneTheme.inkMuted)
+                                    }
+                                }
+                            }
+                            .padding(14)
+                            .background(PhoneTheme.surface, in: RoundedRectangle(cornerRadius: PhoneTheme.Radius.card, style: .continuous))
+                            .overlay(RoundedRectangle(cornerRadius: PhoneTheme.Radius.card, style: .continuous).strokeBorder(PhoneTheme.hairline))
+                            .accessibilityElement(children: .combine)
+                        }
+                        Text("The tick on each ring is how far through its window you are. Ahead of the tick, you're using it faster than it refills.")
+                            .font(.footnote)
+                            .foregroundStyle(PhoneTheme.inkMuted)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(.horizontal, 4)
+                            .padding(.top, 4)
+                    }
+                    .padding(16)
+                }
+            }
+            .background(PhoneTheme.canvas)
+            .navigationTitle("Plan Usage")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) { Button("Done") { dismiss() } }
+            }
+        }
     }
 }
 

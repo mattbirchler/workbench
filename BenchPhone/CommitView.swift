@@ -21,8 +21,8 @@ struct CommitScreen: View {
             case .loaded(let review)?:
                 content(review)
             case .failed?:
-                ContentUnavailableView("Can't show this commit", systemImage: "exclamationmark.triangle",
-                                       description: Text("Workbench couldn't read it on your Mac."))
+                EmptyStateScaffold(title: "Can't show this commit", message: "Workbench couldn't read it on your Mac.",
+                                   symbol: "exclamationmark.triangle")
             case nil:
                 LoadingState()
             }

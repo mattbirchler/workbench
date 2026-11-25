@@ -75,16 +75,24 @@ struct SessionRoute: Hashable {
 
 struct SessionView: View {
     @Environment(CompanionClient.self) private var client
+    @Environment(Navigator.self) private var navigator
     let projectID: UUID
     let sessionID: UUID
     @State private var draft: String
     @State private var attachments: [PendingAttachment]
     @State private var problem: String?
+    /// The model being switched to, until the Mac reports it. Shared by
+    /// the header, which does the switching, and the message box, which
+    /// shows the model.
+    @State private var switchingModel: ModelChoice?
+    /// True once an `@` has been typed here, when the project's files are
+    /// asked for so they can be suggested.
+    @State private var watchesFiles = false
     /// Counts answers to Claude's questions, for the tap that goes with each.
     @State private var answersSent = 0
     /// The messages as turns, with what you just sent merged in. Grouped
     /// once per change, not once per draw.
-    @State private var conversation = Conversation()
+    @State private var conversation = Conversation(tracksChanges: true)
     /// Ends the watch when the screen is popped. `onDisappear` fired on a
     /// push too, so coming back from a file read the whole conversation again.
     @State private var lease = SessionLease()
@@ -138,9 +146,9 @@ struct SessionView: View {
         if let project, let session {
             SessionHeader(project: project, session: session, icon: client.icons[project.parentID ?? project.id],
                           buttonsInBar: hasVerticalBar, inTitleRow: headerInBar, request: $modelRequest,
+                          switching: $switchingModel,
                           switchModel: { client.reply(sessionID: sessionID, text: $0.command, attachments: []) },
-                          setEffort: { client.reply(sessionID: sessionID, text: $0.command, attachments: []) },
-                          openModels: { showsModels.toggle() })
+                          setEffort: { client.reply(sessionID: sessionID, text: $0.command, attachments: []) })
         } else {
             // The tab is gone from the Mac (or hasn't been heard of yet,
             // while connecting): keep a way back.
@@ -170,7 +178,7 @@ struct SessionView: View {
                         .shadow(color: .black.opacity(0.18), radius: 16, y: 6)
                         .transition(ChatMotion.card)
                     } else if let session, session.isAllowOrDeny {
-                        PermissionCard(session: session) { allow in
+                        PermissionCard(session: session, reply: { composing = true }) { allow in
                             client.answer(sessionID: sessionID, allow: allow)
                         }
                         .transition(ChatMotion.card)
@@ -191,16 +199,7 @@ struct SessionView: View {
                             .shadow(color: .black.opacity(0.18), radius: 16, y: 6)
                             .transition(ChatMotion.card)
                     }
-                    if let session {
-                        ComposeBar(session: session, draft: $draft, attachments: $attachments, focused: $composing,
-                                   modelRequest: $modelRequest, showsModels: $showsModels,
-                                   commands: (client.slashCommands[projectID] ?? []).filter { !$0.opensInTerminal },
-                                   stop: client.canInterrupt ? { client.interrupt(sessionID: sessionID) } : nil) { send() }
-                            .onChange(of: draft) { old, text in
-                                clearDictationEcho(text, was: old)
-                                continueList(text, was: old)
-                            }
-                    }
+                    if let session { composeBar(session) }
                 }
                 .frame(maxWidth: Self.column)
                 .frame(maxWidth: .infinity)
@@ -309,6 +308,42 @@ struct SessionView: View {
                              earlier: client.earlierPages[sessionID] ?? .none,
                              loadEarlier: { client.requestEarlier(sessionID: sessionID) })
                 .equatable()
+                // A finished turn lists the files it changed. Tapping one
+                // goes to the project's changes, where its diff is.
+                .environment(\.turnReview, turnReview)
+        }
+    }
+
+    /// The message box, apart from the screen's body, which is already as
+    /// much as the compiler will type-check.
+    private func composeBar(_ session: CompanionSession) -> some View {
+        let setMode: ((PermissionMode) -> Void)? = session.permissionMode == nil ? nil
+            : { client.setPermissionMode(sessionID: sessionID, mode: $0) }
+        let stop: (() -> Void)? = client.canInterrupt ? { client.interrupt(sessionID: sessionID) } : nil
+        let commands = (client.slashCommands[projectID] ?? []).filter { !$0.opensInTerminal }
+        return ComposeBar(session: session, draft: $draft, attachments: $attachments, focused: $composing,
+                          modelRequest: $modelRequest, showsModels: $showsModels,
+                          switchingModel: switchingModel, setMode: setMode, files: mentionFiles,
+                          commands: commands, stop: stop) { send() }
+            .onChange(of: draft) { old, text in
+                clearDictationEcho(text, was: old)
+                continueList(text, was: old)
+            }
+            .modifier(MentionFiles(projectID: projectID, draft: draft, isWatching: $watchesFiles))
+    }
+
+    /// The project's files, once an `@` has asked for them.
+    private var mentionFiles: [String] {
+        watchesFiles ? (client.filePaths[projectID] ?? []) : []
+    }
+
+    private var turnReview: TurnReviewActions? {
+        guard let project, project.isGit != false, !client.isShowingSaved else { return nil }
+        let navigator = navigator, projectID = projectID
+        return TurnReviewActions(root: project.path) { _, _ in
+            navigator.push(ChangesRoute(projectID: projectID))
+        } reviewAll: { _ in
+            navigator.push(ChangesRoute(projectID: projectID))
         }
     }
 
@@ -445,11 +480,22 @@ private struct ConversationList: View, Equatable {
         .environment(\.chatTimingID, sessionID)
     }
 
+    @Environment(\.turnReview) private var turnReview
+
+    /// A turn's row, with the files its turn changed under it when it's
+    /// the last row of a finished turn that changed some.
     private func row(_ turn: TranscriptTurn, lastShown: String?) -> some View {
-        TranscriptTurnView(turn: turn, isLive: isWorking && turn.id == lastShown)
-            .equatable()
-            .id(turn.id)
-            .transition(ChatMotion.row(for: turn))
+        let changes = turnReview == nil ? nil : conversation.changes[turn.id].flatMap { $0.isLatest && isBusy ? nil : $0 }
+        return VStack(alignment: .leading, spacing: 14) {
+            TranscriptTurnView(turn: turn, isLive: isWorking && turn.id == lastShown)
+                .equatable()
+            if let changes {
+                TurnChangesCard(changes: changes)
+                    .transition(.opacity)
+            }
+        }
+        .id(turn.id)
+        .transition(ChatMotion.row(for: turn))
     }
 }
 
@@ -648,13 +694,10 @@ private struct SessionHeader: View {
     /// Set by the `/model` list to switch, after asking first if the
     /// conversation is long.
     @Binding var request: ModelRequest?
+    /// The model being switched to. The message box shows it.
+    @Binding var switching: ModelChoice?
     let switchModel: (ModelChoice) -> Void
     let setEffort: (EffortLevel) -> Void
-    /// Opens the `/model` list above the message box.
-    let openModels: () -> Void
-    @State private var switching: ModelChoice?
-
-    private var current: String? { switching?.name ?? session.model }
 
     private var tint: Color { PhoneTheme.color(for: session.activity) ?? PhoneTheme.inkMuted }
 
@@ -664,82 +707,83 @@ private struct SessionHeader: View {
                             switchModel: switchModel, setEffort: setEffort)
     }
 
+    /// Who this is on one row, what it's doing on the next. The status
+    /// has the row to itself: sharing one with the name, the model and the
+    /// buttons, it was cut down to a word or two.
     private var header: some View {
-        HStack(spacing: 8) {
-            if !buttonsInBar { SessionBackButton() }
-            CompanionProjectIcon(project: project, icon: icon, size: 30)
-            VStack(alignment: .leading, spacing: 1) {
-                Text(project.isWorktree ? (project.branch ?? project.name) : project.name)
-                    .font(.system(.body, design: .rounded, weight: .semibold))
-                    .foregroundStyle(PhoneTheme.ink)
-                    .lineLimit(1)
-                HStack(spacing: 5) {
-                    ActivityMark(activity: session.activity, size: 11)
-                    Text(statusText)
-                        .font(.caption.weight(.medium))
-                        .foregroundStyle(session.activity == .idle ? PhoneTheme.inkMuted : PhoneTheme.ink.opacity(0.85))
+        VStack(alignment: .leading, spacing: 7) {
+            HStack(spacing: 8) {
+                if !buttonsInBar { SessionBackButton() }
+                CompanionProjectIcon(project: project, icon: icon, size: 30)
+                VStack(alignment: .leading, spacing: 1) {
+                    Text(project.isWorktree ? (project.branch ?? project.name) : project.name)
+                        .font(.system(.body, design: .rounded, weight: .semibold))
+                        .foregroundStyle(PhoneTheme.ink)
                         .lineLimit(1)
-                        .contentTransition(.opacity)
-                    // Kept whole: the status beside it gives way first.
-                    if let tokens = session.contextTokens, let window = session.contextWindow {
-                        ContextRing(tokens: tokens, window: window)
-                            .padding(.leading, 2)
+                    if inTitleRow {
+                        // No second row in the bar's title row: the status
+                        // stays under the name there.
+                        status
+                    } else if let place {
+                        HStack(spacing: 4) {
+                            Image(systemName: "arrow.triangle.branch")
+                                .font(.caption2.weight(.semibold))
+                            Text(place)
+                                .font(.caption.monospaced())
+                                .lineLimit(1)
+                                .truncationMode(.middle)
+                        }
+                        .foregroundStyle(PhoneTheme.inkMuted)
                     }
                 }
+                .layoutPriority(1)
+                Spacer(minLength: 0)
+                if !buttonsInBar {
+                    ChangesButton(project: project)
+                    ProjectMenuButton(projectID: project.id, session: session)
+                }
             }
-            // The name comes first: the pill is the last thing to get room.
-            .layoutPriority(1)
-            Spacer(minLength: 0)
-            if session.model != nil || session.canRunCommand {
-                modelPill
-            }
-            if !buttonsInBar {
-                ChangesButton(project: project)
-                ProjectMenuButton(projectID: project.id, session: session)
+            if !inTitleRow {
+                status
+                    .padding(.leading, buttonsInBar ? 0 : 4)
             }
         }
         .headerChrome(inBar: inTitleRow, leading: buttonsInBar ? 16 : 12, rule: tint.opacity(session.activity == .idle ? 0.15 : 0.45))
         .animation(.easeInOut(duration: 0.3), value: session.activity)
     }
 
-    /// The model, in the session's color. Tap for the same list `/model`
-    /// opens. How full the context is sits under the project's name: in
-    /// here it squeezed the name down to a letter.
-    private var modelPill: some View {
-        let costly = ModelChoice.usesLimitsFaster(model: session.model, switching: switching)
-        return Button(action: openModels) {
-            HStack(spacing: 4) {
-                if costly {
-                    Image(systemName: "flame.fill")
-                        .foregroundStyle(ModelChoice.costlyColor)
-                }
-                Text(ModelChoice.label(model: session.model, switching: switching))
-                    .foregroundStyle(costly ? ModelChoice.costlyColor : PhoneTheme.inkMuted)
-                    .contentTransition(.opacity)
-                if switching != nil {
-                    ProgressView()
-                        .controlSize(.mini)
-                } else {
-                    Image(systemName: "chevron.up.chevron.down")
-                        .imageScale(.small)
+    /// The mark, what's going on in words, and how full the context is.
+    private var status: some View {
+        HStack(spacing: 6) {
+            ActivityMark(activity: session.activity, size: 11)
+            Text(statusText)
+                .font(inTitleRow ? .caption.weight(.medium) : .footnote.weight(.medium))
+                .foregroundStyle(session.activity == .idle ? PhoneTheme.inkMuted : PhoneTheme.ink.opacity(0.85))
+                .lineLimit(1)
+                .contentTransition(.opacity)
+            if !inTitleRow { Spacer(minLength: 6) }
+            // Kept whole: the status beside it gives way first.
+            if let tokens = session.contextTokens, let window = session.contextWindow {
+                if !inTitleRow {
+                    Text("\(shortTokens(tokens)) of \(shortTokens(window))")
+                        .font(.caption.monospacedDigit())
                         .foregroundStyle(PhoneTheme.inkMuted)
+                        .fixedSize()
+                        .accessibilityHidden(true)
                 }
+                ContextRing(tokens: tokens, window: window)
+                    .padding(.leading, inTitleRow ? 2 : 0)
             }
-            .animation(.easeInOut(duration: 0.15), value: current)
-            .font(.caption2.weight(.medium))
-            .lineLimit(1)
-            .fixedSize()
-            .padding(.horizontal, 9)
-            .padding(.vertical, 8)
-            .background(costly ? ModelChoice.costlyColor.opacity(0.16) : tint.opacity(session.activity == .idle ? 0.08 : 0.14),
-                        in: Capsule())
-            .overlay { if costly { Capsule().strokeBorder(ModelChoice.costlyColor.opacity(0.35), lineWidth: 0.5) } }
-            .touchArea(horizontal: 2, vertical: 8)
         }
-        .buttonStyle(.plain)
-        .accessibilityLabel("Model \(current ?? "unknown")")
-        .accessibilityValue(costly ? ModelChoice.usesLimitsFasterNote : "")
-        .accessibilityHint("Shows the models and effort levels")
+    }
+
+    /// Where the session is working: its branch, or for a worktree (whose
+    /// name is its branch) the repo and its pull request.
+    private var place: String? {
+        if project.isWorktree {
+            return [project.repoName, project.pullRequest.map { "#\($0.number)" }].compactMap { $0 }.joined(separator: " · ")
+        }
+        return project.branch
     }
 
     private var statusText: String {
@@ -835,6 +879,158 @@ private struct SessionHaptics: ViewModifier {
             .sensoryFeedback(.selection, trigger: model) { (old: String?, new: String?) -> Bool in
                 old != nil && new != nil
             }
+    }
+}
+
+/// Asks the Mac for the project's files the first time an `@` is typed,
+/// so they can be suggested, and stops when the message box goes away.
+private struct MentionFiles: ViewModifier {
+    @Environment(CompanionClient.self) private var client
+    let projectID: UUID
+    let draft: String
+    @Binding var isWatching: Bool
+
+    func body(content: Content) -> some View {
+        content
+            .onChange(of: draft, initial: true) { _, text in
+                guard !isWatching, client.canBrowseFiles, FileMention.token(in: text) != nil else { return }
+                isWatching = true
+                client.watchFiles(projectID: projectID)
+            }
+            .onDisappear {
+                guard isWatching else { return }
+                isWatching = false
+                client.unwatchFiles(projectID: projectID)
+            }
+    }
+}
+
+extension FileMention {
+    /// The `@` word at the end of what's typed. The phone's field doesn't
+    /// say where its cursor is, so it's taken to be at the end, where you
+    /// are while typing.
+    static func token(in text: String) -> ComposerToken? {
+        guard let token = ComposerToken.at(text.utf16.count, in: text), token.kind == .file else { return nil }
+        return token
+    }
+}
+
+/// Files and folders that finish the `@` word being typed. Tap one to
+/// put it in the message.
+private struct FileSuggestions: View {
+    let mentions: [FileMention]
+    let pick: (FileMention) -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            ForEach(Array(mentions.enumerated()), id: \.element.id) { index, mention in
+                if index > 0 { Divider().padding(.leading, 14) }
+                Button { pick(mention) } label: {
+                    HStack(alignment: .firstTextBaseline, spacing: 8) {
+                        Image(systemName: mention.isDirectory ? "folder" : "doc")
+                            .font(.footnote)
+                            .foregroundStyle(PhoneTheme.inkMuted)
+                            .frame(width: 18)
+                        Text(mention.isDirectory ? mention.name + "/" : mention.name)
+                            .font(.system(.subheadline, design: .monospaced).weight(.semibold))
+                            .foregroundStyle(PhoneTheme.ink)
+                            .lineLimit(1)
+                        if !mention.folder.isEmpty {
+                            Text(mention.folder)
+                                .font(.system(.caption, design: .monospaced))
+                                .foregroundStyle(PhoneTheme.inkMuted)
+                                .lineLimit(1)
+                                .truncationMode(.head)
+                        }
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 10)
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(mention.path)
+                .accessibilityHint(mention.isDirectory ? "Puts this folder in the message" : "Puts this file in the message")
+            }
+        }
+        .padding(.vertical, 4)
+        .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+    }
+}
+
+private extension View {
+    /// A small capsule in the message box: the model, the permission mode.
+    func composerPill(fill: Color, stroke: Color? = nil) -> some View {
+        font(.caption.weight(.medium))
+            .lineLimit(1)
+            .fixedSize()
+            .padding(.horizontal, 9)
+            .padding(.vertical, 5)
+            .background(fill, in: Capsule())
+            .overlay { if let stroke { Capsule().strokeBorder(stroke, lineWidth: 0.5) } }
+            .touchArea(horizontal: 2, vertical: 10)
+    }
+}
+
+/// How much the agent does before asking, as a pill that opens the list
+/// of modes. Shows the one you picked at once: the Mac reports the change
+/// a moment later, when Claude Code's screen says so.
+private struct ModePill: View {
+    let mode: PermissionMode
+    let set: (PermissionMode) -> Void
+    @State private var switching: PermissionMode?
+
+    private var shown: PermissionMode { switching ?? mode }
+
+    var body: some View {
+        Menu {
+            Picker("Mode", selection: Binding(get: { shown }, set: choose)) {
+                ForEach(PermissionMode.offered, id: \.self) { option in
+                    // Two lines of text: the name, and what it does under it.
+                    Label {
+                        Text(option.name)
+                        Text(option.detail)
+                    } icon: {
+                        Image(systemName: option.symbol)
+                    }
+                    .tag(option)
+                }
+            }
+            .pickerStyle(.inline)
+            .labelsHidden()
+        } label: {
+            HStack(spacing: 4) {
+                Image(systemName: shown.symbol)
+                    .imageScale(.small)
+                Text(shown.name)
+                    .contentTransition(.opacity)
+                if switching != nil {
+                    ProgressView().controlSize(.mini)
+                } else {
+                    Image(systemName: "chevron.up.chevron.down")
+                        .imageScale(.small)
+                }
+            }
+            .foregroundStyle(shown == .bypass ? PhoneTheme.error : PhoneTheme.inkMuted)
+            .composerPill(fill: shown == .bypass ? PhoneTheme.error.opacity(0.14) : PhoneTheme.ink.opacity(0.07))
+            .animation(.easeInOut(duration: 0.15), value: shown)
+        }
+        .buttonStyle(.plain)
+        .sensoryFeedback(.selection, trigger: shown)
+        .onChange(of: mode) { switching = nil }
+        .accessibilityLabel("Permission mode, \(shown.name)")
+        .accessibilityHint("Chooses how much the agent does before asking")
+    }
+
+    private func choose(_ option: PermissionMode) {
+        guard option != mode else { switching = nil; return }
+        switching = option
+        set(option)
+        // Give up on showing it if the Mac never reports it.
+        Task {
+            try? await Task.sleep(for: .seconds(4))
+            if switching == option { switching = nil }
+        }
     }
 }
 
@@ -1157,89 +1353,44 @@ private struct ContextRing: View {
 /// means Deny; these do the same.
 private struct PermissionCard: View {
     let session: CompanionSession
+    /// Puts the cursor in the message box, to say something else instead.
+    var reply: (() -> Void)?
     let answer: (Bool) -> Void
-    /// How tall the command is when laid out at the card's width.
-    @State private var commandTextHeight: CGFloat = 0
-    /// What you just tapped, shown until the Mac takes the card away.
-    @State private var chosen: Bool?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(spacing: 8) {
                 Image(systemName: "hand.raised.fill").foregroundStyle(PhoneTheme.waiting)
-                Text(session.question ?? "\(session.agentTitle) needs your permission")
+                Text(session.permissionTitle)
                     .font(.system(.subheadline, design: .rounded, weight: .semibold))
                     .foregroundStyle(PhoneTheme.ink)
+                Spacer(minLength: 6)
+                if let since = session.since {
+                    ActiveTimer(since: since, activity: session.activity)
+                        .font(.footnote)
+                }
             }
             if let command = session.command, !command.isEmpty {
-                // All of it, before you allow it: a long command scrolls
-                // rather than hiding its later lines.
-                // Sized from the text's own height: a frame with only a
-                // most-height takes all it's offered.
-                ScrollView {
-                    commandText(command)
-                        .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { commandTextHeight = $0 }
-                }
-                .scrollDisabled(commandTextHeight <= 150)
-                .frame(height: min(max(commandTextHeight, 16), 150))
+                CommandBlock(command: command)
             } else if let action = session.action {
                 // An older Mac only sends the start of the first line.
                 Text(action).font(.system(.footnote, design: .monospaced)).foregroundStyle(PhoneTheme.inkMuted).lineLimit(3)
             }
-            ZStack {
-                HStack(spacing: 10) {
-                    Button { choose(true) } label: { Text("Allow").font(.body.weight(.semibold)).frame(maxWidth: .infinity) }
-                        .buttonStyle(.borderedProminent)
-                        .tint(PhoneTheme.done)
-                    Button { choose(false) } label: { Text("Deny").font(.body.weight(.semibold)).frame(maxWidth: .infinity) }
-                        .buttonStyle(.bordered)
-                        .tint(PhoneTheme.ink)
-                }
-                .opacity(chosen == nil ? 1 : 0)
-                .disabled(chosen != nil)
-                .accessibilityHidden(chosen != nil)
-                if let chosen {
-                    Label(chosen ? "Allowed" : "Denied", systemImage: chosen ? "checkmark.circle.fill" : "xmark.circle.fill")
-                        .font(.body.weight(.semibold))
-                        .foregroundStyle(chosen ? PhoneTheme.done : PhoneTheme.inkMuted)
-                        .transition(.opacity.combined(with: .scale(scale: 0.9)))
-                }
+            PermissionButtons(session: session, answer: answer)
+            if let reply, session.canReply {
+                Button("Reply instead", action: reply)
+                    .font(.footnote.weight(.medium))
+                    .foregroundStyle(PhoneTheme.inkMuted)
+                    .frame(maxWidth: .infinity)
+                    .touchArea(vertical: 8)
+                    .buttonStyle(.plain)
+                    .accessibilityHint("Puts the cursor in the message box")
             }
-        }
-        .animation(.easeOut(duration: 0.15), value: chosen)
-        .sensoryFeedback(trigger: chosen) { _, new in
-            switch new {
-            case true?: .success
-            case false?: .impact(weight: .light)
-            case nil: nil
-            }
-        }
-        // Anything new from the Mac while the card is still up means it's
-        // asking again (or never heard), so the buttons come back.
-        .onChange(of: session) { chosen = nil }
-        .task(id: chosen) {
-            guard chosen != nil else { return }
-            try? await Task.sleep(for: .seconds(4))
-            if !Task.isCancelled { chosen = nil }
         }
         .padding(14)
         .background(PhoneTheme.surface, in: RoundedRectangle(cornerRadius: PhoneTheme.Radius.card, style: .continuous))
         .overlay(RoundedRectangle(cornerRadius: PhoneTheme.Radius.card, style: .continuous).strokeBorder(PhoneTheme.waiting.opacity(0.6), lineWidth: 1.5))
         .shadow(color: .black.opacity(0.18), radius: 16, y: 6)
-    }
-
-    private func commandText(_ command: String) -> some View {
-        Text(command)
-            .font(.system(.footnote, design: .monospaced))
-            .foregroundStyle(PhoneTheme.inkMuted)
-            .fixedSize(horizontal: false, vertical: true)
-            .frame(maxWidth: .infinity, alignment: .leading)
-    }
-
-    /// Shows the answer at once: the Mac can take a second to act on it.
-    private func choose(_ allow: Bool) {
-        chosen = allow
-        answer(allow)
     }
 }
 
@@ -1253,6 +1404,14 @@ private struct ComposeBar: View {
     @Binding var modelRequest: ModelRequest?
     /// True while the list of models `/model` opens is showing.
     @Binding var showsModels: Bool
+    /// The model being switched to, until the Mac reports it.
+    var switchingModel: ModelChoice?
+    /// Switches the permission mode. Nil when the session reports none.
+    var setMode: ((PermissionMode) -> Void)?
+    /// The project's files, suggested after an `@`. Empty until one is typed.
+    var files: [String] = []
+    /// The files and folders `@` can name, worked out once per listing.
+    @State private var mentionList: [FileMention] = []
     /// Slash commands to suggest while you type one.
     var commands: [SlashCommand] = []
     /// Stops Claude, when the Mac can.
@@ -1360,11 +1519,19 @@ private struct ComposeBar: View {
                     focused.wrappedValue = true
                 }
                 .glassList()
+            } else if session.canReply, let token = mentionToken,
+                      case let matches = FileMention.matches(query: token.query, in: mentionList, limit: 5), !matches.isEmpty {
+                FileSuggestions(mentions: matches) { mention in
+                    draft.replaceSubrange(token.range, with: mention.insertion)
+                    focused.wrappedValue = true
+                }
+                .glassList()
             }
             GlassEffectContainer(spacing: 8) {
                 HStack(alignment: .bottom, spacing: 8) {
                     AttachmentControls(attachments: $attachments)
                         .disabled(!session.canReply)
+                    VStack(alignment: .leading, spacing: 9) {
                     HStack(alignment: .top, spacing: 8) {
                         if isShellCommand {
                             // Stands for the `!` you typed, so there's no
@@ -1404,7 +1571,7 @@ private struct ComposeBar: View {
                             .accessibilityHint("Goes back to a message for \(session.agentTitle), keeping what you typed")
                             .transition(.opacity.combined(with: .scale(scale: 0.8)))
                         }
-                        TextField(isShellCommand ? "Command to run" : isSideQuestion ? "Ask a side question" : session.canReply ? "Message \(session.agentTitle)" : "Can't send right now",
+                        TextField(isShellCommand ? "Command to run" : isSideQuestion ? "Ask a side question" : !session.canReply ? "Can't send right now" : session.activity == .working ? "Queue a message for \(session.agentTitle)" : "Message \(session.agentTitle)",
                                   text: $field, axis: .vertical)
                             // An iPad has room for a pasted paragraph or two;
                             // an iPhone keeps it short, above the keyboard.
@@ -1436,6 +1603,8 @@ private struct ComposeBar: View {
                                 return .handled
                             }
                     }
+                    if showsPills { pills }
+                    }
                     .padding(.horizontal, 16)
                     .padding(.vertical, 11)
                     // Inside the glass: drawn after it, a border doesn't show.
@@ -1462,6 +1631,8 @@ private struct ComposeBar: View {
         .animation(.snappy, value: ComposerDraft.mode(of: draft))
         .animation(.snappy, value: SlashCommand.matches(for: draft, in: commands, limit: 5)?.isEmpty ?? true)
         .animation(.snappy, value: showsModels)
+        .animation(.snappy, value: mentionToken?.query)
+        .onChange(of: files, initial: true) { _, paths in mentionList = FileMention.all(from: paths) }
         .onChange(of: showsModels) { _, shows in
             guard shows else { return }
             pickerEffort = session.effortLevel
@@ -1474,6 +1645,73 @@ private struct ComposeBar: View {
         }
         .onChange(of: field) { _, text in fieldChanged(to: text) }
         .onChange(of: draft, initial: true) { _, new in draftChanged(to: new) }
+    }
+
+    /// The `@` word being typed at the end of a message, which the
+    /// project's files can finish. Not in a shell command or a side
+    /// question, where an `@` is just an `@`.
+    private var mentionToken: ComposerToken? {
+        guard !isShellCommand, !isSideQuestion, !mentionList.isEmpty else { return nil }
+        return FileMention.token(in: draft)
+    }
+
+    /// The model and the permission mode sit in the box, under what you
+    /// type, as in Claude Code's terminal. They step aside for a shell
+    /// command or a side question, which neither applies to.
+    private var showsPills: Bool {
+        guard !isShellCommand, !isSideQuestion else { return false }
+        return session.model != nil || session.canRunCommand || mode != nil
+    }
+
+    private var mode: PermissionMode? {
+        guard setMode != nil else { return nil }
+        return session.permissionMode.flatMap(PermissionMode.init(rawValue:))
+    }
+
+    private var pills: some View {
+        HStack(spacing: 6) {
+            if session.model != nil || session.canRunCommand {
+                modelPill
+            }
+            if let mode, let setMode {
+                ModePill(mode: mode, set: setMode)
+            }
+            Spacer(minLength: 0)
+        }
+    }
+
+    /// The model. Tap for the same list `/model` opens.
+    private var modelPill: some View {
+        let costly = ModelChoice.usesLimitsFaster(model: session.model, switching: switchingModel)
+        let current = switchingModel?.name ?? session.model
+        return Button {
+            if showsModels { showsModels = false } else { openModels() }
+        } label: {
+            HStack(spacing: 4) {
+                if costly {
+                    Image(systemName: "flame.fill")
+                        .foregroundStyle(ModelChoice.costlyColor)
+                }
+                Text(ModelChoice.label(model: session.model, switching: switchingModel))
+                    .foregroundStyle(costly ? ModelChoice.costlyColor : PhoneTheme.inkMuted)
+                    .contentTransition(.opacity)
+                if switchingModel != nil {
+                    ProgressView()
+                        .controlSize(.mini)
+                } else {
+                    Image(systemName: "chevron.up.chevron.down")
+                        .imageScale(.small)
+                        .foregroundStyle(PhoneTheme.inkMuted)
+                }
+            }
+            .animation(.easeInOut(duration: 0.15), value: current)
+            .composerPill(fill: costly ? ModelChoice.costlyColor.opacity(0.16) : PhoneTheme.ink.opacity(0.07),
+                          stroke: costly ? ModelChoice.costlyColor.opacity(0.35) : nil)
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Model \(current ?? "unknown")")
+        .accessibilityValue(costly ? ModelChoice.usesLimitsFasterNote : "")
+        .accessibilityHint("Shows the models and effort levels")
     }
 
     /// True while the send button is a stop button: Claude is working and
@@ -1524,7 +1762,10 @@ private struct ComposeBar: View {
 
     private var note: String? {
         if !session.canReply { return session.replyProblem }
-        if session.activity == .working { return "Working. Your message waits for the current step to finish." }
+        // With nothing typed, the box itself says a message will wait and
+        // its button is Stop. Once you type, this line says it, and
+        // carries Stop.
+        if session.activity == .working, !showsStop { return "Working. Your message waits for the current step to finish." }
         return nil
     }
 

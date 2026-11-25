@@ -107,6 +107,8 @@ final class DemoServer {
             sendProjects()
         case .interrupt(let id):
             interrupt(id)
+        case .setPermissionMode(let id, let mode):
+            update(id) { $0.permissionMode = mode }
         case .askSideQuestion(let id, let questionID, let question):
             var asked = SideQuestion(id: questionID, question: question)
             output(.sideQuestion(sessionID: id, question: asked))
@@ -349,7 +351,8 @@ final class DemoServer {
                     canReply: true, since: .now.addingTimeInterval(-6 * minute), checklist: Self.checklist(done: 2),
                     agents: [AgentStatus(toolUseID: "r7t", description: "Find where recipes are saved and synced", type: "Explore",
                                          isFinished: false, isRunning: true, action: "Reading CloudSync.swift", steps: 6,
-                                         startedAt: .now.addingTimeInterval(-50))])]),
+                                         startedAt: .now.addingTimeInterval(-50))],
+                    permissionMode: PermissionMode.acceptEdits.rawValue)]),
             CompanionProject(
                 id: shoppingAgent, name: "dark-mode", repoName: "recipes", path: "~/Code/recipes-agents/dark-mode",
                 branch: "agent/dark-mode", parentID: recipes, activity: .done,
@@ -375,7 +378,7 @@ final class DemoServer {
                     id: websiteSession, title: "Pricing page", activity: .waiting,
                     prompt: "Add a pricing page with the three plans, and link it from the nav.",
                     question: "Claude wants to run: npm run build", isAllowOrDeny: true, canReply: true,
-                    since: .now.addingTimeInterval(-2 * minute))]),
+                    since: .now.addingTimeInterval(-2 * minute), command: "npm run build")]),
             CompanionProject(
                 id: notes, name: "Field Notes", repoName: "field-notes", path: "~/Code/field-notes", branch: "main",
                 activity: .waiting,

@@ -29,7 +29,7 @@ struct ChangesView: View {
         Group {
             if let changes {
                 if !changes.isRepository {
-                    ContentUnavailableView("Not a Git repository", systemImage: "folder", description: Text(project?.name ?? ""))
+                    EmptyStateScaffold(title: "Not a Git repository", message: project?.name ?? "", symbol: "folder")
                 } else if changes.fileCount == 0, changes.commits.isEmpty {
                     EmptyStateScaffold(title: "No changes",
                                        message: changes.baseRef.map { "Nothing differs from \($0)." } ?? "The working copy is clean.") {
@@ -216,7 +216,7 @@ struct DiffScreen: View {
         Group {
             if let lines {
                 if lines.isEmpty {
-                    ContentUnavailableView("No diff", systemImage: "doc", description: Text(change.isBinary ? "This is a binary file." : "Git had nothing to show for this file."))
+                    EmptyStateScaffold(title: "No diff", message: change.isBinary ? "This is a binary file." : "Git had nothing to show for this file.", symbol: "doc")
                 } else {
                     let shown = folded(lines)
                     // The rows fill this view's width, not the screen's,
