@@ -184,7 +184,9 @@ struct BenchPhoneApp: App {
                     navigator.pendingURL = nil
                 }
             }
+            .onChange(of: client.lastUpdate) { _, _ in WidgetFeed.update(from: client) }
             .onChange(of: pairing.info, initial: true) { _, info in
+                if info == nil, !pairing.isDemo { WidgetFeed.clear() }
                 queue.use(info)
                 if let info { client.connect(info) } else if !pairing.isDemo { client.disconnect() }
             }
@@ -210,7 +212,11 @@ struct BenchPhoneApp: App {
                     if let info = pairing.info { client.connect(info) }
                     // Sends prompts that didn't go out, and checks on the rest.
                     Task { await queue.refresh() }
-                case .background: if !pairing.isDemo { client.disconnect() }
+                case .background:
+                    // Before the connection closes, so the widgets start
+                    // from what you just saw.
+                    WidgetFeed.update(from: client, force: true)
+                    if !pairing.isDemo { client.disconnect() }
                 default: break
                 }
             }

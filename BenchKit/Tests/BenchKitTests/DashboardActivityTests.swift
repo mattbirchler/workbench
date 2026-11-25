@@ -66,3 +66,15 @@ private func project(_ name: String, _ sessions: [CompanionSession], pr: Compani
     let data = try JSONSerialization.data(withJSONObject: try #require(aps["content-state"]))
     #expect(try JSONDecoder().decode(DashboardAttributes.ContentState.self, from: data) == state)
 }
+
+@Test func widgetSnapshotKnowsWhenItLooksTheSameAndWhenItIsOld() {
+    let state = DashboardActivity.state(for: [project("Bench", [session(.working, since: 5, action: "Building")])], now: now)
+    let first = WidgetSnapshot(macName: "Mac Studio", state: state, savedAt: now)
+    var later = first
+    later.savedAt = now.addingTimeInterval(90)
+    #expect(first.shows(sameAs: later))
+    later.state.waiting = 1
+    #expect(!first.shows(sameAs: later))
+    #expect(!first.isStale(at: now.addingTimeInterval(60)))
+    #expect(first.isStale(at: now.addingTimeInterval(WidgetSnapshot.staleAfter + 60)))
+}

@@ -335,12 +335,15 @@ targets:
         # Must match the app's, or App Store Connect warns about a mismatch.
         CFBundleShortVersionString: $(MARKETING_VERSION)
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        # Where the app leaves what the widgets show (WidgetSnapshot in BenchKit).
+        BenchSharedKeychainGroup: $(AppIdentifierPrefix)$(BENCH_BUNDLE_PREFIX).BenchPhone.shared
         NSExtension:
           NSExtensionPointIdentifier: com.apple.widgetkit-extension
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: $(BENCH_BUNDLE_PREFIX).BenchPhone.widgets
         PRODUCT_NAME: BenchPhoneWidgets
+        CODE_SIGN_ENTITLEMENTS: BenchPhoneWidgets/BenchPhoneWidgets.entitlements
         MARKETING_VERSION: "1.2.4"
         CURRENT_PROJECT_VERSION: 70
         SWIFT_VERSION: 6.0
