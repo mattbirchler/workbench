@@ -1,4 +1,5 @@
 import AppKit
+import BenchKit
 import SwiftUI
 
 /// What the menu bar and the ⌘K command bar both do, kept in one place so
@@ -174,6 +175,21 @@ struct AppActions {
         Toasts.shared.show("Address Copied", symbol: "link")
     }
 
+    /// The pull request for the project on screen, here or on another Mac.
+    func pullRequestURL(in pullRequests: PullRequests, macs: RemoteMacs) -> URL? {
+        if let remote = store.selectedRemote {
+            return macs.client(for: remote.host)?.snapshot?.projects.first { $0.id == remote.projectID }?.pullRequest?.url
+        }
+        return store.selectedProjectID.flatMap { pullRequests.info[$0]?.url }
+    }
+
+    /// Opens the project's pull request in the browser, like the sidebar's
+    /// Open Pull Request.
+    func openPullRequest(in pullRequests: PullRequests, macs: RemoteMacs) {
+        guard let url = pullRequestURL(in: pullRequests, macs: macs) else { return }
+        NSWorkspace.shared.open(url)
+    }
+
     /// Opens a new shell beside the current tab.
     func split(_ axis: TabSplit.Axis) {
         guard canSplit, let project = store.selectedProject, let tab = project.selectedTab else { return }
@@ -235,7 +251,7 @@ struct AppActions {
 
     /// The actions the command bar lists, in menu order. Ones the menu
     /// would disable right now (nothing selected) are left out.
-    var commandBarActions: [CommandBarAction] {
+    func commandBarActions(pullRequests: PullRequests, macs: RemoteMacs) -> [CommandBarAction] {
         let hasProject = store.hasProjectOnScreen
         var actions: [CommandBarAction] = []
         if hasProject {
@@ -261,6 +277,10 @@ struct AppActions {
             }
             actions.append(CommandBarAction(id: "new-agent", title: "New Agent on a Branch…", symbol: "arrow.triangle.branch",
                                             shortcut: "⇧⌘N", keywords: ["worktree", "branch"]) { store.startNewAgent() })
+            if let url = pullRequestURL(in: pullRequests, macs: macs) {
+                actions.append(CommandBarAction(id: "open-pull-request", title: "Open Pull Request", symbol: "arrow.triangle.pull",
+                                                shortcut: "⇧⌘G", keywords: ["pr", "github", "browser", "review"]) { NSWorkspace.shared.open(url) })
+            }
         }
         actions.append(CommandBarAction(id: "send-tasks", title: "Brain Dump…",
                                         symbol: "brain", shortcut: "⌥⌘N",

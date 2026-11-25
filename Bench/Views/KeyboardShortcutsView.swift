@@ -57,6 +57,7 @@ struct KeyboardShortcutsView: View {
             ]),
             Group(title: "Changes and files", keys: [
                 Key(action: "Show or hide Changes", keys: "⌥⌘0"),
+                Key(action: "Open the pull request", keys: "⇧⌘G"),
                 Key(action: "Next and previous change", keys: "⌃⌥↓ and ⌃⌥↑"),
                 Key(action: "Find in a file", keys: "⌘F"),
             ]),
