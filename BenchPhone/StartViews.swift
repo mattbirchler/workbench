@@ -144,69 +144,91 @@ struct NewAgentView: View {
     /// Whether this view asked for the project's changes (for the branch
     /// list), so it stops them when it closes.
     @State private var startedWatching = false
+    @FocusState private var typing: Bool
 
     private var project: CompanionProject? { client.snapshot?.projects.first { $0.id == projectID } }
     private var bases: [String]? { client.agentBases(projectID: projectID) }
     private var trimmedBranch: String { branch.trimmingCharacters(in: .whitespaces) }
 
+    private var canStart: Bool { !prompt.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && !isStarting }
+
     var body: some View {
-        Form {
-            Section("What should it do?") {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 0) {
+                Text("What should it do?")
+                    .font(.system(.title3, design: .rounded, weight: .semibold))
+                    .foregroundStyle(PhoneTheme.ink)
+                    .padding(.horizontal, 4)
                 TextField("Describe the task", text: $prompt, axis: .vertical)
                     .lineLimit(4...10)
+                    .focused($typing)
+                    .font(.body)
                     .foregroundStyle(PhoneTheme.ink)
-            }
-            .listRowBackground(PhoneTheme.surface)
-            Section {
-                // The label stays on screen: the placeholder alone didn't
-                // say this is the branch.
-                LabeledContent("Branch") {
-                    TextField("Branch", text: $branch, prompt: Text("Suggested from the task"))
-                        .multilineTextAlignment(.trailing)
-                        .textInputAutocapitalization(.never)
-                        .autocorrectionDisabled()
-                }
-                .foregroundStyle(PhoneTheme.ink)
-                Picker("Start From", selection: $base) {
-                    Text("Default Branch").tag(String?.none)
-                    ForEach(bases ?? [], id: \.self) { Text($0).tag(String?.some($0)) }
-                }
-                .foregroundStyle(PhoneTheme.ink)
-                .tint(PhoneTheme.inkMuted)
-                .disabled(bases == nil)
-            } footer: {
-                if !trimmedBranch.isEmpty, bases?.contains(trimmedBranch) == true {
-                    Text("\(trimmedBranch) already exists, so the agent picks it up where it left off instead of starting fresh.")
-                } else {
-                    Text("A new worktree for \(project?.repoName ?? "the repo") on your Mac. The setup files and command saved for the project are used, or its .env files if none are saved.")
-                }
-            }
-            .listRowBackground(PhoneTheme.surface)
-            if let problem = client.lastProblem {
-                Section { Text(problem).foregroundStyle(PhoneTheme.error) }
-                    .listRowBackground(PhoneTheme.surface)
-            }
-            // The main button, on the page instead of in a row, where it
-            // read as a line of text.
-            Section {
-                Button {
-                    isStarting = true
-                    client.newAgent(parentID: projectID, prompt: prompt.trimmingCharacters(in: .whitespacesAndNewlines),
-                                    branch: trimmedBranch, base: base)
-                } label: {
-                    HStack(spacing: 8) {
-                        if isStarting { ProgressView() }
-                        Text("Start Agent")
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 13)
+                    .background(PhoneTheme.surface, in: RoundedRectangle(cornerRadius: PhoneTheme.Radius.card, style: .continuous))
+                    .overlay(RoundedRectangle(cornerRadius: PhoneTheme.Radius.card, style: .continuous)
+                        .strokeBorder(typing ? PhoneTheme.accent.opacity(0.6) : PhoneTheme.hairline))
+                    .animation(.easeOut(duration: 0.15), value: typing)
+                    .padding(.top, 10)
+                options
+                    .padding(.top, 14)
+                Group {
+                    if !trimmedBranch.isEmpty, bases?.contains(trimmedBranch) == true {
+                        Text("\(trimmedBranch) already exists, so the agent picks it up where it left off instead of starting fresh.")
+                    } else {
+                        Text("A new worktree for \(project?.repoName ?? "the repo") on your Mac. The setup files and command saved for the project are used, or its .env files if none are saved.")
                     }
                 }
-                .buttonStyle(.phonePrimary)
-                .sensoryFeedback(.impact(weight: .medium), trigger: isStarting) { _, new in new }
-                .disabled(prompt.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isStarting)
-                .listRowInsets(EdgeInsets())
-                .listRowBackground(Color.clear)
+                .font(.footnote)
+                .foregroundStyle(PhoneTheme.inkMuted)
+                .padding(.horizontal, 4)
+                .padding(.top, 10)
+                if let problem = client.lastProblem {
+                    Label(problem, systemImage: "exclamationmark.triangle")
+                        .font(.subheadline)
+                        .foregroundStyle(PhoneTheme.error)
+                        .padding(14)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(PhoneTheme.error.opacity(0.1), in: RoundedRectangle(cornerRadius: PhoneTheme.Radius.card, style: .continuous))
+                        .padding(.top, 16)
+                }
             }
+            // On an iPad it stays a comfortable column instead of stretching.
+            .frame(maxWidth: 520)
+            .frame(maxWidth: .infinity)
+            .padding(.horizontal, 20)
+            .padding(.top, 16)
+            .padding(.bottom, 24)
         }
-        .scrollContentBackground(.hidden)
+        .scrollDismissesKeyboard(.interactively)
+        // The main button stays in reach above the keyboard, instead of
+        // somewhere down the page.
+        .safeAreaInset(edge: .bottom, spacing: 0) {
+            Button {
+                isStarting = true
+                client.newAgent(parentID: projectID, prompt: prompt.trimmingCharacters(in: .whitespacesAndNewlines),
+                                branch: trimmedBranch, base: base)
+            } label: {
+                HStack(spacing: 8) {
+                    if isStarting { ProgressView() }
+                    Text("Start Agent")
+                }
+            }
+            // Quiet until there's a task to start. While it's starting it
+            // keeps the accent, dimmed, so it still reads as the thing
+            // that was pressed.
+            .buttonStyle(PhonePrimaryButtonStyle(quietWhenDisabled: !isStarting))
+            .sensoryFeedback(.impact(weight: .medium), trigger: isStarting) { _, new in new }
+            .disabled(!canStart)
+            .animation(.easeOut(duration: 0.15), value: canStart)
+            .frame(maxWidth: 520)
+            .frame(maxWidth: .infinity)
+            .padding(.horizontal, 20)
+            .padding(.top, 10)
+            .padding(.bottom, 10)
+            .background(PhoneTheme.canvas)
+        }
         .background(PhoneTheme.canvas)
         .navigationTitle("New Agent")
         .navigationBarTitleDisplayMode(.inline)
@@ -214,6 +236,8 @@ struct NewAgentView: View {
         // A dropped connection never answers, so don't wait on it.
         .onChange(of: client.status) { _, status in if status != .connected { isStarting = false } }
         .onAppear {
+            // Straight to typing: the task is the one thing the screen needs.
+            typing = true
             client.clearLastProblem()
             if !client.isWatchingChanges(projectID) {
                 startedWatching = true
@@ -221,5 +245,69 @@ struct NewAgentView: View {
             }
         }
         .onDisappear { if startedWatching { client.unwatchChanges(projectID: projectID) } }
+    }
+
+    /// The branch and where it starts from, as two rows of one card.
+    private var options: some View {
+        VStack(spacing: 0) {
+            // The label stays on screen: the placeholder alone didn't
+            // say this is the branch.
+            HStack(spacing: 12) {
+                optionLabel("Branch", symbol: "arrow.triangle.branch")
+                TextField("Branch", text: $branch, prompt: Text("Suggested from the task").font(.subheadline))
+                    .font(.system(.subheadline, design: .monospaced))
+                    .foregroundStyle(PhoneTheme.ink)
+                    .multilineTextAlignment(.trailing)
+                    .textInputAutocapitalization(.never)
+                    .autocorrectionDisabled()
+            }
+            .padding(.horizontal, 14)
+            .frame(minHeight: 50)
+            Rectangle().fill(PhoneTheme.hairline).frame(height: 1).padding(.leading, 14)
+            HStack(spacing: 12) {
+                optionLabel("Start From", symbol: "arrow.turn.down.right")
+                Spacer(minLength: 8)
+                Menu {
+                    Picker("Start From", selection: $base) {
+                        Text("Default Branch").tag(String?.none)
+                        ForEach(bases ?? [], id: \.self) { Text($0).tag(String?.some($0)) }
+                    }
+                } label: {
+                    HStack(spacing: 6) {
+                        if let base {
+                            Text(base).font(.system(.subheadline, design: .monospaced))
+                        } else {
+                            Text("Default Branch").font(.subheadline)
+                        }
+                        Image(systemName: "chevron.up.chevron.down").font(.caption2.weight(.semibold))
+                    }
+                    .lineLimit(1)
+                    .truncationMode(.middle)
+                    .foregroundStyle(PhoneTheme.inkMuted)
+                    .touchArea(vertical: 12)
+                }
+                .disabled(bases == nil)
+                .accessibilityLabel("Start From")
+                .accessibilityValue(base ?? "Default Branch")
+            }
+            .padding(.horizontal, 14)
+            .frame(minHeight: 50)
+        }
+        .background(PhoneTheme.surface, in: RoundedRectangle(cornerRadius: PhoneTheme.Radius.card, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: PhoneTheme.Radius.card, style: .continuous).strokeBorder(PhoneTheme.hairline))
+    }
+
+    private func optionLabel(_ title: String, symbol: String) -> some View {
+        HStack(spacing: 8) {
+            Image(systemName: symbol)
+                .font(.footnote.weight(.semibold))
+                .foregroundStyle(PhoneTheme.accent)
+                .frame(width: 20)
+                .accessibilityHidden(true)
+            Text(title)
+                .font(.system(.subheadline, design: .rounded, weight: .semibold))
+                .foregroundStyle(PhoneTheme.ink)
+        }
+        .fixedSize()
     }
 }

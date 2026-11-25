@@ -247,18 +247,31 @@ extension EmptyStateScaffold where Illustration == EmptyStateSymbol, Accessory =
 /// the end of a row.
 struct PhonePrimaryButtonStyle: ButtonStyle {
     var fullWidth = true
+    /// Draws the button it can't use yet as a plain outline with muted
+    /// text, for a screen where it sits in view the whole time and a
+    /// dimmed accent would be a big pale slab.
+    var quietWhenDisabled = false
     @Environment(\.isEnabled) private var isEnabled
+
+    private var isQuiet: Bool { quietWhenDisabled && !isEnabled }
 
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(fullWidth ? .headline : .subheadline.weight(.semibold))
-            .foregroundStyle(PhoneTheme.onAccent)
-            .tint(PhoneTheme.onAccent)
+            .foregroundStyle(isQuiet ? PhoneTheme.inkMuted : PhoneTheme.onAccent)
+            .tint(isQuiet ? PhoneTheme.inkMuted : PhoneTheme.onAccent)
             .padding(.horizontal, fullWidth ? 0 : 18)
             .frame(maxWidth: fullWidth ? .infinity : nil, minHeight: fullWidth ? 50 : 36)
-            .background(PhoneTheme.accent.gradient, in: Capsule())
+            .background {
+                if isQuiet {
+                    Capsule().fill(PhoneTheme.surface)
+                    Capsule().strokeBorder(PhoneTheme.hairline)
+                } else {
+                    Capsule().fill(PhoneTheme.accent.gradient)
+                }
+            }
             .contentShape(Capsule())
-            .opacity(isEnabled ? (configuration.isPressed ? 0.8 : 1) : 0.4)
+            .opacity(isEnabled ? (configuration.isPressed ? 0.8 : 1) : (isQuiet ? 1 : 0.4))
             // Gives a little under the finger, as Start Claude always did.
             .scaleEffect(configuration.isPressed ? 0.97 : 1)
             .animation(.easeOut(duration: 0.12), value: configuration.isPressed)
