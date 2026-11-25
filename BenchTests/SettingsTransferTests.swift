@@ -134,7 +134,7 @@ struct SettingsTransferTests {
             TerminalTheme.sourceKey, TerminalTheme.lightThemeKey, TerminalTheme.darkThemeKey, TerminalTheme.matchKey,
             ChatTypography.textFontKey, ChatTypography.codeFontKey, ChatTypography.scaleKey,
             AppStore.newTabsShowChatKey, Agents.claude.commandKey, Recaps.enabledKey, SessionKeeper.enabledKey,
-            TerminalManager.resumesAtLaunchKey, WorktreeCleaner.autoCleanKey, Worktrees.chosenFolderKey,
+            TerminalManager.resumesAtLaunchKey, WorktreeCleaner.autoCleanKey, Worktrees.chosenFolderKey, Editors.chosenKey,
             Updater.installsWhenIdleKey, PlanUsageMonitor.budgetKey, PlanUsageMonitor.shownKey, PlanUsageMonitor.paceKey,
             MacActivity.shownKey, SimulatorWatch.shownKey, Analytics.optedOutKey,
             Dictation.enabledKey, Dictation.keyKey, Dictation.fixesTermsKey,

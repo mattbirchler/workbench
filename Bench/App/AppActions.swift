@@ -201,6 +201,22 @@ struct AppActions {
         store.switchPane()
     }
 
+    /// The folder of the project or worktree on screen, for opening it in
+    /// your editor. Projects on another Mac have none here.
+    private var folderOnScreen: URL? {
+        guard store.selectedRemote == nil, !store.showsPage else { return nil }
+        return store.selectedProject?.url
+    }
+
+    var canOpenInEditor: Bool { folderOnScreen != nil }
+
+    /// Opens the project or worktree on screen in the editor picked in
+    /// Settings > General.
+    func openInEditor() {
+        guard let folderOnScreen else { return }
+        Editors.open(folderOnScreen)
+    }
+
     func openSettings() {
         store.settingsSection = store.settingsSection ?? .general
     }
@@ -261,6 +277,10 @@ struct AppActions {
             }
             actions.append(CommandBarAction(id: "new-agent", title: "New Agent on a Branch…", symbol: "arrow.triangle.branch",
                                             shortcut: "⇧⌘N", keywords: ["worktree", "branch"]) { store.startNewAgent() })
+            if canOpenInEditor {
+                actions.append(CommandBarAction(id: "open-in-editor", title: Editors.menuTitle, symbol: "chevron.left.forwardslash.chevron.right",
+                                                shortcut: "⇧⌘E", keywords: ["editor", "code", "ide", "worktree", "folder"]) { openInEditor() })
+            }
         }
         actions.append(CommandBarAction(id: "send-tasks", title: "Brain Dump…",
                                         symbol: "brain", shortcut: "⌥⌘N",

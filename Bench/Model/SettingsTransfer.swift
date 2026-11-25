@@ -64,7 +64,7 @@ nonisolated enum SettingsTransfer {
                                "chatTextFont", "chatCodeFont", "chatTextScale", "interfaceTextScale"]
             case .settings: ["newClaudeTabsShowChat", "claudeCommand", "recaps.enabled", "keepsClaudeSessionsAlive",
                              "resumesClaudeTabsAtLaunch", "autoCleanMergedWorktrees", "worktreesFolder",
-                             "trashRemovedWorktrees",
+                             "trashRemovedWorktrees", "editorBundleID",
                              "installsUpdatesWhenIdle", "monthlyBudget", "planUsageShown", "planUsagePace",
                              "showsMacActivity", "showsSimulators", "analyticsOptedOut", "fileViewWraps", "inspectorMode",
                              "inspectorShowsFiles", "usage.days", "usage.showsTokens",

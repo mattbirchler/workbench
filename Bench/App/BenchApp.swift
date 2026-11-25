@@ -558,6 +558,13 @@ struct BenchCommands: Commands {
             Divider()
             Button("Add Project…") { ProjectPicker.present(store: store) }
                 .keyboardShortcut("o")
+            Button {
+                actions.openInEditor()
+            } label: {
+                EditorMenuTitle()
+            }
+            .keyboardShortcut("e", modifiers: [.command, .shift])
+            .disabled(!actions.canOpenInEditor)
         }
         // With Keep Working on, a plain quit leaves Claude tabs running.
         CommandGroup(after: .appTermination) {
@@ -714,6 +721,17 @@ private struct ChatMenuTitle: View {
 
     var body: some View {
         Text(store.selectedProject?.selectedTab?.showsChat == true ? "Show Terminal" : "Show as Chat")
+    }
+}
+
+/// "Open in Visual Studio Code", or whichever editor Settings has. A view
+/// of its own so the name follows the setting.
+private struct EditorMenuTitle: View {
+    @AppStorage(Editors.chosenKey) private var chosen = ""
+
+    var body: some View {
+        let _ = chosen
+        Text(Editors.menuTitle)
     }
 }
 

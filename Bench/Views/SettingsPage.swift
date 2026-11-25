@@ -349,6 +349,9 @@ private struct GeneralSettings: View {
                 .fixedSize()
             }
         }
+        SettingsGroup(title: "Editor") {
+            EditorRow()
+        }
         SettingsGroup(title: "Mac Activity") {
             SettingsRow("Show CPU and memory in the sidebar",
                         detail: "Two rings at the foot of the sidebar that light up when your Mac is under load.",
@@ -395,6 +398,45 @@ private struct GeneralSettings: View {
         panel.prompt = "Choose"
         guard panel.runModal() == .OK, let url = panel.url else { return }
         worktreesFolder = url.path
+    }
+}
+
+/// Which app ⇧⌘E and a project's right-click menu open its folder in.
+private struct EditorRow: View {
+    @AppStorage(Editors.chosenKey) private var chosen = ""
+    /// Bumped when Other App… is cancelled, so the menu goes back to the
+    /// editor it had.
+    @State private var refresh = 0
+    private static let otherTag = "other"
+
+    var body: some View {
+        let _ = (chosen, refresh)
+        let current = Editors.current
+        SettingsRow(title: "Open projects in",
+                    detail: "Where ⇧⌘E opens the project or worktree you're on. It's in a project's right-click menu too.",
+                    more: "It opens the folder the way code . does in a shell, without needing the editor's shell command installed. Pick Other App… for an editor that isn't listed.") {
+            Picker("Open projects in", selection: Binding(
+                get: { current?.bundleID ?? "" },
+                set: { picked in
+                    guard picked == Self.otherTag else {
+                        chosen = picked
+                        return
+                    }
+                    // After the menu has closed, so the panel isn't under it.
+                    DispatchQueue.main.async {
+                        Editors.chooseApp()
+                        refresh += 1
+                    }
+                }
+            )) {
+                if current == nil { Text("None").tag("") }
+                ForEach(Editors.choices) { Text($0.name).tag($0.bundleID) }
+                Divider()
+                Text("Other App…").tag(Self.otherTag)
+            }
+            .labelsHidden()
+            .fixedSize()
+        }
     }
 }
 
