@@ -284,6 +284,11 @@ struct ProjectsView: View {
             guard let old, let new else { return false }
             return !new.isSubset(of: old)
         }
+        // And a firmer one when a session finishes while you're looking.
+        .sensoryFeedback(.success, trigger: finished) { old, new in
+            guard let old, let new else { return false }
+            return !new.isSubset(of: old)
+        }
         .refreshable { client.retry(); checkOtherMacs() }
         .task(id: pairing.macs.map(\.host)) { checkOtherMacs() }
         // So the queued counts are current while the Mac is away.
@@ -350,6 +355,13 @@ struct ProjectsView: View {
             .filter { $0.activity == .waiting || $0.activity == .attention }.map(\.id))
     }
 
+    /// The tabs that have finished, or nil while the list is an old one
+    /// or hasn't arrived.
+    private var finished: Set<UUID>? {
+        guard !client.isShowingSaved, client.status == .connected, let snapshot = client.snapshot else { return nil }
+        return Set(snapshot.projects.flatMap(\.sessions).filter { $0.activity == .done }.map(\.id))
+    }
+
     /// Pins or unpins, moving the row right away.
     private func pin(_ project: CompanionProject, _ pinned: Bool) {
         placementTaps += 1
@@ -382,7 +394,8 @@ struct ProjectsView: View {
                                        parentName: item.project.parentID.flatMap { id in client.snapshot?.projects.first { $0.id == id }?.name },
                                        selected: isSelected(item.project.id, session: item.session.id))
                     }
-                    .listRowBackground(rowBackground(tint: tinted ? color : nil, selected: isSelected(item.project.id, session: item.session.id)))
+                    .listRowBackground(rowBackground(tint: tinted ? color : nil, selected: isSelected(item.project.id, session: item.session.id),
+                                                     breathes: tinted, finishedAt: item.session.activity == .done ? item.session.stoppedAt : nil))
                     .swipeActions(edge: .leading) { placementButtons(item.project, leading: true) }
                     .swipeActions(edge: .trailing, allowsFullSwipe: false) { placementButtons(item.project, leading: false) }
                     .contextMenu { placementMenu(item.project, session: item.session) }
@@ -535,10 +548,16 @@ struct ProjectsView: View {
 
     /// `light` is for Recent and Inactive: a fainter card than the ones
     /// above it.
-    private func rowBackground(tint: Color?, selected: Bool, light: Bool = false) -> some View {
+    /// A row waiting on you breathes, and one that just finished takes a
+    /// sweep of light, as the Mac's rows do.
+    private func rowBackground(tint: Color?, selected: Bool, light: Bool = false,
+                               breathes: Bool = false, finishedAt: Date? = nil) -> some View {
         ZStack {
             PhoneTheme.surface.opacity(light ? 0.45 : 1)
-            if let tint { tint.opacity(0.1) }
+            if let tint {
+                if breathes { BreathingTint(color: tint) } else { tint.opacity(0.1) }
+            }
+            if let finishedAt { FinishSweep(finishedAt: finishedAt) }
             if selected { PhoneTheme.ink.opacity(0.08) }
         }
     }
@@ -1286,6 +1305,60 @@ private struct PullRequestChip: View {
             case .pending: PhoneTheme.waiting
             case .failing: PhoneTheme.error
             }
+        }
+    }
+}
+
+/// The wash behind a row that's waiting on you, slowly rising and falling
+/// so it reads as asking. Still with Reduce Motion on.
+private struct BreathingTint: View {
+    let color: Color
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    var body: some View {
+        if reduceMotion {
+            color.opacity(0.1)
+        } else {
+            // Drawn from the clock, like ActivityMark, so no animation that
+            // never ends sits inside a list row.
+            TimelineView(.animation(minimumInterval: 1.0 / 20)) { context in
+                let phase = context.date.timeIntervalSinceReferenceDate.truncatingRemainder(dividingBy: 3.6) / 3.6
+                color.opacity(0.07 + 0.08 * (0.5 - 0.5 * cos(phase * 2 * .pi)))
+            }
+        }
+    }
+}
+
+/// One band of light across a row whose session just finished. Rows that
+/// finished a while ago, and Reduce Motion, get nothing.
+private struct FinishSweep: View {
+    let finishedAt: Date
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var position: CGFloat = -1
+    @State private var isSweeping = false
+
+    var body: some View {
+        GeometryReader { proxy in
+            if isSweeping {
+                LinearGradient(colors: [.clear, PhoneTheme.palette.done.opacity(0.28), .clear],
+                               startPoint: .leading, endPoint: .trailing)
+                    .frame(width: proxy.size.width * 0.6)
+                    .offset(x: position * proxy.size.width)
+                    .animation(.easeOut(duration: 1.1), value: position)
+            }
+        }
+        .clipped()
+        .allowsHitTesting(false)
+        .accessibilityHidden(true)
+        .task(id: finishedAt) {
+            guard !reduceMotion, Date.now.timeIntervalSince(finishedAt) < 6 else { return }
+            position = -0.6
+            isSweeping = true
+            // A beat, so the band is drawn at the start before it moves.
+            try? await Task.sleep(for: .milliseconds(50))
+            position = 1
+            try? await Task.sleep(for: .seconds(1.2))
+            isSweeping = false
         }
     }
 }

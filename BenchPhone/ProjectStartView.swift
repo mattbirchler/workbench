@@ -129,6 +129,7 @@ struct ProjectStartView: View {
             .disabled(starting)
             .animation(.snappy(duration: 0.2), value: hasPrompt)
             .animation(.snappy(duration: 0.2), value: starting)
+            .sensoryFeedback(.impact(weight: .medium), trigger: starting) { _, new in new }
         }
     }
 

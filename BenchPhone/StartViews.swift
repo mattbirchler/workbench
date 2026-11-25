@@ -199,6 +199,7 @@ struct NewAgentView: View {
                     }
                 }
                 .buttonStyle(.phonePrimary)
+                .sensoryFeedback(.impact(weight: .medium), trigger: isStarting) { _, new in new }
                 .disabled(prompt.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isStarting)
                 .listRowInsets(EdgeInsets())
                 .listRowBackground(Color.clear)

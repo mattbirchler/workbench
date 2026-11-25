@@ -139,7 +139,6 @@ public struct ChecklistStepsBar: View {
     private var reduceMotion: Bool { systemReduceMotion || motionLevel == .still }
     public let items: [ChecklistItem]
     public let activity: ActivityKind
-    @State private var glow = false
 
     public init(items: [ChecklistItem], activity: ActivityKind) {
         self.items = items
@@ -173,12 +172,6 @@ public struct ChecklistStepsBar: View {
                 .fixedSize()
         }
         .animation(.snappy, value: items.map(\.status))
-        #if !os(macOS)
-        .onAppear {
-            guard !reduceMotion else { return }
-            withAnimation(.easeInOut(duration: 1.1).repeatForever(autoreverses: true)) { glow = true }
-        }
-        #endif
         .accessibilityElement()
         .accessibilityLabel("Checklist")
         .accessibilityValue("\(items.doneCount) of \(items.count) steps done")
@@ -198,8 +191,19 @@ public struct ChecklistStepsBar: View {
                 .overlay { if !reduceMotion { LayerMotion(kind: .breathing(NSColor(tint), from: 0, to: 0.35, period: 2.2), cornerRadius: 2) } }
                 .overlay(shape.strokeBorder(tint.opacity(0.6), lineWidth: 0.5))
             #else
-            shape.fill(tint.opacity(reduceMotion ? 0.5 : (glow ? 0.65 : 0.3)))
-                .overlay(shape.strokeBorder(tint.opacity(0.6), lineWidth: 0.5))
+            // Drawn from the clock, like ActivityMark on iOS, so no
+            // animation that never ends sits inside a list row.
+            if reduceMotion {
+                shape.fill(tint.opacity(0.5))
+                    .overlay(shape.strokeBorder(tint.opacity(0.6), lineWidth: 0.5))
+            } else {
+                TimelineView(.animation(minimumInterval: 1.0 / 20)) { context in
+                    let phase = context.date.timeIntervalSinceReferenceDate.truncatingRemainder(dividingBy: 2.2) / 2.2
+                    let glow = 0.5 - 0.5 * cos(phase * 2 * .pi)
+                    shape.fill(tint.opacity(0.3 + 0.35 * glow))
+                        .overlay(shape.strokeBorder(tint.opacity(0.6), lineWidth: 0.5))
+                }
+            }
             #endif
         case .pending:
             shape.fill(Color.primary.opacity(0.1))
