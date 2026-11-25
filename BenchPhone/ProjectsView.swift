@@ -37,6 +37,9 @@ struct ProjectsView: View {
     /// "ungrouped" for Ungrouped. Comma-separated.
     @AppStorage("collapsedGroups") private var collapsedGroups = ""
     @State private var query = ""
+    /// False until the first list has been drawn and had a moment to
+    /// settle, so its arrival isn't animated.
+    @State private var hasSettled = false
     @Environment(\.horizontalSizeClass) private var sizeClass
     @State private var columns = ProjectsView.debugShowsInspector ? NavigationSplitViewVisibility.detailOnly : .all
     /// The window's width, to tell when the sidebar has to cover the chat
@@ -260,6 +263,16 @@ struct ProjectsView: View {
             } else if heldSnapshot != nil {
                 heldSnapshot = nil
             }
+        }
+        // The first list isn't animated in. The row animations below also
+        // caught the list's own first layout, so it grew open from nothing,
+        // and one taller than the screen came to rest scrolled, with the
+        // top card under the title.
+        .transaction { if !hasSettled { $0.animation = nil } }
+        .task(id: board != nil) {
+            guard board != nil, !hasSettled else { return }
+            try? await Task.sleep(for: .milliseconds(700))
+            hasSettled = true
         }
         .animation(.snappy(duration: 0.25), value: heldSnapshot == nil)
         .animation(.snappy(duration: 0.25), value: pendingPlacement)
