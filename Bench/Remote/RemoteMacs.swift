@@ -63,6 +63,7 @@ final class RemoteMacs {
         if let data = try? Data(contentsOf: Self.file), let saved = try? JSONDecoder().decode([Mac].self, from: data) {
             macs = saved
         }
+        RemoteFileDrafts.shared.macs = self
         for mac in macs { connect(mac) }
         // Keep each Mac's name once it has introduced itself, and look into
         // the ones that aren't answering.
@@ -105,6 +106,7 @@ final class RemoteMacs {
         clients[host]?.disconnect()
         clients[host] = nil
         attention[host] = nil
+        RemoteFileDrafts.shared.forget(host: host)
         for key in shells.keys where key.hasPrefix(host + "|") { closeShell(key: key) }
         openTabs = openTabs.filter { !$0.key.hasPrefix(host + "|") }
         diffTabs = diffTabs.filter { !$0.key.hasPrefix(host + "|") }
@@ -180,6 +182,10 @@ final class RemoteMacs {
                                      features: [CompanionFeature.turnTimes, CompanionFeature.results, CompanionFeature.interrupt, CompanionFeature.queue, CompanionFeature.editQueue, CompanionFeature.agents, CompanionFeature.sendNow, CompanionFeature.placement, CompanionFeature.branchControls, CompanionFeature.agentLifecycle, CompanionFeature.sendTasks, CompanionFeature.shortcuts,
                                                 CompanionFeature.imagePreviews, CompanionFeature.keepalive, CompanionFeature.sideQuestions])
         clients[mac.host] = client
+        let host = mac.host
+        client.onFileSaved = { projectID, path, problem in
+            RemoteFileDrafts.shared.saved(.init(host: host, projectID: projectID, path: path), problem: problem)
+        }
         client.connect(mac.info)
         watchSessions(of: client, host: mac.host)
     }
@@ -260,6 +266,7 @@ final class RemoteMacs {
         let key = Self.key(host: host, projectID: projectID)
         fileTabs[key]?.removeAll { $0 == path }
         if openTabs[key] == .file(path) { openTabs[key] = nil }
+        RemoteFileDrafts.shared.discard(.init(host: host, projectID: projectID, path: path))
     }
 
     // MARK: Shells

@@ -132,7 +132,7 @@ struct RemoteProjectView: View {
         } tabs: {
             ForEach(tabs, id: \.self) { tab in
                 RemoteTabButton(tab: tab, session: session(for: tab), isSelected: tab == selected,
-                                closesSessions: client?.canManageAgents == true) {
+                                closesSessions: client?.canManageAgents == true, isEdited: isEdited(tab)) {
                     macs.openTabs[key] = tab
                 } close: {
                     close(tab)
@@ -216,6 +216,12 @@ struct RemoteProjectView: View {
         }
     }
 
+    /// Whether a file tab has changes that haven't been saved to the other Mac.
+    private func isEdited(_ tab: RemoteTab) -> Bool {
+        guard case .file(let path) = tab else { return false }
+        return RemoteFileDrafts.shared.isEdited(.init(host: host, projectID: projectID, path: path))
+    }
+
     private func session(for tab: RemoteTab) -> CompanionSession? {
         guard case .session(let id) = tab else { return nil }
         return project?.sessions.first { $0.id == id }
@@ -225,7 +231,9 @@ struct RemoteProjectView: View {
         switch tab {
         case .shell: macs.closeShell(host: host, projectID: projectID)
         case .diff(let change): macs.closeDiff(host: host, projectID: projectID, change: change)
-        case .file(let path): macs.closeFile(host: host, projectID: projectID, path: path)
+        case .file(let path):
+            guard RemoteFileDrafts.shared.confirmLosing([.init(host: host, projectID: projectID, path: path)]) else { return }
+            macs.closeFile(host: host, projectID: projectID, path: path)
         case .session(let id):
             // Same rule as this Mac's tabs: ask only when Claude is busy.
             if let session = session(for: tab), session.activity != .idle {
@@ -282,6 +290,7 @@ private struct RemoteTabButton: View {
     let isSelected: Bool
     /// Whether that Mac lets us close its Claude tabs.
     var closesSessions = false
+    var isEdited = false
     let select: () -> Void
     let close: () -> Void
 
@@ -294,7 +303,15 @@ private struct RemoteTabButton: View {
         // Remote tabs don't split, so nothing keeps the close button showing.
         TabChip(symbol: symbol, tint: tint, title: title, isSelected: isSelected,
                 showsClose: false, canClose: canClose, activity: session?.activity.tabActivity ?? .idle,
-                select: select, close: close) { EmptyView() }
+                select: select, close: close) {
+            if isEdited {
+                Circle()
+                    .fill(Color.primary.opacity(0.55))
+                    .frame(width: 6, height: 6)
+                    .help("Unsaved changes")
+                    .accessibilityLabel("Unsaved changes")
+            }
+        }
     }
 
     private var symbol: String {

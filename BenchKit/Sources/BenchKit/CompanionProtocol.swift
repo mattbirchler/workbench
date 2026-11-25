@@ -64,6 +64,8 @@ public enum CompanionFeature {
     /// Mac's sidebar: renaming, icons, hidden worktrees, removing, phone
     /// notifications, and which Claude account it uses.
     public static let projectMenu = "projectMenu"
+    /// Saving a text file another Mac edited (`ClientMessage.writeFile`).
+    public static let editFiles = "editFiles"
 }
 
 /// A terminal theme's two main colors, which the rest of a theme is built
@@ -793,6 +795,9 @@ public enum ClientMessage: Codable, Sendable {
     /// Switch Claude Code's permission mode, a `PermissionMode` raw value.
     /// Only to a Mac whose sessions report `permissionMode`.
     case setPermissionMode(sessionID: UUID, mode: String)
+    /// Replace a text file in the project with this, from another Mac's
+    /// file tab. Only for a file the list offers. Answered with `fileSaved`.
+    case writeFile(projectID: UUID, path: String, text: String)
 }
 
 /// Mac to phone.
@@ -864,6 +869,8 @@ public enum ServerMessage: Codable, Sendable {
     /// A watched session's side question as it's answered, or nil once
     /// it's closed. Sent to clients with the sideQuestions feature.
     case sideQuestion(sessionID: UUID, question: SideQuestion?)
+    /// The answer to `writeFile`: it's on disk, or `problem` says why not.
+    case fileSaved(projectID: UUID, path: String, problem: String?)
 }
 
 /// A past conversation, as Bench's Past Sessions popover lists it.

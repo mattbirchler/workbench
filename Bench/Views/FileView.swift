@@ -286,7 +286,7 @@ struct FileEditor {
 
 /// The note above a file whose disk copy changed under unsaved edits.
 /// Nothing is lost either way until a button is pressed.
-private struct FileConflictBanner: View {
+struct FileConflictBanner: View {
     let conflict: FileDraft.Conflict
     let reload: () -> Void
     let discard: () -> Void

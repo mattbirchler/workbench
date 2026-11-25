@@ -454,6 +454,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // came, an update's relaunch included: they'd be gone for good.
         let drafts = FileDrafts.shared
         guard drafts.confirmLosing(drafts.edited) else { return .terminateCancel }
+        let remoteDrafts = RemoteFileDrafts.shared
+        guard remoteDrafts.confirmLosing(remoteDrafts.edited, quitting: true) else { return .terminateCancel }
         guard !Self.skipsQuitConfirmation, let terminals = Self.terminals else { return .terminateNow }
         let kept = terminals.tabsKeptThroughQuit()
         guard terminals.quitInterruptsWork(keeping: kept) else { return .terminateNow }

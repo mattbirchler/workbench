@@ -68,13 +68,27 @@ struct AppActions {
         return project.fileURL(of: tab)
     }
 
+    /// The file tab in front in a project on another Mac, if that's
+    /// what's showing.
+    private var currentRemoteFile: RemoteFileDrafts.File? {
+        guard !store.showsPage, let remote = store.selectedRemote, let macs = RemoteFileDrafts.shared.macs,
+              case .file(let path) = macs.openTabs[RemoteMacs.key(host: remote.host, projectID: remote.projectID)]
+        else { return nil }
+        return .init(host: remote.host, projectID: remote.projectID, path: path)
+    }
+
     /// Whether ⌘S has anything to write.
     var canSaveFile: Bool {
-        currentFile.map(FileDrafts.shared.isEdited) ?? false
+        if let currentRemoteFile { return RemoteFileDrafts.shared.isEdited(currentRemoteFile) }
+        return currentFile.map(FileDrafts.shared.isEdited) ?? false
     }
 
     /// Saves the edits in the current file tab.
     func saveFile() {
+        if let currentRemoteFile {
+            RemoteFileDrafts.shared.save(currentRemoteFile)
+            return
+        }
         guard let currentFile else { return }
         FileDrafts.shared.saveOrExplain(currentFile)
     }

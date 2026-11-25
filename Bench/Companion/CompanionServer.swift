@@ -132,7 +132,7 @@ final class CompanionServer {
                            CompanionFeature.imagePreviews, CompanionFeature.paging, CompanionFeature.sendTasks,
                            CompanionFeature.branchControls, CompanionFeature.agentLifecycle, CompanionFeature.shortcuts, CompanionFeature.dashboard,
                            CompanionFeature.codeReview, CompanionFeature.keepalive, CompanionFeature.offlineQueue,
-                           CompanionFeature.localNetwork, CompanionFeature.sideQuestions]
+                           CompanionFeature.localNetwork, CompanionFeature.sideQuestions, CompanionFeature.editFiles]
 
     /// The port this server listens on: the app's, unless a test picks
     /// a free one of its own.
@@ -589,6 +589,23 @@ final class CompanionServer {
                     send(.fileCode(projectID: projectID, path: path, runs: runs), to: client)
                 }
             }
+        case .writeFile(let projectID, let path, let text):
+            guard client.isAuthorized, let monitor = snapshots.fileMonitor(projectID: projectID) else { return }
+            Task { [weak self, weak client] in
+                // The same files reading offers, and nothing a link in the
+                // project points to outside it.
+                var problem: String?
+                if await Self.isListed(path, in: monitor) {
+                    let root = monitor.root
+                    problem = await Task.detached(priority: .userInitiated) {
+                        Self.write(text, toPath: path, in: root)
+                    }.value
+                } else {
+                    problem = "It's no longer in the project."
+                }
+                guard let self, let client else { return }
+                send(.fileSaved(projectID: projectID, path: path, problem: problem), to: client)
+            }
         case .image(let imageID):
             guard client.isAuthorized else { return }
             let paths = client.watching.compactMap { snapshots.transcriptPath(tabID: $0) }
@@ -775,6 +792,22 @@ final class CompanionServer {
                 if let client { send(.tasksStarted(failures: failures), to: client) }
                 tick()
             }
+        }
+    }
+
+    /// Replaces a project's text file for another Mac. Returns why it
+    /// couldn't, or nil once it's written.
+    nonisolated static func write(_ text: String, toPath path: String, in root: URL) -> String? {
+        let target = root.appendingPathComponent(path).resolvingSymlinksInPath()
+        let folder = root.resolvingSymlinksInPath().path
+        guard target.path.hasPrefix(folder.hasSuffix("/") ? folder : folder + "/") else {
+            return "It's a link to a file outside the project."
+        }
+        do {
+            try FileDrafts.write(text, to: target)
+            return nil
+        } catch {
+            return error.localizedDescription
         }
     }
 

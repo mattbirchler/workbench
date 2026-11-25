@@ -76,15 +76,20 @@ final class FileDrafts {
     func save(_ url: URL) throws {
         let key = Self.key(url)
         guard let draft = drafts[key], draft.isEdited else { return }
+        try Self.write(draft.text, to: url)
+        change(url) { $0.didSave() }
+    }
+
+    /// Writes text to a file, as `save` describes.
+    nonisolated static func write(_ text: String, to url: URL) throws {
         let target = url.resolvingSymlinksInPath()
         let manager = FileManager.default
         let permissions = (try? manager.attributesOfItem(atPath: target.path))?[.posixPermissions]
         try manager.createDirectory(at: target.deletingLastPathComponent(), withIntermediateDirectories: true)
-        try Data(draft.text.utf8).write(to: target, options: .atomic)
+        try Data(text.utf8).write(to: target, options: .atomic)
         if let permissions {
             try? manager.setAttributes([.posixPermissions: permissions], ofItemAtPath: target.path)
         }
-        change(url) { $0.didSave() }
     }
 
     /// Saves, and says why in an alert if it couldn't. False if it failed.
