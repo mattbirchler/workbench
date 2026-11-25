@@ -2,6 +2,7 @@ import ActivityKit
 import BenchKit
 import Foundation
 import Observation
+import SwiftUI
 
 /// The lock screen dashboard: one Live Activity listing what every session
 /// on the Mac is up to. It only starts when you ask for it. The Mac pushes
@@ -59,7 +60,11 @@ final class ActivityManager {
         guard isAvailable, !isShowing, let client, let macName = client.macName ?? (client.isDemo ? "Mac Studio" : nil) else { return }
         let state = DashboardActivity.state(for: client.snapshot?.projects ?? [])
         do {
-            let activity = try Activity.request(attributes: DashboardAttributes(macName: macName),
+            // The theme as it is now. A dashboard keeps the colors it
+            // started with, so a change of theme shows on the next one.
+            let attributes = DashboardAttributes(macName: macName, light: DashboardColors(PhoneTheme.themePalette, scheme: .light),
+                                                 dark: DashboardColors(PhoneTheme.themePalette, scheme: .dark))
+            let activity = try Activity.request(attributes: attributes,
                                                 content: .init(state: state, staleDate: .now.addingTimeInterval(DashboardActivity.staleAfter)),
                                                 pushType: .token)
             track(activity)
@@ -124,5 +129,23 @@ final class ActivityManager {
 
     private static func hex(_ data: Data) -> String {
         data.map { String(format: "%02x", $0) }.joined()
+    }
+}
+
+extension DashboardColors {
+    /// A theme's colors as the phone shows them in light or in dark. Nil
+    /// with no theme picked, when the dashboard keeps its own look.
+    init?(_ palette: CompanionPalette?, scheme: ColorScheme) {
+        guard let palette else { return nil }
+        var environment = EnvironmentValues()
+        environment.colorScheme = scheme
+        func hex(_ color: Color) -> String {
+            let resolved = color.resolve(in: environment)
+            func byte(_ value: Float) -> Int { Int((min(max(value, 0), 1) * 255).rounded()) }
+            return String(format: "#%02x%02x%02x", byte(resolved.red), byte(resolved.green), byte(resolved.blue))
+        }
+        self.init(background: hex(palette.surface), ink: hex(palette.ink), working: hex(palette.working),
+                  remote: hex(palette.remote), waiting: hex(palette.waiting), done: hex(palette.done),
+                  waitingInk: hex(palette.waitingInk))
     }
 }

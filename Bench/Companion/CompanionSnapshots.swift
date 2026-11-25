@@ -18,12 +18,22 @@ struct CompanionSnapshots {
     /// Each project's dev command, read from disk at most every 10 seconds
     /// rather than on every snapshot.
     private let devCommands = DevCommandCache()
+    /// Which projects were working at the last snapshot, to read a repo
+    /// again when its agent stops.
+    private let finishes = FinishTracker()
 
     func build() -> ProjectsSnapshot {
         let projects = store.projects.map { project -> CompanionProject in
             let monitor = monitors.monitor(for: project)
             if monitor.snapshot == nil, !monitor.isRefreshing { monitor.refresh() }
             let sessions = project.tabs.filter { $0.kind == .agent }.compactMap { Self.session(for: $0, terminals: terminals) }
+            // Only the selected project's repo is watched, so what a row
+            // says is uncommitted would be from before the agent's work.
+            // One read as it stops, not a timer.
+            if finishes.stoppedWorking(project.id, isWorking: sessions.contains { $0.activity == .working }) {
+                monitor.refreshSoon()
+            }
+            let uncommitted = monitor.snapshot.map { $0.staged + $0.unstaged }
             return CompanionProject(
                 id: project.id,
                 name: project.name,
@@ -47,10 +57,26 @@ struct CompanionSnapshots {
                 hasCustomIcon: project.isWorktree ? nil : icons.hasCustomIcon(project),
                 hasHiddenWorktrees: project.isWorktree ? nil : project.hiddenWorktrees?.isEmpty == false,
                 notifiesPhone: store.notifiesPhone(project.id),
-                claudeAccountID: store.claudeAccountID(for: project.id))
+                claudeAccountID: store.claudeAccountID(for: project.id),
+                uncommittedAdditions: uncommitted?.reduce(0) { $0 + $1.additions },
+                uncommittedDeletions: uncommitted?.reduce(0) { $0 + $1.deletions })
         }
         return ProjectsSnapshot(projects: projects, selectedProjectID: store.selectedProjectID, groups: groups,
                                 claudeAccounts: claudeAccounts, inactiveAfter: store.sidebarTimes.inactiveAfter)
+    }
+
+    /// Remembers which projects had an agent working, between snapshots.
+    private final class FinishTracker {
+        private var working: Set<UUID> = []
+
+        /// True the first time a project that was working no longer is.
+        func stoppedWorking(_ id: UUID, isWorking: Bool) -> Bool {
+            if isWorking {
+                working.insert(id)
+                return false
+            }
+            return working.remove(id) != nil
+        }
     }
 
     /// The Claude accounts set up here, main first.

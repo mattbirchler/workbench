@@ -27,6 +27,20 @@ private func project(_ name: String, _ sessions: [CompanionSession], pr: Compani
     #expect((state.working, state.waiting, state.done, state.more) == (2, 1, 0, 0))
 }
 
+@Test func dashboardCountsStepsOnWorkingRows() throws {
+    var busy = session(.working, since: 30, action: "Editing")
+    busy.checklist = [ChecklistItem(id: "1", title: "One", status: .completed), ChecklistItem(id: "2", title: "Two", status: .inProgress),
+                      ChecklistItem(id: "3", title: "Three", status: .pending)]
+    let state = DashboardActivity.state(for: [project("Bench", [busy]), project("notes", [session(.working, since: 5)])], now: now)
+    #expect(state.rows.map(\.stepsDone) == [1, nil])
+    #expect(state.rows.map(\.stepsTotal) == [3, nil])
+    // An older phone build decodes the same state without the counts.
+    struct OldRow: Decodable { var id: UUID; var project: String; var activity: String; var text: String }
+    struct OldState: Decodable { var rows: [OldRow] }
+    let old = try JSONDecoder().decode(OldState.self, from: JSONEncoder().encode(state))
+    #expect(old.rows.count == 2)
+}
+
 @Test func dashboardDropsOldFinishedSessionsAndCapsRows() {
     let pr = CompanionPullRequest(number: 42, title: "Lap chart", url: URL(string: "https://example.com")!, state: .open,
                                   checks: .passing, passedCount: 8, totalCount: 8, failingNames: [])
@@ -51,4 +65,16 @@ private func project(_ name: String, _ sessions: [CompanionSession], pr: Compani
     let aps = try #require(payload["aps"] as? [String: Any])
     let data = try JSONSerialization.data(withJSONObject: try #require(aps["content-state"]))
     #expect(try JSONDecoder().decode(DashboardAttributes.ContentState.self, from: data) == state)
+}
+
+@Test func widgetSnapshotKnowsWhenItLooksTheSameAndWhenItIsOld() {
+    let state = DashboardActivity.state(for: [project("Bench", [session(.working, since: 5, action: "Building")])], now: now)
+    let first = WidgetSnapshot(macName: "Mac Studio", state: state, savedAt: now)
+    var later = first
+    later.savedAt = now.addingTimeInterval(90)
+    #expect(first.shows(sameAs: later))
+    later.state.waiting = 1
+    #expect(!first.shows(sameAs: later))
+    #expect(!first.isStale(at: now.addingTimeInterval(60)))
+    #expect(first.isStale(at: now.addingTimeInterval(WidgetSnapshot.staleAfter + 60)))
 }

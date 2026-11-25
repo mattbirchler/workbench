@@ -26,6 +26,9 @@ final class NotificationService: UNNotificationServiceExtension {
             userInfo["url"] = opened.url
             userInfo["host"] = opened.host
             content.userInfo = userInfo
+            // Sealed with the words, so the relay and Apple don't learn
+            // what kind of notification this is.
+            if let category = opened.category { content.categoryIdentifier = category }
         }
         contentHandler(content)
     }

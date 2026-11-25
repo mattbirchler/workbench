@@ -9,6 +9,9 @@ final class DemoServer {
 
     private var projects: [CompanionProject] = []
     private var transcripts: [UUID: [TranscriptMessage]] = [:]
+    /// A project's changes once a Commit, Push or Open PR has moved them
+    /// on from the samples.
+    private var git: [UUID: ChangesSnapshot] = [:]
     private var watching: Set<UUID> = []
     private var timer: Task<Void, Never>?
     private var step = 0
@@ -134,6 +137,7 @@ final class DemoServer {
     private func reply(to id: UUID, text: String) {
         output(.sent(sessionID: id, ok: true, problem: nil))
         append(id, .user, text)
+        if let action = ChangesAction.matching(prompt: text) { return act(action, in: id) }
         update(id) {
             $0.activity = .working
             $0.suggestion = nil
@@ -352,7 +356,8 @@ final class DemoServer {
                     agents: [AgentStatus(toolUseID: "r7t", description: "Find where recipes are saved and synced", type: "Explore",
                                          isFinished: false, isRunning: true, action: "Reading CloudSync.swift", steps: 6,
                                          startedAt: .now.addingTimeInterval(-50))],
-                    permissionMode: PermissionMode.acceptEdits.rawValue)]),
+                    permissionMode: PermissionMode.acceptEdits.rawValue)],
+                uncommittedAdditions: 30, uncommittedDeletions: 1),
             CompanionProject(
                 id: shoppingAgent, name: "dark-mode", repoName: "recipes", path: "~/Code/recipes-agents/dark-mode",
                 branch: "agent/dark-mode", parentID: recipes, activity: .done,
@@ -370,7 +375,8 @@ final class DemoServer {
                              AgentStatus(toolUseID: "a2bt", description: "Check images and icons for dark variants", type: "Explore",
                                          isFinished: true, isRunning: false, steps: 9,
                                          startedAt: .now.addingTimeInterval(-39 * minute), finishedAt: .now.addingTimeInterval(-38 * minute - 40))],
-                    suggestion: "merge the PR")]),
+                    suggestion: "merge the PR")],
+                uncommittedAdditions: 124, uncommittedDeletions: 18),
             CompanionProject(
                 id: website, name: "Website", repoName: "website", path: "~/Code/website", branch: "pricing-page",
                 activity: .waiting,
@@ -378,7 +384,8 @@ final class DemoServer {
                     id: websiteSession, title: "Pricing page", activity: .waiting,
                     prompt: "Add a pricing page with the three plans, and link it from the nav.",
                     question: "Claude wants to run: npm run build", isAllowOrDeny: true, canReply: true,
-                    since: .now.addingTimeInterval(-2 * minute), command: "npm run build")]),
+                    since: .now.addingTimeInterval(-2 * minute), command: "npm run build")],
+                uncommittedAdditions: 1, uncommittedDeletions: 0),
             CompanionProject(
                 id: notes, name: "Field Notes", repoName: "field-notes", path: "~/Code/field-notes", branch: "main",
                 activity: .waiting,
@@ -391,11 +398,12 @@ final class DemoServer {
                     questions: [CompanionQuestion(
                         question: "What should an empty notebook export as?", header: "Empty export",
                         options: [.init(label: "A title page", description: "One page with the notebook's name and date."),
-                                  .init(label: "Nothing, with a message", description: "Skip the file and say the notebook is empty.")])])]),
+                                  .init(label: "Nothing, with a message", description: "Skip the file and say the notebook is empty.")])])],
+                uncommittedAdditions: 3, uncommittedDeletions: 1),
             CompanionProject(
                 id: blog, name: "Blog", repoName: "blog", path: "~/Code/blog", branch: "main", activity: .idle,
                 deploy: CompanionDeploy(state: .deploying, prNumber: 18, place: "blog / production", url: nil),
-                defaultBranch: "main"),
+                defaultBranch: "main", uncommittedAdditions: 9, uncommittedDeletions: 2),
         ]
 
         for index in projects.indices where !projects[index].isWorktree {
@@ -452,23 +460,103 @@ final class DemoServer {
     }
 
     private func changes(for id: UUID) -> ChangesSnapshot {
-        switch id {
+        if let moved = git[id] { return moved }
+        return switch id {
         case recipes:
             ChangesSnapshot(branch: "main", baseRef: "origin/main", unstaged: [
                 FileChange(path: "Recipes/Models/ShoppingList.swift", kind: .untracked, additions: 24, deletions: 0, section: .unstaged),
                 FileChange(path: "Recipes/Models/RecipeStore.swift", kind: .modified, additions: 6, deletions: 1, section: .unstaged),
-            ])
+            ], upstream: "origin/main", unpushed: 0, branches: ["main"])
         case shoppingAgent:
-            ChangesSnapshot(branch: "agent/dark-mode", baseRef: "origin/main", againstBase: [
+            // Work since the pull request went up, not committed yet.
+            ChangesSnapshot(branch: "agent/dark-mode", baseRef: "origin/main", unstaged: [
+                FileChange(path: "Recipes/Views/ShoppingListView.swift", kind: .modified, additions: 96, deletions: 14, section: .unstaged),
+                FileChange(path: "Recipes/Models/RecipeStore.swift", kind: .modified, additions: 28, deletions: 4, section: .unstaged),
+            ], againstBase: [
                 FileChange(path: "Recipes/Views/RecipeCard.swift", kind: .modified, additions: 4, deletions: 3, section: .againstBase),
             ], commits: [Commit(hash: "4f1c2a9e", shortHash: "4f1c2a9", subject: "Support dark mode", body: "",
-                                author: "Claude", date: .now.addingTimeInterval(-1600), additions: 4, deletions: 3)])
+                                author: "Claude", date: .now.addingTimeInterval(-1600), additions: 4, deletions: 3)],
+                            upstream: "origin/agent/dark-mode", unpushed: 0, branches: ["main"])
         case website:
             ChangesSnapshot(branch: "pricing-page", baseRef: "origin/main", unstaged: [
                 FileChange(path: "src/components/Nav.astro", kind: .modified, additions: 1, deletions: 0, section: .unstaged),
-            ])
+            ], branches: ["main"])
+        case notes:
+            ChangesSnapshot(branch: "main", baseRef: "origin/main", unstaged: [
+                FileChange(path: "FieldNotes/Exporter.swift", kind: .modified, additions: 3, deletions: 1, section: .unstaged),
+            ], upstream: "origin/main", unpushed: 0, branches: ["main"])
+        case blog:
+            ChangesSnapshot(branch: "main", baseRef: "origin/main", unstaged: [
+                FileChange(path: "posts/shopping-lists.md", kind: .modified, additions: 9, deletions: 2, section: .unstaged),
+            ], upstream: "origin/main", unpushed: 0, branches: ["main"])
         default:
-            ChangesSnapshot(branch: "main", baseRef: "origin/main")
+            ChangesSnapshot(branch: "main", baseRef: "origin/main", upstream: "origin/main", unpushed: 0, branches: ["main"])
+        }
+    }
+
+    /// Acts out a Commit, Push or Open PR from the Changes screen: the
+    /// session works for a moment, then the project's changes, counts and
+    /// pull request move on as they would on a Mac.
+    private func act(_ action: ChangesAction, in sessionID: UUID) {
+        guard let id = projects.first(where: { $0.sessions.contains { $0.id == sessionID } })?.id else { return }
+        let command = switch action {
+        case .commit: "git commit"
+        case .push: "git push"
+        case .pullRequest: "gh pr create"
+        }
+        update(sessionID) {
+            $0.activity = .working
+            $0.action = "Running \(command)"
+            $0.question = nil
+            $0.questions = nil
+            $0.isAllowOrDeny = false
+            $0.since = .now
+        }
+        later(3) { [self] in
+            var state = changes(for: id)
+            let branch = state.branch ?? "main"
+            var said = ""
+            // Open PR commits what's uncommitted and pushes first.
+            if action != .push, !(state.staged + state.unstaged).isEmpty {
+                let files = state.staged + state.unstaged
+                let subject = id == website ? "Link the pricing page from the nav" : "Polish the shopping list in dark mode"
+                state.commits.insert(Commit(hash: "9b3e7d1\(nextID)", shortHash: "9b3e7d1", subject: subject, body: "", author: "Claude",
+                                            date: .now, additions: files.reduce(0) { $0 + $1.additions },
+                                            deletions: files.reduce(0) { $0 + $1.deletions }), at: 0)
+                state.againstBase += files.filter { file in !state.againstBase.contains { $0.path == file.path } }.map {
+                    FileChange(path: $0.path, kind: $0.kind == .untracked ? .added : $0.kind,
+                               additions: $0.additions, deletions: $0.deletions, section: .againstBase)
+                }
+                state.staged = []
+                state.unstaged = []
+                state.unpushed = (state.unpushed ?? 0) + 1
+                said = "Committed as 9b3e7d1: \(subject). Nothing is pushed yet."
+            }
+            if action != .commit {
+                state.upstream = "origin/\(branch)"
+                state.unpushed = 0
+                said = "Pushed \(branch) to origin."
+            }
+            git[id] = state
+            output(.changes(projectID: id, snapshot: state))
+            if let index = projects.firstIndex(where: { $0.id == id }) {
+                projects[index].uncommittedAdditions = 0
+                projects[index].uncommittedDeletions = 0
+                if action == .pullRequest {
+                    let title = state.commits.first?.subject ?? branch
+                    projects[index].pullRequest = CompanionPullRequest(
+                        number: 43, title: title, url: URL(string: "https://github.com")!, state: .open, checks: .pending,
+                        passedCount: 0, totalCount: 3, failingNames: [])
+                    said = "Opened pull request #43, \(title). Its checks are running."
+                }
+            }
+            append(sessionID, .assistant, said)
+            update(sessionID) {
+                $0.activity = .done
+                $0.action = nil
+                $0.summary = said
+                $0.stoppedAt = .now
+            }
         }
     }
 
@@ -623,6 +711,32 @@ final class DemoServer {
     ]
 
     private static let fileTexts: [String: String] = [
+        "FieldNotes/Exporter.swift": """
+        @@ -12,3 +12,5 @@
+             func export(_ notebook: Notebook) -> Data {
+        -        let first = notebook.pages.first!
+        +        guard let first = notebook.pages.first else {
+        +            return emptyExport(for: notebook)
+        +        }
+                 return render(first, in: notebook)
+        """,
+        "posts/shopping-lists.md": """
+        @@ -1,6 +1,13 @@
+         # Shopping lists are here
+
+        -Recipes can now make a list for you.
+        -More soon.
+        +Recipes can now make a shopping list for you.
+        +
+        +- Add ingredients from any recipe
+        +- Check them off at the store
+        +- Lists sync between your devices
+        +
+        +Dark mode is next. It's in review now,
+        +and should be out this week.
+        +
+         Thanks for reading.
+        """,
         "README.md": "# Demo project\n\nThis is sample content from Workbench's demo. Pair with Workbench on your Mac to see your own projects here.\n",
         "Recipes/Views/ShoppingListView.swift": """
         import SwiftUI

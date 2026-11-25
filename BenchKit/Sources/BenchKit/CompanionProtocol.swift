@@ -516,6 +516,11 @@ public struct CompanionProject: Codable, Sendable, Hashable, Identifiable {
     public var notifiesPhone: Bool?
     /// The Claude account its new tabs use, from `ProjectsSnapshot.claudeAccounts`.
     public var claudeAccountID: UUID?
+    /// Lines added and removed that aren't committed yet, staged or not,
+    /// as of the Mac's last read of the repo. Nil before it has read it,
+    /// and from older Macs.
+    public var uncommittedAdditions: Int?
+    public var uncommittedDeletions: Int?
 
     public var isWorktree: Bool { parentID != nil }
 
@@ -526,7 +531,10 @@ public struct CompanionProject: Codable, Sendable, Hashable, Identifiable {
                 deploy: CompanionDeploy? = nil, defaultBranch: String? = nil, cleanup: CompanionCleanup? = nil,
                 shortcuts: [CompanionShortcut]? = nil, isGit: Bool? = nil,
                 hasCustomName: Bool? = nil, hasCustomIcon: Bool? = nil, hasHiddenWorktrees: Bool? = nil,
-                notifiesPhone: Bool? = nil, claudeAccountID: UUID? = nil) {
+                notifiesPhone: Bool? = nil, claudeAccountID: UUID? = nil,
+                uncommittedAdditions: Int? = nil, uncommittedDeletions: Int? = nil) {
+        self.uncommittedAdditions = uncommittedAdditions
+        self.uncommittedDeletions = uncommittedDeletions
         self.isGit = isGit
         self.hasCustomName = hasCustomName
         self.hasCustomIcon = hasCustomIcon

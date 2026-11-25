@@ -90,6 +90,7 @@ enum Analytics {
         case toolAnswered = "tool_answered"
         case questionAnswered = "question_answered"
         case notificationOpened = "notification_opened"
+        case notificationAnswered = "notification_answered"
     }
 
     private static var started = false

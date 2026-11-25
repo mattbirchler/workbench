@@ -283,14 +283,15 @@ final class AgentStateWatcher {
 /// pull request's checks finished (clicking opens the PR).
 /// Something worth telling the phone about.
 enum RemoteEvent {
-    case waiting(project: String, tabID: UUID, projectID: UUID, question: String?)
+    /// `allowOrDeny` when a yes or no answers it, so the phone can offer both.
+    case waiting(project: String, tabID: UUID, projectID: UUID, question: String?, allowOrDeny: Bool)
     case finished(project: String, tabID: UUID, projectID: UUID, summary: String?)
     case checks(project: String, projectID: UUID, pr: PullRequestInfo)
     case deploy(project: String, projectID: UUID, deploy: DeployInfo)
 
     var projectID: UUID {
         switch self {
-        case .waiting(_, _, let id, _), .finished(_, _, let id, _), .checks(_, let id, _), .deploy(_, let id, _): id
+        case .waiting(_, _, let id, _, _), .finished(_, _, let id, _), .checks(_, let id, _), .deploy(_, let id, _): id
         }
     }
 }
@@ -320,8 +321,8 @@ final class AgentNotifier: NSObject, UNUserNotificationCenterDelegate {
         return center
     }
 
-    func notifyWaiting(project: String, tabID: UUID, projectID: UUID, agent: String, question: String? = nil) {
-        remote?(.waiting(project: project, tabID: tabID, projectID: projectID, question: question))
+    func notifyWaiting(project: String, tabID: UUID, projectID: UUID, agent: String, question: String? = nil, allowOrDeny: Bool = false) {
+        remote?(.waiting(project: project, tabID: tabID, projectID: projectID, question: question, allowOrDeny: allowOrDeny))
         let center = center()
         let content = UNMutableNotificationContent()
         content.title = "\(agent) needs you"

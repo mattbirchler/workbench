@@ -14,6 +14,17 @@ struct NotificationSealTests {
         #expect(NotificationSeal.open(sealed, with: NotificationSeal.key(token: "secret", host: host)) == contents)
     }
 
+    @Test func carriesWhichButtonsToShow() throws {
+        let key = NotificationSeal.key(token: "secret", host: host)
+        let contents = NotificationSeal.Contents(title: "Claude needs you", body: "Run npm test?", category: NotificationActions.permissionCategory)
+        let sealed = try NotificationSeal.seal(contents, with: key)
+        #expect(!sealed.contains("permission"))
+        #expect(NotificationSeal.open(sealed, with: key)?.category == NotificationActions.permissionCategory)
+        // What an older Mac seals has no category, and still opens.
+        let older = try AES.GCM.seal(Data(#"{"title":"a","body":"b"}"#.utf8), using: key).combined!.base64EncodedString()
+        #expect(NotificationSeal.open(older, with: key) == .init(title: "a", body: "b"))
+    }
+
     @Test func wrongTokenCantOpen() throws {
         let sealed = try NotificationSeal.seal(.init(title: "a", body: "b"), with: NotificationSeal.key(token: "one", host: host))
         #expect(NotificationSeal.open(sealed, with: NotificationSeal.key(token: "two", host: host)) == nil)

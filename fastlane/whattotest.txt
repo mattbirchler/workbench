@@ -1,17 +1,13 @@
-New in this build: answer from the project list, a clearer session screen, and redone secondary screens.
+New in this build: answering from notifications, widgets, and git actions from the phone. Several of these need the newest Workbench on your Mac. With an older Mac they simply won't appear.
 
-• Answer without opening the session. A row waiting on permission shows the command with Deny and Allow right on it. A row with a plain question shows its answers as buttons. The permission card inside a chat has the same larger buttons, plus "Reply instead".
+• Answer from a notification. Long press a "needs you" notification for Allow, Deny and Reply, or a "finished" one for Reply. The answer goes to your Mac without opening the app. Allow and Reply ask you to unlock first. If it can't be sent, a second notification tells you. (Needs the new Mac build.)
 
-• The project list leads with what needs you. The title is now a headline like "2 need you" with the rest underneath. Tap the usage strip for the full plan usage details. When your Mac offers Brain Dump, a bar at the bottom starts new work (the brain button in the toolbar is gone).
+• Widgets. Add "Sessions" to the Home Screen (small or medium) or the Lock Screen (round or wide). They show how many sessions need you and what's working. They only update while the app is open, and after 20 minutes they show "as of" the time they were last right.
 
-• Session header. The name and branch are on one row and the status has a full line of its own, with how full the context is on the right. It should no longer be cut down to a word or two.
+• Lock Screen dashboard. Working sessions show their checklist as step segments with a count like 2/5 (needs the new Mac build), and the dashboard now uses the theme you picked in the app. A dashboard that's already running keeps its old colors until you start a new one.
 
-• Model and permission mode in the message box. The model moved from the header into the box, next to a new pill that switches the permission mode (Ask, Accept edits, Plan and so on). While Claude is working the box says "Queue a message".
+• Uncommitted changes on rows. Done and quiet rows in the project list show lines added and removed. (Needs the new Mac build.)
 
-• Changed files. A finished turn lists the files it changed under it, with line counts. Tap one, or Review, to go to the project's changes.
+• Commit, Push and Open PR. The Changes screen has a bar at the bottom for the next step. It asks the project's agent to do it, shows how it's going, and ends with the result. Tap a pull request card to open it.
 
-• Type @ in a message to get suggestions for the project's files and folders.
-
-• New Agent is a full page with the task first, Files can search the whole project, Past Sessions rows are cards, and the empty states on these screens match the rest of the app.
-
-Things to look for: tapping Allow or Deny by accident while scrolling the list, the permission mode pill not catching up after you switch, @ suggestions that are slow or missing in a big project, and anything cramped in the new header with long project or branch names.
+Things to look for: notification buttons that don't show or don't reach the Mac, an Allow that answers the wrong question, widgets that stay empty after you've opened the app, dashboard colors that are hard to read on your wallpaper, and git actions that finish without saying how they went.

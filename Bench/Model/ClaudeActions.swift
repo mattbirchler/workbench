@@ -1,3 +1,4 @@
+import BenchKit
 import Foundation
 import Observation
 import SwiftUI
@@ -68,30 +69,13 @@ struct ClaudeAction: Codable, Identifiable, Hashable {
                           "list.bullet.clipboard", "tag", "trash", "doc.text"]
 
     static let defaults: [ClaudeAction] = [
-        ClaudeAction(
-            name: "Commit",
-            prompt: """
-            Commit the current changes on {branch}. Look over what's staged and unstaged, stage what belongs \
-            together, and leave out anything that looks accidental (secrets, scratch files) and tell me about it. \
-            Write the message in this repo's style, going by recent commits. Don't push.
-            """,
-            symbol: "checkmark.circle", role: .commit),
-        ClaudeAction(
-            name: "Push",
-            prompt: """
-            Push {branch} to its remote, setting the upstream if it doesn't have one yet. If the push is rejected \
-            because the remote has commits this branch doesn't, stop and tell me instead of forcing.
-            """,
-            symbol: "arrow.up.circle", role: .push),
-        ClaudeAction(
-            name: "Open PR",
-            prompt: """
-            Open a pull request for {branch} against {base}. Commit anything uncommitted first and push the branch. \
-            Use whatever this repo's host uses: gh for GitHub, glab for GitLab, or the host's web URL if there's no \
-            CLI. Write a title and description that say what changed and why, in this repo's style (check the PR \
-            template or recent PRs if there are any). When it's up, tell me the URL.
-            """,
-            symbol: "arrow.triangle.pull", role: .pullRequest),
+        // The words are BenchKit's, so the phone's buttons send the same.
+        ClaudeAction(name: ChangesAction.commit.name, prompt: ChangesAction.commit.prompt,
+                     symbol: ChangesAction.commit.symbol, role: .commit),
+        ClaudeAction(name: ChangesAction.push.name, prompt: ChangesAction.push.prompt,
+                     symbol: ChangesAction.push.symbol, role: .push),
+        ClaudeAction(name: ChangesAction.pullRequest.name, prompt: ChangesAction.pullRequest.prompt,
+                     symbol: ChangesAction.pullRequest.symbol, role: .pullRequest),
         merge,
     ]
 

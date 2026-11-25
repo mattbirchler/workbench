@@ -54,6 +54,21 @@ struct ProjectsView: View {
     /// sidebar's place. Starts hidden (BENCH_SHOW_INSPECTOR=1 opens it, for screenshots).
     @State private var narrowInspector = ProjectsView.debugShowsInspector
 
+    #if DEBUG
+    /// Scrolls the first list on screen to its end, for screenshots: the
+    /// simulator can't be swiped from the command line.
+    private static func debugScrollToBottom() {
+        func list(in view: UIView) -> UIScrollView? {
+            if let scroll = view as? UIScrollView, scroll.contentSize.height > scroll.bounds.height { return scroll }
+            return view.subviews.lazy.compactMap(list).first
+        }
+        let windows = UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.flatMap(\.windows)
+        guard let scroll = windows.lazy.compactMap(list).first else { return }
+        let bottom = scroll.contentSize.height - scroll.bounds.height + scroll.adjustedContentInset.bottom
+        scroll.setContentOffset(CGPoint(x: 0, y: bottom), animated: false)
+    }
+    #endif
+
     private static var debugShowsInspector: Bool {
         #if DEBUG
         ProcessInfo.processInfo.environment["BENCH_SHOW_INSPECTOR"] != nil
@@ -354,8 +369,14 @@ struct ProjectsView: View {
         // BENCH_OPEN_SEND_TASKS=1 opens Send Tasks, and
         // BENCH_SHOW_DASHBOARD=1 starts the Lock Screen dashboard, and
         // BENCH_APP_ICON=<name> switches to that app icon.
+        // BENCH_LIST_BOTTOM=1 scrolls the list to its end, where Done and
+        // the quiet projects are.
         .task {
             let env = ProcessInfo.processInfo.environment
+            if env["BENCH_LIST_BOTTOM"] != nil {
+                try? await Task.sleep(for: .seconds(2))
+                Self.debugScrollToBottom()
+            }
             if let icon = env["BENCH_APP_ICON"] {
                 try? await Task.sleep(for: .seconds(1))
                 do {
@@ -961,12 +982,23 @@ private struct SessionRowView: View {
                     ChecklistStepsBar(items: items, activity: session.activity)
                         .padding(.top, 4)
                 }
-                if let pr = project.pullRequest {
-                    PullRequestChip(pr: pr)
-                        .padding(.top, 4)
+                if project.pullRequest != nil || uncommitted != nil {
+                    HStack(spacing: 8) {
+                        if let pr = project.pullRequest { PullRequestChip(pr: pr) }
+                        if let uncommitted { uncommitted }
+                    }
+                    .padding(.top, 4)
                 }
             }
         }
+    }
+
+    /// What's left uncommitted, once the session is done or idle. A row
+    /// that's working or waiting has its step, its timer and its buttons
+    /// to show, and those stay clear.
+    private var uncommitted: UncommittedCounts? {
+        guard [.done, .idle].contains(session.activity) else { return nil }
+        return UncommittedCounts(project: project)
     }
 
     private var title: String {
@@ -1049,6 +1081,7 @@ private struct ProjectRowView: View {
                 }
             }
             Spacer(minLength: 8)
+            if let counts = UncommittedCounts(project: project) { counts }
             if queued > 0 {
                 Text("\(queued) queued")
                     .font(.caption2.weight(.semibold))
@@ -1283,6 +1316,32 @@ private struct ProjectStatusLine: View {
             }
         case .branch: ("arrow.triangle.branch", PhoneTheme.inkMuted)
         }
+    }
+}
+
+/// How much of a project isn't committed yet, as "+124 −18": lines added
+/// in green and removed in red, in the diff's own type.
+private struct UncommittedCounts: View {
+    let additions: Int
+    let deletions: Int
+
+    /// Nil when the tree is clean, or the Mac doesn't say.
+    init?(project: CompanionProject) {
+        additions = project.uncommittedAdditions ?? 0
+        deletions = project.uncommittedDeletions ?? 0
+        if additions == 0, deletions == 0 { return nil }
+    }
+
+    var body: some View {
+        HStack(spacing: 5) {
+            if additions > 0 { Text("+\(additions)").foregroundStyle(PhoneTheme.added) }
+            if deletions > 0 { Text("−\(deletions)").foregroundStyle(PhoneTheme.error) }
+        }
+        .font(.caption.monospaced().weight(.medium))
+        .lineLimit(1)
+        .fixedSize()
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Uncommitted: \(additions) added, \(deletions) removed")
     }
 }
 

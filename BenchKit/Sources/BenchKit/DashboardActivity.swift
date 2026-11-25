@@ -29,9 +29,38 @@ public struct DashboardAttributes: Codable, Sendable, Hashable {
 
     /// The Mac it's about, like "Mac Studio".
     public var macName: String
+    /// The app's theme when the dashboard started, for the phone in light
+    /// and in dark. Nil for the dashboard's own colors.
+    public var light: DashboardColors?
+    public var dark: DashboardColors?
 
-    public init(macName: String) {
+    public init(macName: String, light: DashboardColors? = nil, dark: DashboardColors? = nil) {
         self.macName = macName
+        self.light = light
+        self.dark = dark
+    }
+}
+
+/// The few colors the dashboard draws with, as "#rrggbb". The widget
+/// can't read the app's settings, so the app hands them over at the start.
+public struct DashboardColors: Codable, Sendable, Hashable {
+    public var background: String
+    public var ink: String
+    public var working: String
+    public var remote: String
+    public var waiting: String
+    public var done: String
+    /// `waiting` as text, dark enough to read on a light background.
+    public var waitingInk: String?
+
+    public init(background: String, ink: String, working: String, remote: String, waiting: String, done: String, waitingInk: String? = nil) {
+        self.waitingInk = waitingInk
+        self.background = background
+        self.ink = ink
+        self.working = working
+        self.remote = remote
+        self.waiting = waiting
+        self.done = done
     }
 }
 
@@ -52,14 +81,21 @@ public struct DashboardRow: Codable, Sendable, Hashable, Identifiable {
     /// For a finished session with an open pull request: its checks, as
     /// `CompanionPullRequest.Checks`' raw value.
     public var checks: String?
+    /// For a session working through a checklist: how many steps are
+    /// done, and how many there are.
+    public var stepsDone: Int?
+    public var stepsTotal: Int?
 
-    public init(id: UUID, project: String, activity: String, text: String, since: Date? = nil, checks: String? = nil) {
+    public init(id: UUID, project: String, activity: String, text: String, since: Date? = nil, checks: String? = nil,
+                stepsDone: Int? = nil, stepsTotal: Int? = nil) {
         self.id = id
         self.project = project
         self.activity = activity
         self.text = text
         self.since = since
         self.checks = checks
+        self.stepsDone = stepsDone
+        self.stepsTotal = stepsTotal
     }
 
     public var kind: ActivityKind { ActivityKind(rawValue: activity) ?? .idle }
@@ -91,7 +127,12 @@ public enum DashboardActivity {
                     working += 1
                     let step = session.checklist?.first { $0.status == .inProgress }?.label
                     let text = session.action ?? step ?? (session.remoteHost.map { "Working on \($0)" } ?? "Working")
-                    rows.append((1, since?.timeIntervalSinceReferenceDate ?? 0, row(project, session, text, since: since)))
+                    var row = row(project, session, text, since: since)
+                    if let steps = session.checklist, !steps.isEmpty {
+                        row.stepsDone = steps.doneCount
+                        row.stepsTotal = steps.count
+                    }
+                    rows.append((1, since?.timeIntervalSinceReferenceDate ?? 0, row))
                 case .done:
                     guard let stopped = session.stoppedAt, now.timeIntervalSince(stopped) < doneFor else { continue }
                     done += 1

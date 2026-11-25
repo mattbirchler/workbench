@@ -26,6 +26,9 @@ struct BenchPhoneApp: App {
         client.onSend = { PhoneAnalytics.log($0) }
         _client = State(initialValue: client)
         AppDelegate.client = client
+        // Here rather than when the first screen appears: a button on a
+        // notification can start the app with no screen at all.
+        AppDelegate.pairing = pairing
         #if DEBUG
         // The chat timing log to a file too, where a simulator's can be read.
         if let documents = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first {
@@ -45,6 +48,9 @@ struct BenchPhoneApp: App {
                 } else if let mode = ProcessInfo.processInfo.environment["BENCH_CHECKLIST_SAMPLE"] {
                     // Screenshots: the checklist bar, folded or ("open") open.
                     ChecklistPreview(expanded: mode == "open")
+                } else if let kind = ProcessInfo.processInfo.environment["BENCH_SURFACE_SAMPLE"] {
+                    // Screenshots: the Lock Screen dashboard, drawn in the app.
+                    SurfacePreview(kind: kind)
                 } else if ProcessInfo.processInfo.environment["BENCH_MARKDOWN_SAMPLE"] != nil {
                     // Screenshots: render the Markdown sample on its own.
                     ScrollView { MarkdownText(text: MarkdownText.sample).padding(16) }.background(PhoneTheme.canvas)
@@ -178,7 +184,9 @@ struct BenchPhoneApp: App {
                     navigator.pendingURL = nil
                 }
             }
+            .onChange(of: client.lastUpdate) { _, _ in WidgetFeed.update(from: client) }
             .onChange(of: pairing.info, initial: true) { _, info in
+                if info == nil, !pairing.isDemo { WidgetFeed.clear() }
                 queue.use(info)
                 if let info { client.connect(info) } else if !pairing.isDemo { client.disconnect() }
             }
@@ -204,7 +212,11 @@ struct BenchPhoneApp: App {
                     if let info = pairing.info { client.connect(info) }
                     // Sends prompts that didn't go out, and checks on the rest.
                     Task { await queue.refresh() }
-                case .background: if !pairing.isDemo { client.disconnect() }
+                case .background:
+                    // Before the connection closes, so the widgets start
+                    // from what you just saw.
+                    WidgetFeed.update(from: client, force: true)
+                    if !pairing.isDemo { client.disconnect() }
                 default: break
                 }
             }

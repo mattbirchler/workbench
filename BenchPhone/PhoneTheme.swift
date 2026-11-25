@@ -18,6 +18,9 @@ enum PhoneTheme {
     /// file, why a request didn't go through. Readable as text on both
     /// the light and dark surfaces.
     static let error = Color(light: Color(red: 0.80, green: 0.20, blue: 0.17), dark: Color(red: 0.96, green: 0.42, blue: 0.38))
+    /// Lines added, as small text: `done`, deepened on light surfaces
+    /// where the plain green is too pale to read.
+    static let added = Color(light: Color(red: 0.10, green: 0.53, blue: 0.26), dark: done)
     /// A merged pull request, in the purple GitHub uses for it.
     static let merged = Color(light: Color(red: 0.51, green: 0.31, blue: 0.87), dark: Color(red: 0.64, green: 0.48, blue: 0.95))
 
@@ -71,6 +74,8 @@ enum PhoneTheme {
     /// phone's own otherwise. Read in a view's body, so views follow
     /// theme changes.
     static var palette: CompanionPalette { MacTheme.shared.palette ?? standard }
+    /// The theme you picked, or nil when the app is in its own colors.
+    static var themePalette: CompanionPalette? { MacTheme.shared.palette }
 }
 
 /// Where the app's colors come from: the Mac's terminal theme (kept so the

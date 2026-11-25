@@ -166,12 +166,14 @@ final class Companion {
     private func handle(_ event: RemoteEvent) {
         guard isEnabled, snapshots.store.notifiesPhone(event.projectID) else { return }
         switch event {
-        case .waiting(let project, let tabID, let projectID, let question):
+        case .waiting(let project, let tabID, let projectID, let question, let allowOrDeny):
             push.notify(title: "\(agentName(tabID, in: projectID)) needs you", body: question ?? "Waiting for your permission in \(project).",
-                        projectID: projectID, sessionID: tabID, collapseID: tabID.uuidString, kind: .needsYou)
+                        projectID: projectID, sessionID: tabID, collapseID: tabID.uuidString, kind: .needsYou,
+                        category: allowOrDeny ? NotificationActions.permissionCategory : NotificationActions.replyCategory)
         case .finished(let project, let tabID, let projectID, let summary):
             push.notify(title: "\(project): finished", body: summary ?? "\(agentName(tabID, in: projectID)) is done and waiting for your next message.",
-                        projectID: projectID, sessionID: tabID, collapseID: tabID.uuidString, kind: .finished)
+                        projectID: projectID, sessionID: tabID, collapseID: tabID.uuidString, kind: .finished,
+                        category: NotificationActions.replyCategory)
         case .checks(let project, _, let pr):
             let title = pr.checks == .passing ? "Checks passed" : "Checks failed"
             let body = pr.checks == .passing ? "PR #\(pr.number) in \(project): \(pr.title)"

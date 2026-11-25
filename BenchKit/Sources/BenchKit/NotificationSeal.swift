@@ -27,14 +27,19 @@ public enum NotificationSeal {
         public var session: String?
         public var url: String?
         public var host: String?
+        /// Which buttons the notification gets (see `NotificationActions`).
+        /// Nil from a Mac that doesn't say, and for kinds with none.
+        public var category: String?
 
-        public init(title: String, body: String, project: String? = nil, session: String? = nil, url: String? = nil, host: String? = nil) {
+        public init(title: String, body: String, project: String? = nil, session: String? = nil, url: String? = nil, host: String? = nil,
+                    category: String? = nil) {
             self.title = title
             self.body = body
             self.project = project
             self.session = session
             self.url = url
             self.host = host
+            self.category = category
         }
     }
 

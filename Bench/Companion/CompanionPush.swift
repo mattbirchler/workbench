@@ -150,9 +150,11 @@ final class CompanionPush {
     // MARK: Notifications
 
     /// Sends an alert to every registered phone. Tapping it opens the
-    /// session, or the URL.
+    /// session, or the URL. `category` names the buttons it gets on the
+    /// phone (see `NotificationActions`); a phone that doesn't know the
+    /// name shows none.
     func notify(title: String, body: String, projectID: UUID?, sessionID: UUID?, url: URL? = nil, collapseID: String? = nil,
-                kind: CompanionNotificationKind? = nil) {
+                kind: CompanionNotificationKind? = nil, category: String? = nil) {
         guard let sender, !devices.isEmpty else { return }
         var payload: [String: Any] = [
             "aps": [
@@ -165,8 +167,12 @@ final class CompanionPush {
         if let sessionID { payload["session"] = sessionID.uuidString }
         if let url { payload["url"] = url.absoluteString }
         if let hostName { payload["host"] = hostName }
+        if let category, var aps = payload["aps"] as? [String: Any] {
+            aps["category"] = category
+            payload["aps"] = aps
+        }
         let contents = NotificationSeal.Contents(title: title, body: body, project: projectID?.uuidString, session: sessionID?.uuidString,
-                                                 url: url?.absoluteString, host: hostName)
+                                                 url: url?.absoluteString, host: hostName, category: category)
         let sealedPayload = sealed(contents, threadID: projectID?.uuidString ?? "bench")
         for device in devices where kind.map({ !(device.muted ?? []).contains($0) }) ?? true {
             // Phones that can open them get the words sealed, so the relay
