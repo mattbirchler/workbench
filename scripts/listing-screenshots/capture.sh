@@ -1,16 +1,25 @@
 #!/bin/zsh
 # Captures the iPhone app's demo mode in the simulator for the App Store
-# screenshots. Debug builds only: BENCH_OPEN_PROJECT and BENCH_OPEN_SCREEN
-# jump straight to a screen. Then run compose.py.
+# screenshots, in dark mode. Debug builds only: BENCH_OPEN_PROJECT,
+# BENCH_OPEN_SCREEN and BENCH_SURFACE_SAMPLE jump straight to a screen.
+# Then run compose.py.
+#
+#   capture.sh                                              iPhone 6.9"
+#   SIM="iPad Pro 13-inch (M5)" PREFIX=ipad WAIT=9 capture.sh
+#   SIM="iPhone Duo" PREFIX=duo DISPLAY_ID=1 WAIT=14 capture.sh
+#
+# The Duo's outer display is display 1. Its inner display (3) is black
+# unless the device is opened in Device Hub first; simctl can't change poses.
+# Boot one simulator at a time.
 set -euo pipefail
 cd "$(dirname "$0")/../.."
-SIM=${SIM:-"iPhone 17 Pro Max"}
+SIM=${SIM:-"Store iPhone 17 Pro Max"}
+PREFIX=${PREFIX:-iphone}
+WAIT=${WAIT:-6}
 U=$(xcrun simctl list devices available -j | python3 -c "
 import json,sys; d=json.load(sys.stdin)['devices']
 print(next(x['udid'] for k,v in d.items() if 'iOS-27' in k for x in v if x['name']=='$SIM'))")
-# For the Duo's inner display: open the device flat in Device Hub (simctl
-# can't change poses), then SIM="iPhone Duo" DISPLAY_ID=3 OUT=fastlane/screenshots/raw-duo.
-OUT=${OUT:-fastlane/screenshots/raw}
+OUT=fastlane/screenshots/raw
 DISPLAY_ARG=${DISPLAY_ID:+--display=$DISPLAY_ID}
 mkdir -p $OUT
 
@@ -22,23 +31,24 @@ xcrun simctl bootstatus $U -b >/dev/null
 xcrun simctl status_bar $U override --time 9:41 --batteryState charged --batteryLevel 100 \
     --cellularBars 4 --wifiBars 3 --dataNetwork wifi
 xcrun simctl install $U build/phonesim/Build/Products/Debug-iphonesimulator/Bench.app
+xcrun simctl ui $U appearance dark
 
-# name, appearance, project, screen, seconds to wait
+# name, seconds to wait, then NAME=value launch settings
 cap() {
-    xcrun simctl ui $U appearance $2
+    local name=$1 wait=$2; shift 2
     xcrun simctl terminate $U me.birchtree.BenchPhone 2>/dev/null || true
-    SIMCTL_CHILD_BENCH_DEMO=1 SIMCTL_CHILD_BENCH_OPEN_PROJECT="$3" SIMCTL_CHILD_BENCH_OPEN_SCREEN="$4" \
+    env SIMCTL_CHILD_BENCH_DEMO=1 ${@/#/SIMCTL_CHILD_} \
         xcrun simctl launch $U me.birchtree.BenchPhone -checklistExpanded YES >/dev/null
-    sleep $5
-    xcrun simctl io $U screenshot ${=DISPLAY_ARG} $OUT/$1.png >/dev/null 2>&1
-    echo $OUT/$1.png
+    sleep $wait
+    xcrun simctl io $U screenshot ${=DISPLAY_ARG} $OUT/$PREFIX-$name.png >/dev/null 2>&1
+    echo $OUT/$PREFIX-$name.png
 }
-cap list light "" "" 5
-cap list-dark dark "" "" 5
-cap permission-dark dark Website "" 5
-cap working light Recipes "" 5
-cap agent light dark-mode "" 5
-cap diff-agent light dark-mode diff 8
+cap list $WAIT
+cap permission $WAIT BENCH_OPEN_PROJECT=Website
+cap working $WAIT BENCH_OPEN_PROJECT=Recipes
+cap agent $WAIT BENCH_OPEN_PROJECT=dark-mode
+cap changes $((WAIT + 2)) BENCH_OPEN_PROJECT=dark-mode BENCH_OPEN_SCREEN=changes
+cap widgets $WAIT BENCH_SURFACE_SAMPLE=widgets
 
 xcrun simctl terminate $U me.birchtree.BenchPhone || true
 xcrun simctl ui $U appearance light
