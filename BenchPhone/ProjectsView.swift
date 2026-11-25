@@ -852,6 +852,10 @@ private struct SessionRowView: View {
                     ChecklistStepsBar(items: items, activity: session.activity)
                         .padding(.top, 4)
                 }
+                if let pr = project.pullRequest {
+                    PullRequestChip(pr: pr)
+                        .padding(.top, 4)
+                }
             }
         }
         .padding(.vertical, 4)
@@ -1147,6 +1151,92 @@ private struct ProjectStatusLine: View {
                 }
             }
         case .branch: ("arrow.triangle.branch", PhoneTheme.inkMuted)
+        }
+    }
+}
+
+/// A session's pull request in a small capsule: its number and how its
+/// checks stand, like "#42 · 7/7 checks".
+private struct PullRequestChip: View {
+    let pr: CompanionPullRequest
+
+    var body: some View {
+        HStack(spacing: 4) {
+            Image(systemName: symbol)
+                .font(.caption2.weight(.semibold))
+                .foregroundStyle(color)
+            // The state colors are too light to read as small text on a
+            // light card, so the words stay in ink and the tint says it.
+            Text(text)
+                .font(.caption.weight(.medium).monospacedDigit())
+                .foregroundStyle(PhoneTheme.ink.opacity(0.85))
+                .lineLimit(1)
+        }
+        .padding(.horizontal, 8)
+        .padding(.vertical, 3)
+        .background(color.opacity(0.14), in: Capsule())
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(spoken)
+    }
+
+    private var text: String {
+        switch pr.state {
+        case .merged: return "#\(pr.number) merged"
+        case .closed: return "#\(pr.number) closed"
+        case .draft: return "#\(pr.number) draft"
+        case .open:
+            switch pr.checks {
+            case .failing:
+                let failing = pr.failingNames.count
+                return failing > 0 ? "#\(pr.number) · \(failing) failing" : "#\(pr.number) · checks failing"
+            case .passing, .pending:
+                return pr.totalCount > 0 ? "#\(pr.number) · \(pr.passedCount)/\(pr.totalCount) checks" : "#\(pr.number)"
+            case .none:
+                return "#\(pr.number)"
+            }
+        }
+    }
+
+    private var spoken: String {
+        switch pr.state {
+        case .merged: return "Pull request \(pr.number), merged"
+        case .closed: return "Pull request \(pr.number), closed"
+        case .draft: return "Pull request \(pr.number), draft"
+        case .open:
+            switch pr.checks {
+            case .failing: return "Pull request \(pr.number), checks failing"
+            case .passing, .pending:
+                return pr.totalCount > 0 ? "Pull request \(pr.number), \(pr.passedCount) of \(pr.totalCount) checks passed" : "Pull request \(pr.number)"
+            case .none: return "Pull request \(pr.number)"
+            }
+        }
+    }
+
+    private var symbol: String {
+        switch pr.state {
+        case .merged: "checkmark.circle.fill"
+        case .closed: "xmark.circle"
+        case .draft: "pencil.circle"
+        case .open:
+            switch pr.checks {
+            case .passing: "checkmark.circle.fill"
+            case .pending: "clock.fill"
+            case .failing: "xmark.circle.fill"
+            case .none: "arrow.triangle.pull"
+            }
+        }
+    }
+
+    private var color: Color {
+        switch pr.state {
+        case .merged: PhoneTheme.merged
+        case .closed, .draft: PhoneTheme.inkMuted
+        case .open:
+            switch pr.checks {
+            case .passing, .none: PhoneTheme.palette.done
+            case .pending: PhoneTheme.waiting
+            case .failing: PhoneTheme.error
+            }
         }
     }
 }
