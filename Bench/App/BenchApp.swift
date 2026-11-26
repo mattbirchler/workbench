@@ -509,6 +509,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         if let terminals = Self.terminals { RestartRecovery.shared.recordQuit(terminals: terminals) }
         // Keep Working was turned off while some tabs were kept.
         SessionKeeper.endForQuit()
+        #if compiler(>=6.4.4)
+        if #available(macOS 27.3, *) { (menuBarActivity as? MenuBarActivity)?.endForQuit() }
+        #endif
     }
 
     /// What a quit or restart would stop, by name, and what happens after.
@@ -542,6 +545,7 @@ struct BenchCommands: Commands {
     @Environment(\.openWindow) private var openWindow
     @AppStorage(SidebarLayout.key) private var sidebarLayout = SidebarLayout.standard
     @AppStorage(SessionKeeper.enabledKey) private var keepsWorking = false
+    @AppStorage(LiveActivitySetting.key) private var showsLiveActivity = false
     /// True while a chat is on screen. Otherwise the text size items stay
     /// off, so the terminal gets ⌘+, ⌘− and ⌘0 for its own font.
     @FocusedValue(\.showsChat) private var showsChat
@@ -631,6 +635,10 @@ struct BenchCommands: Commands {
             .pickerStyle(.inline)
             Picker("Group Projects", selection: Binding(get: { store.grouping }, set: { store.grouping = $0 })) {
                 ForEach(SidebarGrouping.allCases, id: \.self) { Text($0.title).tag($0) }
+            }
+            if LiveActivitySetting.isAvailable {
+                Toggle("Live Activity in Menu Bar", isOn: $showsLiveActivity)
+                    .keyboardShortcut("l", modifiers: [.command, .option])
             }
             Divider()
             Button(store.showsChanges ? "Hide Changes" : "Show Changes") { store.showsChanges.toggle() }

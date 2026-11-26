@@ -1,10 +1,30 @@
+import AppKit
+import BenchKit
+import SwiftUI
+
+/// The switch for the menu bar Live Activity, for the places that flip it:
+/// Settings, the View menu, the command bar and the Overview.
+enum LiveActivitySetting {
+    static let key = "showsLiveActivity"
+
+    /// False before macOS 27.3, where there's nothing to switch.
+    static var isAvailable: Bool {
+        #if compiler(>=6.4.4)
+        if #available(macOS 27.3, *) { return true }
+        #endif
+        return false
+    }
+
+    static var isOn: Bool {
+        get { UserDefaults.standard.bool(forKey: key) }
+        set { UserDefaults.standard.set(newValue, forKey: key) }
+    }
+}
+
 // Live Activities came to the Mac with macOS 27.3, whose SDK ships with
 // Swift 6.4.4. Older toolchains build Workbench without this.
 #if compiler(>=6.4.4)
 import ActivityKit
-import AppKit
-import BenchKit
-import SwiftUI
 
 /// The sessions dashboard as a Live Activity: counts in the menu bar (or
 /// the Dynamic Island on a MacBook with one), and the roster when you open
@@ -18,8 +38,7 @@ import SwiftUI
 @MainActor
 final class MenuBarActivity {
     /// The setting that shows it. Off unless you turn it on.
-    static let shownKey = "showsLiveActivity"
-    static var isShown: Bool { UserDefaults.standard.bool(forKey: shownKey) }
+    static var isShown: Bool { LiveActivitySetting.isOn }
 
     private let store: AppStore
     private let terminals: TerminalManager
@@ -62,12 +81,26 @@ final class MenuBarActivity {
         refresh()
     }
 
-    /// Ends the activity, for when the setting is turned off or the app quits.
+    /// Ends the activity, for when the setting is turned off.
     func remove() {
         removed = true
         timer?.invalidate()
         if let activation { NotificationCenter.default.removeObserver(activation) }
         end()
+    }
+
+    /// Ends it as the app quits, waiting a moment for the system to hear:
+    /// an activity outlives the app that started it otherwise.
+    func endForQuit() {
+        removed = true
+        let handles = Activity<DashboardAttributes>.activities.map(Handle.init)
+        guard !handles.isEmpty else { return }
+        let finished = DispatchSemaphore(value: 0)
+        Task.detached {
+            for handle in handles { await handle.end() }
+            finished.signal()
+        }
+        _ = finished.wait(timeout: .now() + 1)
     }
 
     private func refresh() {

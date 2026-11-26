@@ -66,6 +66,7 @@ struct OverviewView: View {
     @Environment(TerminalManager.self) private var terminals
     @Environment(RepoMonitors.self) private var monitors
     @Environment(OfflineQueue.self) private var offlineQueue
+    @AppStorage(LiveActivitySetting.key) private var showsLiveActivity = false
 
     static func items(store: AppStore, terminals: TerminalManager) -> [OverviewItem] {
         var items: [OverviewItem] = []
@@ -139,6 +140,14 @@ struct OverviewView: View {
                     offlineQueue.showsFailedPrompts = true
                 }
                 .controlSize(.small)
+            }
+            if LiveActivitySetting.isAvailable {
+                Toggle(isOn: $showsLiveActivity) {
+                    Label("Live Activity", systemImage: "menubar.rectangle")
+                }
+                .toggleStyle(.button)
+                .controlSize(.small)
+                .help(showsLiveActivity ? "Take these sessions out of the menu bar (⌥⌘L)" : "Keep these sessions in the menu bar as a Live Activity (⌥⌘L)")
             }
         }
     }
