@@ -45,6 +45,7 @@ private struct CommandBarView: View {
     @Environment(ProjectIcons.self) private var icons
     @Environment(RemoteMacs.self) private var macs
     @Environment(RepoMonitors.self) private var monitors
+    @Environment(PullRequests.self) private var pullRequests
     #if DEBUG
     @State private var query = ProcessInfo.processInfo.environment["BENCH_SNAPSHOT_COMMAND_BAR"] ?? ""
     #else
@@ -240,7 +241,8 @@ private struct CommandBarView: View {
         }
         items.append(contentsOf: projects.map(CommandBarItem.project))
         items.append(contentsOf: store.listedEntries.filter { $0.host != nil }.map(CommandBarItem.remote))
-        items.append(contentsOf: AppActions(store: store, terminals: terminals).commandBarActions.map(CommandBarItem.action))
+        items.append(contentsOf: AppActions(store: store, terminals: terminals)
+            .commandBarActions(pullRequests: pullRequests, macs: macs).map(CommandBarItem.action))
 
         let candidates = items.map { item -> CommandBarMatcher.Candidate<String> in
             switch item {

@@ -393,7 +393,7 @@ struct BenchApp: App {
         // No toolbar: the columns draw the top band themselves (WindowChrome).
         .windowStyle(.hiddenTitleBar)
         .commands {
-            BenchCommands(store: store, terminals: terminals, macs: remoteMacs, previews: previews)
+            BenchCommands(store: store, terminals: terminals, macs: remoteMacs, previews: previews, pullRequests: pullRequests)
             UpdateCommands(updater: updater)
         }
 
@@ -509,6 +509,7 @@ struct BenchCommands: Commands {
     let terminals: TerminalManager
     let macs: RemoteMacs
     let previews: PreviewPages
+    let pullRequests: PullRequests
     @Environment(\.openWindow) private var openWindow
     @AppStorage(SidebarLayout.key) private var sidebarLayout = SidebarLayout.standard
     @AppStorage(SessionKeeper.enabledKey) private var keepsWorking = false
@@ -598,6 +599,9 @@ struct BenchCommands: Commands {
             Divider()
             Button(store.showsChanges ? "Hide Changes" : "Show Changes") { store.showsChanges.toggle() }
                 .keyboardShortcut("0", modifiers: [.command, .option])
+            Button(actions.pullRequestTitle(in: pullRequests, macs: macs)) { actions.openPullRequest(in: pullRequests, macs: macs) }
+                .keyboardShortcut("g", modifiers: [.command, .shift])
+                .disabled(actions.pullRequestURL(in: pullRequests, macs: macs) == nil)
             Button {
                 actions.toggleChat()
             } label: {
