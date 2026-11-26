@@ -439,14 +439,29 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         AppIconManager.shared.applyAtLaunch()
         HangWatchdog.shared.start()
         Dictation.shared.start()
-        if let store = Self.store, let terminals = Self.terminals {
+        syncMenuBarItem()
+        // The setting can change from Settings or from an imported settings
+        // file, so the icon follows the preference itself.
+        NotificationCenter.default.addObserver(forName: UserDefaults.didChangeNotification, object: nil, queue: .main) { [weak self] _ in
+            MainActor.assumeIsolated { self?.syncMenuBarItem() }
+        }
+    }
+
+    /// Shows or hides the menu bar icon to match its setting.
+    @MainActor
+    private func syncMenuBarItem() {
+        let wanted = MenuBarItem.isShown
+        if wanted, menuBarItem == nil, let store = Self.store, let terminals = Self.terminals {
             menuBarItem = MenuBarItem(store: store, terminals: terminals)
+        } else if !wanted, let item = menuBarItem {
+            item.remove()
+            menuBarItem = nil
         }
     }
 
     /// Closing the window leaves Workbench running, as Mac apps do. Its
     /// terminals belong to TerminalManager, not the window, so they keep
-    /// going; the Dock icon or the menu bar item brings the window back.
+    /// going; the Dock icon (or the menu bar icon, if it's on) brings the window back.
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool { false }
 
     func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
