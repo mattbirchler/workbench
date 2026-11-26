@@ -315,7 +315,7 @@
     <div class="feature-text">
       <h2 class="display">Run it on a headless Mac. Drive it from anywhere.</h2>
       <p>Leave Workbench running on a Mac mini in the closet and work in its projects from your laptop's sidebar, as if they were local. Read and answer its sessions, start Claude tabs and agents, review its changes, and run its shortcuts, like the dev server. While an agent is working, Workbench keeps that Mac from going to sleep on its own.</p>
-      <p>The Macs connect over your own Tailscale network. Turn on Remote Access on the headless Mac, copy its pairing link, and paste it into the other one. The <a class="inline-link" href="support.html#using-another-mac">support page</a> has the steps.</p>
+      <p>The Macs connect directly on your home network, or from anywhere over your own Tailscale network. No Tailscale? Turn on the optional <a class="inline-link" href="relay.html">Workbench relay</a>, which is encrypted end to end and needs no account. Turn on Remote Access on the headless Mac, copy its pairing link, and paste it into the other one. The <a class="inline-link" href="support.html#using-another-mac">support page</a> has the steps.</p>
     </div>
     <figure class="feature-media">
       <div class="agents remote" role="img" aria-label="The Workbench sidebar on a laptop, switched to a Mac mini over Tailscale: api-server is working on migration tests, ios-app is waiting for permission to run xcodebuild test, and docs is done.">
@@ -348,7 +348,7 @@
   <div class="wrap">
     <div class="feature-text wide">
       <h2 class="display">Keep up from your iPhone.</h2>
-      <p>The iPhone app connects to your Mac over your own Tailscale network, with nothing in between. Sessions that need you sit at the top. Read along as Claude works, answer its questions, tap Allow or Deny, reply with a message or a photo, and review diffs from the couch. You can start new tabs and agents too.</p>
+      <p>The iPhone app connects straight to your Mac on your home Wi-Fi or over your own Tailscale network, with nothing in between. If you'd rather skip Tailscale, the optional <a class="inline-link" href="relay.html">Workbench relay</a> reaches your Mac from anywhere, encrypted so the relay can't read it. Sessions that need you sit at the top. Read along as Claude works, answer its questions, tap Allow or Deny, reply with a message or a photo, and review diffs from the couch. You can start new tabs and agents too.</p>
       <a class="btn btn-ghost phone-cta" href="https://apps.apple.com/us/app/workbench-manage-your-agents/id6827762868">
         <svg aria-hidden="true"><use href="#phone"/></svg>Get it on the App Store
       </a>
@@ -448,7 +448,7 @@ Field Notes  ~/Code/field-notes  agent/export</span>
         <li>The <a href="https://cli.github.com">GitHub CLI</a> for pull requests, checks, and deploys</li>
         <li><a href="https://developers.openai.com/codex/cli">Codex</a>, if you want to run it beside Claude Code (beta)</li>
         <li>The <a href="https://apps.apple.com/us/app/workbench-manage-your-agents/id6827762868">Workbench iPhone app</a> from the App Store</li>
-        <li><a href="https://tailscale.com/download/mac">Tailscale</a> for the iPhone app and other Macs</li>
+        <li><a href="https://tailscale.com/download/mac">Tailscale</a>, to reach your Mac from anywhere with nothing in between (or use the <a href="relay.html">Workbench relay</a>)</li>
       </ul>
     </div>
   </div>
