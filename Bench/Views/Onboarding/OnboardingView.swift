@@ -206,6 +206,7 @@ struct OnboardingView: View {
             "theme_matches": TerminalTheme.shared.matches,
             "theme_source": TerminalTheme.shared.source.rawValue,
             "iphone_enabled": companion.isEnabled,
+            "relay_enabled": companion.isEnabled && companion.relay.isOn,
             "missing": missingTools,
             "replay": seenBefore,
         ])
@@ -1069,7 +1070,7 @@ private struct PhoneStep: View {
 
     @ViewBuilder private var pairing: some View {
         if !companion.isEnabled {
-            Text("It connects over Tailscale or your home network, so only your own devices can reach it. You can do this later in Settings > Remote Access.")
+            Text("At home it connects over your Wi-Fi, and away from home over Tailscale. Both are just your own devices talking to each other. If you'd rather not set up Tailscale, the optional Workbench relay reaches your Mac from anywhere, encrypted so the relay can't read it. You can do this later in Settings > Remote Access.")
                 .font(.ui(size: 12))
                 .foregroundStyle(palette.inkMuted)
                 .fixedSize(horizontal: false, vertical: true)
@@ -1088,16 +1089,7 @@ private struct PhoneStep: View {
                         .foregroundStyle(palette.inkMuted)
                         .fixedSize(horizontal: false, vertical: true)
                 }
-                if !companion.hasTailscale {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("Works on your home Wi-Fi. To use it anywhere, set up Tailscale.")
-                            .font(.ui(size: 12))
-                            .foregroundStyle(palette.inkMuted)
-                            .fixedSize(horizontal: false, vertical: true)
-                        Link("Set Up Tailscale", destination: Tailscale.downloadURL)
-                            .font(.ui(size: 12))
-                    }
-                }
+                paths
                 if let error = companion.tailscaleError {
                     VStack(alignment: .leading, spacing: 6) {
                         Label(error, systemImage: "exclamationmark.triangle.fill")
@@ -1118,6 +1110,45 @@ private struct PhoneStep: View {
                     .font(.ui(size: 12))
                     .foregroundStyle(palette.inkMuted)
             }
+        }
+    }
+
+    /// The ways a device reaches this Mac, in the order they're tried:
+    /// the two direct ones, then the relay you can choose to add.
+    private var paths: some View {
+        VStack(alignment: .leading, spacing: 7) {
+            Text("How your iPhone reaches this Mac")
+                .font(.ui(size: 12, weight: .semibold))
+            path("wifi", "Home Wi-Fi", "Direct, device to device.")
+            HStack(alignment: .firstTextBaseline, spacing: 6) {
+                path("point.3.connected.trianglepath.dotted", "Tailscale",
+                     companion.hasTailscale ? "Direct, from anywhere." : "Direct, from anywhere. Not set up.")
+                if !companion.hasTailscale {
+                    Link("Set Up", destination: Tailscale.downloadURL)
+                        .font(.ui(size: 12))
+                }
+            }
+            Toggle(isOn: Binding(get: { companion.relay.isOn }, set: { companion.relay.setOn($0) })) {
+                path("arrow.triangle.swap", "Workbench relay", "Optional fallback.")
+            }
+            .toggleStyle(.benchSwitch)
+            Text(companion.hasTailscale
+                 ? "The first two are only your devices talking to each other, and always come first. The relay steps in when neither connects. It passes messages through a relay server, encrypted so the relay can't read them."
+                 : "Without Tailscale, your iPhone only connects on your home Wi-Fi. Set up Tailscale to keep it between your devices, or turn on the relay: it passes messages through a relay server, encrypted so the relay can't read them.")
+                .font(.ui(size: 11))
+                .foregroundStyle(palette.inkMuted)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+
+    private func path(_ symbol: String, _ name: String, _ note: String) -> some View {
+        HStack(alignment: .firstTextBaseline, spacing: 6) {
+            Image(systemName: symbol)
+                .font(.system(size: 11))
+                .foregroundStyle(palette.inkMuted)
+                .frame(width: 16)
+            Text(name).font(.ui(size: 12, weight: .medium))
+            Text(note).font(.ui(size: 12)).foregroundStyle(palette.inkMuted)
         }
     }
 }

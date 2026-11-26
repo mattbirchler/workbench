@@ -1,4 +1,4 @@
-New in this build: reach your Mac from anywhere without Tailscale, through the Workbench relay. It needs the newest Workbench on your Mac, with "Use the Workbench relay" turned on in Settings > iPhone. Also in this build: answering from notifications, widgets, and git actions from the phone. Several of these need the newest Workbench on your Mac. With an older Mac they simply won't appear.
+New in this build: reach your Mac from anywhere without Tailscale, through the Workbench relay. It needs the newest Workbench on your Mac, with "Use the Workbench relay" turned on in Settings > Remote Access. Also in this build: answering from notifications, widgets, and git actions from the phone. Several of these need the newest Workbench on your Mac. With an older Mac they simply won't appear.
 
 • The Workbench relay. Once your Mac has it turned on, open the app once on your home Wi-Fi or Tailscale so the phone learns about it (no need to scan again). After that it connects from anywhere. Your home network and Tailscale are still used first when they answer. Settings shows which way you're connected. Messages are sealed on your devices, so the relay can't read them.
 

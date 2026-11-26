@@ -129,4 +129,6 @@ reconnect on their own.
 ## Host your own
 
 The same steps work on any host that keeps a Node process running and
-passes WebSockets through. Point Workbench at it in Settings > iPhone.
+passes WebSockets through. Point Workbench at it in Settings > Remote
+Access, under Relay server. There's a step by step guide at
+https://workbenchapp.dev/relay.html.
