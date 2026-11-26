@@ -635,7 +635,7 @@ struct BenchCommands: Commands {
             Button("Unsplit") { actions.unsplit() }
                 .disabled(!actions.isSplit)
             Divider()
-            Button("Overview") { actions.showOverview() }
+            Button("Overview") { actions.showOverview(from: .menu) }
                 .keyboardShortcut("o", modifiers: [.command, .shift])
             Button("Usage and Costs") { actions.showUsage() }
                 .keyboardShortcut("u", modifiers: [.command, .shift])

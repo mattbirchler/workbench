@@ -68,6 +68,9 @@ enum Analytics {
         case claudeAccountChosen = "claude_account_chosen"
         case tabViewSwitched = "tab_view_switched"
         case tabsSplit = "tabs_split"
+        /// The Overview page was opened (property `from`: sidebar, rail,
+        /// menu, command_bar, menu_bar or notification).
+        case overviewOpened = "overview_opened"
         case artifactOpened = "artifact_opened"
         case artifactTargetChosen = "artifact_target_chosen"
         case agentStarted = "agent_started"

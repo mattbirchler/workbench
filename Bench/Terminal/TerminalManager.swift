@@ -449,7 +449,7 @@ final class TerminalManager {
             NSApp.activate()
         }
         notifier.openOverview = { [weak self] in
-            self?.store?.showsOverview = true
+            self?.store?.showOverview(from: .notification)
             NSApp.activate()
         }
         stateWatcher = AgentStateWatcher { [weak self] all in

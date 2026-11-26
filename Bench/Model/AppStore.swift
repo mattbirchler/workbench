@@ -110,6 +110,15 @@ final class AppStore {
     var showsOverview = false {
         didSet { if showsOverview { settingsSection = nil } }
     }
+    /// Where the Overview was opened from, for analytics.
+    enum OverviewSource: String {
+        case sidebar, rail, menu, commandBar = "command_bar", menuBar = "menu_bar", notification
+    }
+    /// Opens the Overview. Asking again while it's showing isn't counted.
+    func showOverview(from source: OverviewSource) {
+        if !showsOverview { Analytics.capture(.overviewOpened, ["from": source.rawValue]) }
+        showsOverview = true
+    }
     /// The Settings page's section while Settings fills the main area and
     /// its sections take over the sidebar. nil when it's closed.
     var settingsSection: SettingsSection? = AppStore.openingSection {

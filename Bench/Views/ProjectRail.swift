@@ -140,7 +140,7 @@ private struct RailOverviewButton: View {
                 }
             }
             .contentShape(Rectangle())
-            .onTapGesture { store.showsOverview = true }
+            .onTapGesture { store.showOverview(from: .rail) }
             .onHover { isHovering = $0 }
             .help(waiting > 0 ? "Overview: \(waiting) waiting for you" : "Overview: every agent session at a glance")
     }

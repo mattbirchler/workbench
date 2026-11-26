@@ -539,7 +539,7 @@ struct OverviewRow: View {
             }
         }
         .contentShape(Rectangle())
-        .onTapGesture { store.showsOverview = true }
+        .onTapGesture { store.showOverview(from: .sidebar) }
         .onHover { isHovering = $0 }
         .help("Every agent session at a glance")
         .accessibilityElement(children: .combine)
