@@ -47,16 +47,24 @@
       <h2 id="iphone">Using the iPhone app</h2>
       <ol>
         <li>Get the <a href="https://apps.apple.com/us/app/workbench-manage-your-agents/id6827762868">Workbench iPhone app</a> from the App Store.</li>
-        <li>Install <a href="https://tailscale.com">Tailscale</a> on your Mac and iPhone, and sign in to the same account.</li>
         <li>On the Mac, open Workbench &gt; Settings &gt; Remote Access and turn on the switch at the top (<strong>Let my iPhone and other Macs connect</strong>).</li>
         <li>In the iPhone app, tap Scan Code and scan the code on your Mac.</li>
       </ol>
+      <p>That's all you need at home: on the same Wi-Fi, your iPhone connects straight to your Mac.</p>
+
+      <h2 id="away">Connecting away from home</h2>
+      <p>There are two ways to reach your Mac from anywhere. You can use either, or both.</p>
+      <ul>
+        <li><strong>Tailscale.</strong> Install <a href="https://tailscale.com">Tailscale</a> on your Mac and your iPhone, and sign in to the same account. Your devices talk straight to each other, with nothing in between.</li>
+        <li><strong>The Workbench relay.</strong> On the Mac, open Settings &gt; Remote Access and turn on <strong>Workbench relay</strong>. There's no account and nothing else to install. Messages pass through a relay server, encrypted on your devices so the relay can't read them. A device that's already paired picks it up the next time it connects at home.</li>
+      </ul>
+      <p>Workbench always tries your home network and Tailscale first, and uses the relay only when neither answers. The <a href="relay.html">relay page</a> says what the relay can and can't see, and how to host your own.</p>
       <p>To look around first, tap <strong>Try a Demo</strong> on the iPhone app's first screen.</p>
 
       <h2 id="using-another-mac">Using another Mac</h2>
       <p>You can work in a second Mac's projects from the same sidebar.</p>
       <ol>
-        <li>Install <a href="https://tailscale.com">Tailscale</a> on both Macs, and sign in to the same account.</li>
+        <li>Both Macs on the same network can skip this step. To connect from anywhere, set up Tailscale or the Workbench relay on the Mac you want to reach (see <a href="#away">Connecting away from home</a>).</li>
         <li>On the Mac you want to reach, open Workbench &gt; Settings &gt; Remote Access, turn on the switch at the top, and click <strong>Copy Pairing Link</strong>. The link starts with <code>bench://pair</code>.</li>
         <li>Send that link to the other Mac (with Universal Clipboard, a note, or a message to yourself).</li>
         <li>On the other Mac, click <strong>+</strong> next to This Mac at the top of the sidebar, paste the link, and click <strong>Connect</strong>.</li>
@@ -64,8 +72,8 @@
       <p>The pairing link holds a secret, so keep it to yourself. Click <strong>Make a New Code</strong> to replace it.</p>
 
       <h2 id="problems">Common problems</h2>
-      <p><strong>"Can't find the Mac."</strong> Check that Tailscale is connected on both devices.</p>
-      <p><strong>"Found the Mac, but Workbench isn't answering."</strong> Make sure Workbench is open on the Mac and <strong>Let my iPhone connect to Workbench</strong> is on in Settings &gt; iPhone.</p>
+      <p><strong>"Can't find the Mac."</strong> At home, check that both devices are on the same Wi-Fi. Away from home, check that Tailscale is connected on both devices, or that <strong>Workbench relay</strong> is on in Settings &gt; Remote Access on the Mac and its Relay row under Status says Connected.</p>
+      <p><strong>"Found the Mac, but Workbench isn't answering."</strong> Make sure Workbench is open on the Mac and <strong>Let my iPhone and other Macs connect</strong> is on in Settings &gt; Remote Access.</p>
       <p><strong>No notifications on your phone.</strong> Turn on notifications in the iPhone app's Settings. Then, on the Mac, right-click each project you want to hear about and choose <strong>Send Notifications to iPhone</strong>. A bell shows on projects that notify.</p>
       <p><strong>Claude tabs say Claude Code isn't installed.</strong> Install it, then open a new Claude tab. Settings &gt; Setup shows where Workbench looked.</p>
       <p><strong>There's no way to open a Codex tab.</strong> Workbench offers Codex once <a href="https://developers.openai.com/codex/cli">Codex</a> is installed. If it's installed and still missing, check that Codex is turned on in Settings &gt; Agents, where you also choose which agent new tabs run.</p>
