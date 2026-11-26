@@ -108,3 +108,24 @@ private func timeline(_ messages: [TranscriptMessage]) -> SessionTimeline {
     #expect(merged.map(\.start) == [at(0), at(40)])
     #expect(merged.map(\.end) == [at(30), at(50)])
 }
+
+@Test func aDayReachesThePhoneWhole() throws {
+    var project = ProjectDay(id: UUID())
+    project.work = [DaySpan(kind: .working, start: at(0), end: at(30), text: "Add an RSS feed")]
+    project.waits = [DaySpan(kind: .waiting, start: at(5), end: at(10), text: "Run the tests")]
+    project.finishes = [DayFinish(at: at(30), summary: "Done.")]
+    let day = CompanionDay(daysBack: 0, start: at(-60), readAt: at(45), rows: [CompanionDay.Row(name: "Blog", day: project, isWorking: true)], cost: 4.2)
+    let sent = try CompanionCoding.encoder.encode(ServerMessage.day(day))
+    guard case .day(let received) = try CompanionCoding.decoder.decode(ServerMessage.self, from: sent) else {
+        Issue.record("Not a day")
+        return
+    }
+    #expect(received == day)
+    #expect(received.workingTime == 25 * 60)
+    // A finish with work soon after it isn't a stop worth marking.
+    project.work.append(DaySpan(kind: .working, start: at(32), end: at(40)))
+    #expect(project.stops.isEmpty)
+    // Six hours at least, ending an hour past now.
+    let hours = day.hours(calendar: Calendar(identifier: .gregorian))
+    #expect(hours.end.timeIntervalSince(hours.start) >= 6 * 3600)
+}

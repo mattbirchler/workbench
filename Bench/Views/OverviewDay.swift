@@ -52,30 +52,10 @@ struct OverviewDay: View {
         .task(id: daysBack) {
             UsageLedger.shared.refresh()
             while !Task.isCancelled {
-                await activity.refresh(day: dayStart, sources: store.projects.map { DayActivity.Source(id: $0.id, path: $0.path) }, live: live)
+                await activity.refresh(day: dayStart, sources: store.projects.map { DayActivity.Source(id: $0.id, path: $0.path) }, live: daysBack == 0 ? DayActivity.live(store: store, terminals: terminals) : [:])
                 try? await Task.sleep(for: .seconds(15))
             }
         }
-    }
-
-    /// What each open session is doing now, by its session file.
-    private var live: [String: SessionLiveState] {
-        guard daysBack == 0 else { return [:] }
-        var result: [String: SessionLiveState] = [:]
-        for item in items {
-            guard let session = item.session,
-                  let path = session.details?.transcriptPath ?? AgentSessions.transcriptPath(tabID: item.tab.id) else { continue }
-            switch item.activity {
-            case .working:
-                result[path] = .working
-            case .waiting:
-                let details = session.details
-                result[path] = .waiting(since: details?.questionAt ?? .now, question: details?.plainAction ?? details?.action ?? details?.question)
-            default:
-                break
-            }
-        }
-        return result
     }
 
     /// A project's name in a row: an agent's worktree goes by its branch,
@@ -314,26 +294,8 @@ private struct DayTimelinePanel: View {
 
     private static let labelWidth: CGFloat = 168
 
-    /// The hours on show: from the first activity to a little past now,
-    /// and never less than six hours.
     private var range: (start: Date, end: Date) {
-        let calendar = Calendar.current
-        let dayEnd = calendar.date(byAdding: .day, value: 1, to: dayStart) ?? dayStart.addingTimeInterval(86400)
-        let spans = rows.flatMap { $0.day.work + $0.day.waits }
-        let first = spans.map(\.start).min() ?? readAt
-        let last = isToday ? readAt : (spans.map(\.end).max() ?? readAt)
-        func hour(_ date: Date, up: Bool) -> Date {
-            let floor = calendar.dateInterval(of: .hour, for: date)?.start ?? date
-            return up && floor < date ? floor.addingTimeInterval(3600) : floor
-        }
-        var start = max(dayStart, hour(first, up: false))
-        var end = min(dayEnd, hour(last, up: true).addingTimeInterval(isToday ? 3600 : 0))
-        let short = 6 * 3600 - end.timeIntervalSince(start)
-        if short > 0 {
-            start = max(dayStart, start.addingTimeInterval(-short))
-            end = min(dayEnd, start.addingTimeInterval(6 * 3600))
-        }
-        return (start, end)
+        DayText.hours(spans: rows.flatMap { $0.day.work + $0.day.waits }, dayStart: dayStart, readAt: readAt, isToday: isToday)
     }
 
     var body: some View {
@@ -404,7 +366,7 @@ private struct DayTimelinePanel: View {
                 ForEach(day.waits, id: \.self) { span in
                     bar(span, color: Theme.Status.waiting, x: x)
                 }
-                ForEach(Self.stops(in: day), id: \.self) { finish in
+                ForEach(day.stops, id: \.self) { finish in
                     Circle()
                         .fill(Theme.Status.done)
                         .frame(width: 9, height: 9)
@@ -424,14 +386,6 @@ private struct DayTimelinePanel: View {
         .frame(height: 22)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("\(DayText.duration(day.workingTime)) working, \(DayText.duration(day.waitingTime)) waiting on you")
-    }
-
-    /// The finishes worth a mark: where the work stopped for a while. In a
-    /// back-and-forth, every reply is a finish, and a dot on each hides the bars.
-    static func stops(in day: ProjectDay) -> [DayFinish] {
-        day.finishes.filter { finish in
-            !day.work.contains { $0.start > finish.at && $0.start.timeIntervalSince(finish.at) < 10 * 60 }
-        }
     }
 
     private func bar(_ span: DaySpan, color: Color, x: (Date) -> CGFloat) -> some View {

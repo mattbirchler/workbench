@@ -161,7 +161,7 @@ final class CompanionServer {
     }
 
     /// What this Mac offers beyond the protocol version.
-    static let features = [CompanionFeature.turnTimes, CompanionFeature.results, CompanionFeature.interrupt, CompanionFeature.theme, CompanionFeature.queue, CompanionFeature.editQueue, CompanionFeature.agents, CompanionFeature.sendNow, CompanionFeature.placement, CompanionFeature.projectMenu, CompanionFeature.planUsage, CompanionFeature.artifacts, CompanionFeature.slashCommands,
+    static let features = [CompanionFeature.turnTimes, CompanionFeature.results, CompanionFeature.interrupt, CompanionFeature.theme, CompanionFeature.queue, CompanionFeature.editQueue, CompanionFeature.agents, CompanionFeature.sendNow, CompanionFeature.placement, CompanionFeature.projectMenu, CompanionFeature.planUsage, CompanionFeature.artifacts, CompanionFeature.day, CompanionFeature.slashCommands,
                            CompanionFeature.notificationPrefs, CompanionFeature.usage,
                            CompanionFeature.imagePreviews, CompanionFeature.paging, CompanionFeature.sendTasks,
                            CompanionFeature.branchControls, CompanionFeature.agentLifecycle, CompanionFeature.shortcuts, CompanionFeature.dashboard,
@@ -718,6 +718,14 @@ final class CompanionServer {
                 let commands = await SlashCommandLibrary.shared.load(path: path)
                 guard let self, let client else { return }
                 send(.slashCommands(projectID: projectID, commands: commands), to: client)
+            }
+        case .day(let daysBack):
+            guard client.isAuthorized else { return }
+            Task { [weak self, weak client] in
+                guard let self else { return }
+                let day = await DayActivity.shared.companionDay(daysBack: min(max(daysBack, 0), 7), store: snapshots.store, terminals: snapshots.terminals)
+                guard let client else { return }
+                send(.day(day), to: client)
             }
         case .artifacts(let projectID):
             guard client.isAuthorized, let path = snapshots.projectPath(projectID) else { return }

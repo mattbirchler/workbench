@@ -32,7 +32,7 @@ final class DemoServer {
         build()
         output(.welcome(macName: "Demo Mac", protocolVersion: companionProtocolVersion,
                         features: [CompanionFeature.results, CompanionFeature.interrupt, CompanionFeature.placement,
-                                   CompanionFeature.planUsage, CompanionFeature.artifacts,
+                                   CompanionFeature.planUsage, CompanionFeature.artifacts, CompanionFeature.day,
                                    CompanionFeature.slashCommands, CompanionFeature.notificationPrefs,
                                    CompanionFeature.usage, CompanionFeature.codeReview, CompanionFeature.sideQuestions],
                         appVersion: "0.7.3"))
@@ -96,6 +96,8 @@ final class DemoServer {
             output(.slashCommands(projectID: id, commands: SlashCommand.builtIn + [
                 SlashCommand(name: "release", description: "Bump the version and publish a build", source: .project),
             ]))
+        case .day(let daysBack):
+            output(.day(demoDay(daysBack: daysBack)))
         case .artifacts(let id):
             output(.artifacts(projectID: id, links: id == recipes ? [
                 ArtifactLink(url: "https://claude.ai/artifact/demo-shopping", title: "Shopping list mockup",
@@ -340,6 +342,38 @@ final class DemoServer {
             return ChecklistItem(id: id, title: title, activeTitle: active, status: status,
                                  startedAt: status == .inProgress ? .now : nil)
         }
+    }
+
+    /// A made-up working day, from 8 in the morning until now.
+    private func demoDay(daysBack: Int) -> CompanionDay {
+        let now = Date()
+        let today = Calendar.current.startOfDay(for: now)
+        let start = Calendar.current.date(byAdding: .day, value: -daysBack, to: today) ?? today
+        let end = daysBack == 0 ? now : start.addingTimeInterval(17.5 * 3600)
+        func at(_ hour: Double) -> Date { start.addingTimeInterval(hour * 3600) }
+        func row(_ id: UUID, _ name: String, work: [(Double, Double, String)], waits: [(Double, Double, String)] = [],
+                 finishes: [(Double, String)] = [], lines: (Int, Int) = (0, 0), working: Bool = false, waiting: Bool = false) -> CompanionDay.Row? {
+            var day = ProjectDay(id: id)
+            day.work = work.compactMap { DaySpan(kind: .working, start: at($0.0), end: at($0.1), text: $0.2).clipped(from: start, to: end) }
+                .filter { $0.start < end }
+            day.waits = waits.compactMap { DaySpan(kind: .waiting, start: at($0.0), end: at($0.1), text: $0.2).clipped(from: start, to: end) }
+                .filter { $0.start < end }
+            day.finishes = finishes.filter { at($0.0) <= end }.map { DayFinish(at: at($0.0), summary: $0.1) }
+            day.prompts = day.work.map { DayFinish(at: $0.start, prompt: $0.text) }
+            (day.linesAdded, day.linesRemoved) = lines
+            return day.isEmpty ? nil : CompanionDay.Row(name: name, day: day, isWorking: working && daysBack == 0, isWaiting: waiting && daysBack == 0)
+        }
+        let rows = [
+            row(recipes, "Recipes", work: [(8.3, 9.1, "Add a photo picker to the recipe editor"), (9.4, 10.2, "Crop photos to a square"), (12.7, 13.9, "Add tests for the picker")],
+                waits: [(9.1, 9.4, "Run the photo picker tests")], finishes: [(10.2, "Photos crop to a square, with a pinch to adjust."), (13.9, "Six new tests cover the picker, and all pass.")],
+                lines: (412, 96)),
+            row(website, "Website", work: [(9.7, 11.8, "Build the pricing page")], waits: [(10.1, 11.3, "Which layout should the pricing page use?")],
+                finishes: [(11.8, "The pricing page is up with three columns.")], lines: (268, 31)),
+            row(notes, "Field Notes", work: [(10.0, 10.8, "Fix duplicate notes after a sync conflict"), (11.5, 12.2, "Merge conflicted notes by edit time")],
+                finishes: [(12.2, "Conflicted notes now merge by edit time. Four new tests.")], lines: (182, 41)),
+            row(blog, "Blog", work: [(8.1, 8.7, "Add an RSS feed")], finishes: [(8.7, "The feed is at /feed.xml with full post text.")], lines: (96, 3)),
+        ].compactMap { $0 }
+        return CompanionDay(daysBack: daysBack, start: start, readAt: end, rows: rows, cost: daysBack == 0 ? 18.4 : nil)
     }
 
     private func build() {

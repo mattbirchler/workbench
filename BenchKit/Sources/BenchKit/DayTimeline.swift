@@ -2,8 +2,8 @@ import Foundation
 
 /// A stretch of an agent session's day: time it spent working, or time it
 /// spent stopped on a question for you.
-public struct DaySpan: Sendable, Hashable {
-    public enum Kind: Sendable, Hashable { case working, waiting }
+public struct DaySpan: Codable, Sendable, Hashable {
+    public enum Kind: String, Codable, Sendable, Hashable { case working, waiting }
 
     public var kind: Kind
     public var start: Date
@@ -29,7 +29,7 @@ public struct DaySpan: Sendable, Hashable {
 }
 
 /// The moment an agent finished a stretch of work, and how it summed it up.
-public struct DayFinish: Sendable, Hashable {
+public struct DayFinish: Codable, Sendable, Hashable {
     public var at: Date
     /// What you'd asked for.
     public var prompt: String?
@@ -69,6 +69,93 @@ public struct SessionDay: Sendable, Hashable {
             }
         }
         return max(0, total)
+    }
+}
+
+/// What a project's agents did in a day: every session in it, as one row.
+public struct ProjectDay: Codable, Identifiable, Sendable, Hashable {
+    public var id: UUID
+    /// Stretches of work and of waiting on you, joined where sessions overlap.
+    public var work: [DaySpan] = []
+    public var waits: [DaySpan] = []
+    public var finishes: [DayFinish] = []
+    public var prompts: [DayFinish] = []
+    public var linesAdded = 0
+    public var linesRemoved = 0
+
+    public init(id: UUID) { self.id = id }
+
+    public var isEmpty: Bool { work.isEmpty && waits.isEmpty }
+    public var waitingTime: TimeInterval { waits.reduce(0) { $0 + $1.duration } }
+
+    /// Time with an agent working: the work, less the waits inside it.
+    public var workingTime: TimeInterval {
+        var total = work.reduce(0) { $0 + $1.duration }
+        for wait in waits {
+            for span in work {
+                if let overlap = wait.clipped(from: span.start, to: span.end) { total -= overlap.duration }
+            }
+        }
+        return max(0, total)
+    }
+
+    public var lastActivity: Date? { (work.map(\.end) + waits.map(\.end)).max() }
+
+    /// The finishes worth a mark: where the work stopped for a while. In a
+    /// back-and-forth, every reply is a finish, and a dot on each hides the bars.
+    public var stops: [DayFinish] {
+        finishes.filter { finish in
+            !work.contains { $0.start > finish.at && $0.start.timeIntervalSince(finish.at) < 10 * 60 }
+        }
+    }
+}
+
+/// A day of agent work on a Mac, as it sends it to a phone.
+public struct CompanionDay: Codable, Sendable, Hashable {
+    public struct Row: Codable, Sendable, Hashable, Identifiable {
+        public var name: String
+        public var day: ProjectDay
+        /// True while one of its agents is working, or waiting on you.
+        public var isWorking: Bool
+        public var isWaiting: Bool
+        public var id: UUID { day.id }
+
+        public init(name: String, day: ProjectDay, isWorking: Bool = false, isWaiting: Bool = false) {
+            self.name = name
+            self.day = day
+            self.isWorking = isWorking
+            self.isWaiting = isWaiting
+        }
+    }
+
+    /// 0 for today, 1 for yesterday.
+    public var daysBack: Int
+    /// When the day began, and when this was read.
+    public var start: Date
+    public var readAt: Date
+    /// Projects with anything in the day, in the Mac's sidebar order.
+    public var rows: [Row]
+    /// What the day's work would cost at API prices, when the Mac knows.
+    public var cost: Double?
+
+    public init(daysBack: Int, start: Date, readAt: Date, rows: [Row], cost: Double? = nil) {
+        self.daysBack = daysBack
+        self.start = start
+        self.readAt = readAt
+        self.rows = rows
+        self.cost = cost
+    }
+
+    public var workingTime: TimeInterval { rows.reduce(0) { $0 + $1.day.workingTime } }
+    public var waitingTime: TimeInterval { rows.reduce(0) { $0 + $1.day.waitingTime } }
+    public var promptCount: Int { rows.reduce(0) { $0 + $1.day.prompts.count } }
+    public var linesAdded: Int { rows.reduce(0) { $0 + $1.day.linesAdded } }
+    public var linesRemoved: Int { rows.reduce(0) { $0 + $1.day.linesRemoved } }
+
+    /// The hours to draw: from the first activity to a little past the
+    /// last (or past now, for today), and never less than six hours.
+    public func hours(calendar: Calendar = .current) -> (start: Date, end: Date) {
+        DayText.hours(spans: rows.flatMap { $0.day.work + $0.day.waits }, dayStart: start, readAt: readAt, isToday: daysBack == 0, calendar: calendar)
     }
 }
 
@@ -223,6 +310,26 @@ public enum DayText {
         if minutes < 60 { return "\(minutes)m" }
         let rest = minutes % 60
         return rest == 0 ? "\(minutes / 60)h" : "\(minutes / 60)h \(String(format: "%02d", rest))m"
+    }
+
+    /// The hours a day's timeline covers: from the first activity to a
+    /// little past the last (or past now, for today), and never less than six.
+    public static func hours(spans: [DaySpan], dayStart: Date, readAt: Date, isToday: Bool, calendar: Calendar = .current) -> (start: Date, end: Date) {
+        let dayEnd = calendar.date(byAdding: .day, value: 1, to: dayStart) ?? dayStart.addingTimeInterval(86400)
+        let first = spans.map(\.start).min() ?? readAt
+        let last = isToday ? readAt : (spans.map(\.end).max() ?? readAt)
+        func hour(_ date: Date, up: Bool) -> Date {
+            let floor = calendar.dateInterval(of: .hour, for: date)?.start ?? date
+            return up && floor < date ? floor.addingTimeInterval(3600) : floor
+        }
+        var start = max(dayStart, hour(first, up: false))
+        var end = min(dayEnd, hour(last, up: true).addingTimeInterval(isToday ? 3600 : 0))
+        let short = 6 * 3600 - end.timeIntervalSince(start)
+        if short > 0 {
+            start = max(dayStart, start.addingTimeInterval(-short))
+            end = min(dayEnd, start.addingTimeInterval(6 * 3600))
+        }
+        return (start, end)
     }
 
     /// Spans joined where they touch or overlap, for drawing several

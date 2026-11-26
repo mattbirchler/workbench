@@ -2,34 +2,6 @@ import BenchKit
 import Foundation
 import Observation
 
-/// What a project's agents did in a day: every session in it, as one row.
-nonisolated struct ProjectDay: Identifiable, Sendable, Equatable {
-    var id: UUID
-    /// Stretches of work and of waiting on you, joined where sessions overlap.
-    var work: [DaySpan] = []
-    var waits: [DaySpan] = []
-    var finishes: [DayFinish] = []
-    var prompts: [DayFinish] = []
-    var linesAdded = 0
-    var linesRemoved = 0
-
-    var isEmpty: Bool { work.isEmpty && waits.isEmpty }
-    var waitingTime: TimeInterval { waits.reduce(0) { $0 + $1.duration } }
-
-    /// Time with an agent working: the work, less the waits inside it.
-    var workingTime: TimeInterval {
-        var total = work.reduce(0) { $0 + $1.duration }
-        for wait in waits {
-            for span in work {
-                if let overlap = wait.clipped(from: span.start, to: span.end) { total -= overlap.duration }
-            }
-        }
-        return max(0, total)
-    }
-
-    var lastActivity: Date? { (work.map(\.end) + waits.map(\.end)).max() }
-}
-
 /// A day of agent work across every project, for the Overview's timeline.
 ///
 /// Rebuilt from the session files the agents keep, so it covers days before
@@ -60,13 +32,57 @@ final class DayActivity {
         let from = Calendar.current.startOfDay(for: day)
         let to = Calendar.current.date(byAdding: .day, value: 1, to: from) ?? from.addingTimeInterval(86400)
         let now = Date()
-        let logged = WaitLog.shared.spans(from: from, to: min(to, now))
         isReading = true
-        let result = await reader.read(sources: sources, from: from, to: min(to, now), now: now, live: live, logged: logged)
+        let result = await load(day: day, sources: sources, live: live, now: now)
         isReading = false
         if projects != result { projects = result }
         self.day = from
         readAt = now
+    }
+
+    /// A day by project, without putting it on show: for a phone that asks.
+    func load(day: Date, sources: [Source], live: [String: SessionLiveState], now: Date = .now) async -> [UUID: ProjectDay] {
+        let from = Calendar.current.startOfDay(for: day)
+        let to = Calendar.current.date(byAdding: .day, value: 1, to: from) ?? from.addingTimeInterval(86400)
+        let logged = WaitLog.shared.spans(from: from, to: min(to, now))
+        return await reader.read(sources: sources, from: from, to: min(to, now), now: now, live: live, logged: logged)
+    }
+
+    /// What each open agent session is doing now, by its session file.
+    static func live(store: AppStore, terminals: TerminalManager) -> [String: SessionLiveState] {
+        var result: [String: SessionLiveState] = [:]
+        for item in OverviewView.items(store: store, terminals: terminals) {
+            guard let session = item.session,
+                  let path = session.details?.transcriptPath ?? AgentSessions.transcriptPath(tabID: item.tab.id) else { continue }
+            switch item.activity {
+            case .working:
+                result[path] = .working
+            case .waiting:
+                let details = session.details
+                result[path] = .waiting(since: details?.questionAt ?? .now, question: details?.plainAction ?? details?.action ?? details?.question)
+            default:
+                break
+            }
+        }
+        return result
+    }
+
+    /// The day as a phone draws it.
+    func companionDay(daysBack: Int, store: AppStore, terminals: TerminalManager) async -> CompanionDay {
+        let today = Calendar.current.startOfDay(for: .now)
+        let start = Calendar.current.date(byAdding: .day, value: -daysBack, to: today) ?? today
+        let now = Date()
+        let items = OverviewView.items(store: store, terminals: terminals)
+        let days = await load(day: start, sources: store.projects.map { Source(id: $0.id, path: $0.path) },
+                              live: daysBack == 0 ? Self.live(store: store, terminals: terminals) : [:], now: now)
+        let rows = store.projects.compactMap { project -> CompanionDay.Row? in
+            guard let day = days[project.id] else { return nil }
+            return CompanionDay.Row(name: OverviewDay.label(project), day: day,
+                                    isWorking: daysBack == 0 && items.contains { $0.project.id == project.id && $0.activity == .working },
+                                    isWaiting: daysBack == 0 && items.contains { $0.project.id == project.id && $0.activity == .waiting })
+        }
+        let cost = daysBack == 0 ? UsageLedger.shared.cost(since: start) : 0
+        return CompanionDay(daysBack: daysBack, start: start, readAt: now, rows: rows, cost: cost >= 0.01 ? cost : nil)
     }
 
     var workingTime: TimeInterval { projects.values.reduce(0) { $0 + $1.workingTime } }
@@ -114,8 +130,9 @@ actor DayReader {
             day.prompts.sort { $0.at < $1.at }
             if !day.isEmpty { result[source.id] = day }
         }
-        // Files from a day no longer on show.
-        files = files.filter { seen.contains($0.key) }
+        // Today and yesterday are both asked for, by this Mac and by phones,
+        // so files are kept until there are a great many.
+        if files.count > 600 { files = files.filter { seen.contains($0.key) } }
         return result
     }
 

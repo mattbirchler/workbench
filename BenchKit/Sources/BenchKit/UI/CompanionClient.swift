@@ -147,6 +147,8 @@ public final class CompanionClient {
     public private(set) var pastSessions: [UUID: [PastSessionSummary]] = [:]
     /// Each project's published pages, once asked for.
     public private(set) var artifacts: [UUID: [ArtifactLink]] = [:]
+    /// The Mac's day of agent work, by how many days back it is.
+    public private(set) var days: [Int: CompanionDay] = [:]
     /// Each project's slash commands, once asked for.
     public private(set) var slashCommands: [UUID: [SlashCommand]] = [:]
     /// A tab the Mac just opened for us. The app navigates to it.
@@ -381,6 +383,7 @@ public final class CompanionClient {
         fileWatchers = [:]
         pastSessions = [:]
         artifacts = [:]
+        days = [:]
         slashCommands = [:]
         started = nil
         lastProblem = nil
@@ -683,6 +686,13 @@ public final class CompanionClient {
     public func loadSlashCommands(projectID: UUID) {
         guard canListCommands else { return }
         send(.slashCommands(projectID: projectID))
+    }
+
+    public var canShowDay: Bool { macFeatures.contains(CompanionFeature.day) }
+
+    public func loadDay(daysBack: Int) {
+        guard canShowDay else { return }
+        send(.day(daysBack: daysBack))
     }
 
     public var canListArtifacts: Bool { macFeatures.contains(CompanionFeature.artifacts) }
@@ -1055,6 +1065,8 @@ public final class CompanionClient {
         case .sideQuestion(let sessionID, let question):
             if let question, dismissedSideQuestions.contains(question.id) { break }
             if sideQuestions[sessionID] != question { sideQuestions[sessionID] = question }
+        case .day(let day):
+            if days[day.daysBack] != day { days[day.daysBack] = day }
         case .artifacts(let projectID, let links):
             if artifacts[projectID] != links { artifacts[projectID] = links }
         case .started(let projectID, let sessionID):
