@@ -22,10 +22,7 @@ struct RelayUsage: Codable, Equatable {
 /// paired devices can reach it from anywhere without Tailscale, and hands
 /// each device that joins to the companion server.
 ///
-/// Off unless turned on. For now that's a hidden setting:
-///
-///     defaults write me.birchtree.Bench companion.relay.enabled -bool YES
-///     defaults write me.birchtree.Bench companion.relay.url wss://your-relay.example   (optional)
+/// Off unless turned on, in Settings > iPhone.
 @MainActor
 @Observable
 final class CompanionRelay {
@@ -46,6 +43,10 @@ final class CompanionRelay {
 
     private(set) var state = State.off
     private(set) var room: RelayRoom
+    /// Whether this Mac keeps a room on the relay. Saved.
+    private(set) var isOn = UserDefaults.standard.bool(forKey: CompanionRelay.enabledKey)
+    /// The address typed in Settings, empty for Workbench's own relay. Saved.
+    private(set) var customAddress = UserDefaults.standard.string(forKey: CompanionRelay.addressKey) ?? ""
     @ObservationIgnored private let roomFile: URL
     @ObservationIgnored private let token: @Sendable () -> String
     @ObservationIgnored private let accept: (RelayHostConnection) -> Void
@@ -62,21 +63,47 @@ final class CompanionRelay {
         room = Self.loadOrMakeRoom(at: roomFile)
     }
 
-    var isOn: Bool {
-        get { UserDefaults.standard.bool(forKey: Self.enabledKey) }
-        set {
-            guard newValue != isOn else { return }
-            UserDefaults.standard.set(newValue, forKey: Self.enabledKey)
-            Analytics.capture(.relayToggled, ["on": newValue, "own_relay": address != Self.defaultAddress])
-            if newValue { start() } else { stop() }
-            onChange?()
+    func setOn(_ on: Bool) {
+        guard on != isOn else { return }
+        isOn = on
+        UserDefaults.standard.set(on, forKey: Self.enabledKey)
+        Analytics.capture(.relayToggled, ["on": on, "own_relay": address != Self.defaultAddress])
+        if on { start() } else { stop() }
+        onChange?()
+    }
+
+    /// Points this Mac at another relay, or back at Workbench's when
+    /// empty. Devices hear the new address over the connection they have.
+    func setCustomAddress(_ text: String) {
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard trimmed != customAddress else { return }
+        customAddress = trimmed
+        UserDefaults.standard.set(trimmed, forKey: Self.addressKey)
+        if isOn {
+            stop()
+            start()
         }
+        onChange?()
     }
 
     /// The relay's address: Workbench's, or one the person hosts.
     var address: String {
-        let saved = UserDefaults.standard.string(forKey: Self.addressKey)?.trimmingCharacters(in: .whitespaces) ?? ""
-        return saved.isEmpty ? Self.defaultAddress : saved
+        customAddress.isEmpty ? Self.defaultAddress : customAddress
+    }
+
+    var isProblem: Bool {
+        if case .problem = state { return true }
+        return false
+    }
+
+    /// The state in words, for Settings.
+    var statusText: String {
+        switch state {
+        case .off: "Off"
+        case .connecting: "Connecting…"
+        case .connected: "Connected"
+        case .problem(let text): text
+        }
     }
 
     /// What goes in the pairing code, or nil while the relay is off.

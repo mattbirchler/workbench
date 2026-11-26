@@ -853,6 +853,27 @@ private struct ClaudeActionsSettings: View {
 
 // MARK: - iPhone
 
+/// The relay's address, saved when you press Return or click away, so a
+/// half-typed address never gets used.
+private struct RelayAddressField: View {
+    let relay: CompanionRelay
+    @State private var text = ""
+    @FocusState private var isFocused: Bool
+
+    var body: some View {
+        TextField("", text: $text, prompt: Text(CompanionRelay.defaultAddress))
+            .accessibilityLabel("Relay address")
+            .textFieldStyle(.roundedBorder)
+            .frame(width: 300)
+            .focused($isFocused)
+            .onAppear { text = relay.customAddress }
+            .onSubmit { relay.setCustomAddress(text) }
+            .onChange(of: isFocused) { _, focused in
+                if !focused { relay.setCustomAddress(text) }
+            }
+    }
+}
+
 private struct CompanionSettings: View {
     @Environment(Companion.self) private var companion
 
@@ -861,7 +882,7 @@ private struct CompanionSettings: View {
         SettingsGroup {
             SettingsRow("Let my iPhone and other Macs connect",
                         detail: "Shows your projects and agent sessions on your own devices.",
-                        more: "The Workbench app on your iPhone, or Workbench on another Mac, shows your projects and what each agent session is doing. It connects over Tailscale or your home network, so only your own devices can reach it.",
+                        more: "The Workbench app on your iPhone, or Workbench on another Mac, shows your projects and what each agent session is doing. It connects over your home network, Tailscale, or the Workbench relay if you turn it on, and only devices you've paired can reach it.",
                         isOn: $companion.isEnabled)
             SettingsRow(title: "Get Workbench for iPhone",
                         detail: "Workbench for iPhone is free on the App Store.") {
@@ -871,6 +892,18 @@ private struct CompanionSettings: View {
         if companion.isEnabled {
             SettingsGroup(title: "Pair Your iPhone or Another Mac") {
                 pairing
+            }
+            SettingsGroup(title: "Away from Home") {
+                SettingsRow("Use the Workbench relay",
+                            detail: "Reach this Mac from anywhere, with no account and nothing else to install.",
+                            more: "Your Mac and your paired devices both connect out to the relay, which passes messages between them when they can't reach each other directly. Everything is sealed on your devices with keys from the pairing code, so the relay can't read it, and it keeps none of it. Your home network and Tailscale are still used first when they answer.",
+                            isOn: Binding(get: { companion.relay.isOn }, set: { companion.relay.setOn($0) }))
+                if companion.relay.isOn {
+                    SettingsRow(title: "Relay address",
+                                detail: "Leave empty to use Workbench's. Fill in to use one you host.") {
+                        RelayAddressField(relay: companion.relay)
+                    }
+                }
             }
             SettingsGroup(title: "Status") {
                 SettingsRow(title: "Server") {
@@ -899,6 +932,10 @@ private struct CompanionSettings: View {
                         }
                     }
                     .textSelection(.enabled)
+                }
+                SettingsRow(title: "Relay") {
+                    Text(companion.relay.statusText)
+                        .foregroundStyle(companion.relay.isProblem ? AnyShapeStyle(Theme.Status.failed) : AnyShapeStyle(.secondary))
                 }
                 SettingsRow(title: "Connected") {
                     let devices = companion.server.connectedDevices
@@ -963,9 +1000,9 @@ private struct CompanionSettings: View {
                     Text("For another Mac running Workbench, choose Copy Pairing Link. On that Mac, click + next to This Mac at the top of the sidebar, and paste the link.")
                         .font(.ui(size: 12))
                         .foregroundStyle(.secondary)
-                    if !companion.hasTailscale {
+                    if !companion.hasTailscale, !companion.relay.isOn {
                         HStack(spacing: 4) {
-                            Text("Works on your home Wi-Fi. To use it anywhere, set up Tailscale.")
+                            Text("Works on your home Wi-Fi. To use it anywhere, turn on the Workbench relay below, or set up Tailscale.")
                                 .font(.ui(size: 12))
                                 .foregroundStyle(.secondary)
                             Link("Set Up Tailscale", destination: Tailscale.downloadURL)
