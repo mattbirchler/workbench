@@ -100,7 +100,7 @@ struct AddMacSheet: View {
         if let found = await Tailscale.status()?.pairingProblem(host: info.host) {
             return (found.message, found != .thisDevice)
         }
-        let client = CompanionClient(deviceName: Host.current().localizedName ?? "Mac")
+        let client = CompanionClient(deviceName: Host.current().localizedName ?? "Mac", features: [CompanionFeature.relay])
         defer { client.disconnect() }
         client.connect(info)
         // Long enough for Serve to fetch a first certificate on the other end.
