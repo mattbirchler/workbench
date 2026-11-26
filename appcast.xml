@@ -6,6 +6,25 @@
     <description>Updates for Workbench, a Mac app for running Claude Code.</description>
     <language>en</language>
     <item>
+      <title>Workbench 0.10.2</title>
+      <pubDate>Thu, 26 Nov 2026 13:40:25 GMT</pubDate>
+      <sparkle:version>70</sparkle:version>
+      <sparkle:shortVersionString>0.10.2</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
+      <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
+      <description><![CDATA[
+<p>Workbench 0.10.2 lets your iPhone reach your Mac from anywhere without Tailscale, and makes projects on another Mac feel a lot more like your own.</p>
+<p><strong>Reach your Mac without Tailscale.</strong> There&#x27;s a new optional Workbench relay. Turn it on in Settings &gt; Remote Access and your iPhone, iPad or another Mac can connect from anywhere, with no account and nothing else to install. Your home network and Tailscale still come first, and they connect your devices straight to each other with no server in between. The relay only steps in when neither of those answers. Everything it carries is encrypted on your devices with keys from your pairing code, so the relay can&#x27;t read your projects, code or prompts. It&#x27;s off until you turn it on, and devices you&#x27;ve already paired pick it up the next time they connect. This needs Workbench for iPhone 1.2.4 or later.</p>
+<p><img src="https://workbenchapp.dev/images/0.10.2/relay-settings.png" alt="The How Devices Reach This Mac section of Settings. It lists Home network, Tailscale and Workbench relay in order, with the relay switched on, a Relay server field, and a link to host your own relay." style="max-width:100%;height:auto;border-radius:8px"></p>
+<p><strong>Host your own relay.</strong> The relay is a small open source program. If you&#x27;d rather nothing went through ours, run your own and enter its address under Relay server. The steps are at workbenchapp.dev/relay.html.</p>
+<p><strong>A clearer Remote Access page.</strong> Settings now lists the ways your devices reach this Mac in the order they&#x27;re tried, with the status of each, and the welcome explains the same choices when you set up your iPhone.</p>
+<p><strong>More you can do with projects on another Mac</strong></p>
+<ul><li><strong>Know when an agent there needs you.</strong> This Mac now notifies you when an agent on a Mac you&#x27;re connected to starts waiting on you, the same way it does for its own tabs.</li><li><strong>Commit, push and open a pull request.</strong> The Changes panel has the same buttons for a project on another Mac as for one on this Mac.</li><li><strong>Edit files.</strong> Open a file from a project on another Mac, type, and press ⌘S to save it there.</li><li><strong>Add a project.</strong> Add a folder on the other Mac as a project without walking over to it.</li></ul>
+<p><strong>Ready for Workbench for iPhone 1.2.4.</strong> With the new iPhone app, you can answer Allow, Deny or Reply straight from a notification, and commit, push or open a pull request from the phone&#x27;s Changes screen. Both need this version on your Mac.</p>
+      ]]></description>
+      <enclosure url="https://github.com/mattbirchler/workbench/releases/download/v0.10.2-70/Workbench-0.10.2-70.zip" type="application/octet-stream" sparkle:edSignature="w1rlCeu78Y1Ju7ud3Xn42Wag6SfZY38LOsJ/vIERZ/wUjkCkJ6J4DGkCelvxO75098M7rhi39KxE5bPv+fh8DA==" length="35519768"/>
+    </item>
+    <item>
       <title>Workbench 0.10.1</title>
       <pubDate>Wed, 25 Nov 2026 12:04:34 GMT</pubDate>
       <sparkle:version>69</sparkle:version>
