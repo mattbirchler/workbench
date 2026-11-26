@@ -164,6 +164,54 @@ public struct FileMention: Hashable, Sendable, Identifiable {
     }
 }
 
+/// The folder an `@` path outside the project points into, like `~/Notes/`
+/// or `../app/`. The project's listing doesn't hold these, so Claude Code's
+/// picker, and this one, list the folder itself. It's any path starting
+/// `~/`, `../`, `./` or `/`.
+public struct MentionFolder: Equatable, Sendable {
+    /// The folder as typed, up to its last slash: "~/", "../app/", "/tmp/".
+    public var typed: String
+    /// What's typed after it: the start of a name in the folder.
+    public var name: String
+
+    /// Nil for a path in the project, like "Sources/Ap".
+    public init?(query: String) {
+        guard ["~/", "../", "./", "/"].contains(where: query.hasPrefix),
+              let slash = query.lastIndex(of: "/") else { return nil }
+        typed = String(query[...slash])
+        name = String(query[query.index(after: slash)...])
+    }
+
+    /// The folder's full path. One starting with `.` counts from `root`,
+    /// the folder Claude Code runs in.
+    public func path(root: String?, home: String = NSHomeDirectory()) -> String? {
+        if typed.hasPrefix("/") { return typed }
+        if typed.hasPrefix("~/") { return home + typed.dropFirst() }
+        guard let root else { return nil }
+        return (root.hasSuffix("/") ? root : root + "/") + typed
+    }
+
+    /// The things in the folder matching the name typed, as mentions to
+    /// fill in. `entries` is what's in it, each named on its own. Names
+    /// that start with what's typed come first, then names that contain
+    /// it. Hidden ones show once the name typed starts with a dot.
+    public func matches(in entries: [FileMention], limit: Int = 8) -> [FileMention] {
+        let name = name.lowercased()
+        var starts: [FileMention] = [], contains: [FileMention] = []
+        for entry in entries where name.hasPrefix(".") || !entry.path.hasPrefix(".") {
+            let entryName = entry.path.lowercased()
+            // Typing all of "README.md" shouldn't offer "README.md" itself.
+            if entryName == name, !entry.isDirectory { continue }
+            if entryName.hasPrefix(name) { starts.append(entry) }
+            else if entryName.contains(name) { contains.append(entry) }
+        }
+        let order: (FileMention, FileMention) -> Bool = { $0.path.localizedStandardCompare($1.path) == .orderedAscending }
+        return (starts.sorted(by: order) + contains.sorted(by: order))
+            .prefix(limit)
+            .map { FileMention(path: typed + $0.path, isDirectory: $0.isDirectory) }
+    }
+}
+
 extension ComposerToken {
     /// The message as it should be typed into Claude Code before pressing
     /// Return. A message that ends on a file mention (`@~/Work/app/`)

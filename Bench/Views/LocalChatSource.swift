@@ -57,6 +57,7 @@ final class LocalChatSource: ChatSource {
         return SlashCommandLibrary.shared.commands(forProject: path)
     }
     var projectFiles: [String]? { files?.listing?.paths }
+    var folderRoot: String? { terminals.projectPath(forTab: tab.id) }
     func holdFiles() async { await files?.hold() }
     var takeBackQueue: ((_ queued: [String], _ keep: [String]) -> Void)? {
         { [weak self] queued, keep in

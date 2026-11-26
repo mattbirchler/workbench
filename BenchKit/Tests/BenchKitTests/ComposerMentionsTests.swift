@@ -76,6 +76,61 @@ import Testing
     }
 }
 
+@Suite struct MentionFolderTests {
+    private let entries = [
+        FileMention(path: "README.md", isDirectory: false), FileMention(path: "app", isDirectory: true),
+        FileMention(path: "web-app", isDirectory: true), FileMention(path: ".env", isDirectory: false),
+        FileMention(path: "Notes", isDirectory: true),
+    ]
+
+    @Test func pathsOutsideTheProjectNameAFolder() throws {
+        let home = try #require(MentionFolder(query: "~/"))
+        #expect(home.typed == "~/")
+        #expect(home.name == "")
+        let parent = try #require(MentionFolder(query: "../app/Sour"))
+        #expect(parent.typed == "../app/")
+        #expect(parent.name == "Sour")
+        #expect(MentionFolder(query: "./Ma")?.typed == "./")
+        #expect(MentionFolder(query: "/tmp/x")?.typed == "/tmp/")
+    }
+
+    @Test func pathsInTheProjectDont() {
+        #expect(MentionFolder(query: "Sources/Ap") == nil)
+        #expect(MentionFolder(query: "app") == nil)
+        #expect(MentionFolder(query: "~") == nil)
+        #expect(MentionFolder(query: "..") == nil)
+    }
+
+    @Test func resolvesFromHomeOrTheProject() {
+        let root = "/Users/me/Work/app"
+        #expect(MentionFolder(query: "~/Notes/")?.path(root: root, home: "/Users/me") == "/Users/me/Notes/")
+        #expect(MentionFolder(query: "../")?.path(root: root, home: "/Users/me") == "/Users/me/Work/app/../")
+        #expect(MentionFolder(query: "./")?.path(root: root + "/", home: "/Users/me") == "/Users/me/Work/app/./")
+        #expect(MentionFolder(query: "/tmp/")?.path(root: nil, home: "/Users/me") == "/tmp/")
+        #expect(MentionFolder(query: "../")?.path(root: nil, home: "/Users/me") == nil)
+    }
+
+    @Test func nothingTypedListsTheFolderWithoutHiddenFiles() {
+        let found = MentionFolder(query: "../")!.matches(in: entries).map(\.path)
+        #expect(found == ["../app", "../Notes", "../README.md", "../web-app"])
+    }
+
+    @Test func namesStartingWithItComeFirst() {
+        let found = MentionFolder(query: "~/AP")!.matches(in: entries)
+        #expect(found.map(\.path) == ["~/app", "~/web-app"])
+        #expect(found.first?.insertion == "@~/app/")
+    }
+
+    @Test func aDotShowsHiddenFiles() {
+        #expect(MentionFolder(query: "../.e")!.matches(in: entries).map(\.path) == ["../.env"])
+    }
+
+    @Test func aFileTypedInFullIsntOfferedAgain() {
+        #expect(MentionFolder(query: "../README.md")!.matches(in: entries).isEmpty)
+        #expect(MentionFolder(query: "../app")!.matches(in: entries).map(\.path) == ["../app", "../web-app"])
+    }
+}
+
 @Suite struct MidMessageCommandTests {
     @Test func sessionCommandsOnlyWorkAlone() {
         let clear = SlashCommand.builtIn.first { $0.name == "clear" }!
