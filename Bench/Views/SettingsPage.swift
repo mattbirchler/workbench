@@ -893,31 +893,18 @@ private struct CompanionSettings: View {
             SettingsGroup(title: "Pair Your iPhone or Another Mac") {
                 pairing
             }
-            SettingsGroup(title: "Away from Home") {
-                SettingsRow("Use the Workbench relay",
-                            detail: "Reach this Mac from anywhere, with no account and nothing else to install.",
-                            more: "Your Mac and your paired devices both connect out to the relay, which passes messages between them when they can't reach each other directly. Everything is sealed on your devices with keys from the pairing code, so the relay can't read it, and it keeps none of it. Your home network and Tailscale are still used first when they answer.",
-                            isOn: Binding(get: { companion.relay.isOn }, set: { companion.relay.setOn($0) }))
-                if companion.relay.isOn {
-                    SettingsRow(title: "Relay address",
-                                detail: "Leave empty to use Workbench's. Fill in to use one you host.") {
-                        RelayAddressField(relay: companion.relay)
-                    }
-                }
-            }
-            SettingsGroup(title: "Status") {
-                SettingsRow(title: "Server") {
-                    Text(companion.server.isRunning ? "Running" : (companion.server.lastError ?? "Starting…"))
-                        .foregroundStyle(.secondary)
-                }
-                SettingsRow(title: "Home network") {
+            SettingsGroup(title: "How Devices Reach This Mac",
+                          footer: "Workbench uses the first of these that answers. Your home network and Tailscale connect your devices straight to this Mac, with no server in between, and they always come first. The relay is an optional fallback: with it on, a device that can't reach this Mac directly connects through a relay server instead. Everything the relay carries is encrypted on your devices, and the relay never has the key.") {
+                SettingsRow(title: "1. Home network",
+                            detail: "Direct, on the same Wi-Fi. Nothing leaves your network.") {
                     Text(companion.server.localPort != nil ? "On this network" : (companion.server.localError ?? "Starting…"))
                         .foregroundStyle(.secondary)
                 }
-                SettingsRow(title: "Tailscale") {
+                SettingsRow(title: "2. Tailscale",
+                            detail: "Direct, from anywhere, over your own private network.") {
                     Group {
                         if !Tailscale.isInstalled {
-                            Text("Not set up").foregroundStyle(.secondary)
+                            Link("Set Up Tailscale", destination: Tailscale.downloadURL)
                         } else if let error = companion.tailscaleError {
                             VStack(alignment: .trailing, spacing: 6) {
                                 Text(error).foregroundStyle(Theme.Status.failed)
@@ -933,9 +920,31 @@ private struct CompanionSettings: View {
                     }
                     .textSelection(.enabled)
                 }
-                SettingsRow(title: "Relay") {
-                    Text(companion.relay.statusText)
-                        .foregroundStyle(companion.relay.isProblem ? AnyShapeStyle(Theme.Status.failed) : AnyShapeStyle(.secondary))
+                SettingsRow("3. Workbench relay",
+                            detail: "A fallback for when neither of those answers. Encrypted end to end, so the relay can't read it.",
+                            more: "With the relay on, this Mac and your paired devices each connect out to a relay server, which passes messages between them when they can't reach each other directly. It needs no account and nothing else installed. Messages are encrypted on your devices with keys made from the pairing code, which the relay never has, so it can't read your projects, code, or prompts, and it stores none of it. It does see that a Mac and a device are talking, from which network addresses, and how much. Leave it off and nothing ever goes through a server.",
+                            isOn: Binding(get: { companion.relay.isOn }, set: { companion.relay.setOn($0) }))
+                if companion.relay.isOn {
+                    SettingsRow(title: "Relay server",
+                                detail: "Leave empty to use the one Workbench runs. Or host your own and enter its address, and nothing goes through ours.") {
+                        VStack(alignment: .trailing, spacing: 6) {
+                            RelayAddressField(relay: companion.relay)
+                            Link("How to Host Your Own Relay", destination: CompanionRelay.hostingGuideURL)
+                                .font(.ui(size: 12))
+                        }
+                    }
+                }
+            }
+            SettingsGroup(title: "Status") {
+                SettingsRow(title: "Server") {
+                    Text(companion.server.isRunning ? "Running" : (companion.server.lastError ?? "Starting…"))
+                        .foregroundStyle(.secondary)
+                }
+                if companion.relay.isOn {
+                    SettingsRow(title: "Relay") {
+                        Text(companion.relay.statusText)
+                            .foregroundStyle(companion.relay.isProblem ? AnyShapeStyle(Theme.Status.failed) : AnyShapeStyle(.secondary))
+                    }
                 }
                 SettingsRow(title: "Connected") {
                     let devices = companion.server.connectedDevices
@@ -1002,7 +1011,7 @@ private struct CompanionSettings: View {
                         .foregroundStyle(.secondary)
                     if !companion.hasTailscale, !companion.relay.isOn {
                         HStack(spacing: 4) {
-                            Text("Works on your home Wi-Fi. To use it anywhere, turn on the Workbench relay below, or set up Tailscale.")
+                            Text("Works on your home Wi-Fi for now. To use it anywhere, set up Tailscale or turn on the Workbench relay below.")
                                 .font(.ui(size: 12))
                                 .foregroundStyle(.secondary)
                             Link("Set Up Tailscale", destination: Tailscale.downloadURL)

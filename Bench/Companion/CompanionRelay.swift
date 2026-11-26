@@ -22,12 +22,14 @@ struct RelayUsage: Codable, Equatable {
 /// paired devices can reach it from anywhere without Tailscale, and hands
 /// each device that joins to the companion server.
 ///
-/// Off unless turned on, in Settings > iPhone.
+/// Off unless turned on, in Settings > Remote Access.
 @MainActor
 @Observable
 final class CompanionRelay {
     /// The relay Workbench runs.
     static let defaultAddress = "wss://relay-production-7c2aaa99.up.railway.app"
+    /// How to run a relay of your own.
+    static let hostingGuideURL = URL(string: "https://workbenchapp.dev/relay.html")!
     static let enabledKey = "companion.relay.enabled"
     static let addressKey = "companion.relay.url"
     private static let usageKey = "companion.relay.usage"
