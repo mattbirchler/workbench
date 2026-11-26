@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Host Your Own Workbench Relay</title>
+<meta name="description" content="What the Workbench relay is, what it can and can't see, and how to run one yourself.">
+<meta name="theme-color" content="#111522">
+<link rel="icon" type="image/png" href="assets/img/favicon.png">
+<link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Martian+Mono:wdth,wght@75..112.5,300..700&display=swap">
+<link rel="stylesheet" href="assets/site.css">
+<script src="assets/site.js"></script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="site-header">
+  <div class="wrap">
+    <a class="brand" href="./"><img src="assets/img/app-icon.webp" alt="" width="30" height="30"><span>Workbench</span></a>
+    <nav class="nav" aria-label="Main">
+      <a class="nav-hide" href="./#features">Features</a>
+      <a href="releases.html">Version history</a>
+      <a class="nav-hide" href="support.html">Support</a>
+      <a class="btn btn-primary btn-small" data-download href="https://github.com/mattbirchler/workbench/releases/latest/download/Workbench.dmg">Download</a>
+    </nav>
+  </div>
+</header>
+
+<main id="main">
+  <div class="wrap page-head">
+    <h1 class="display">The Workbench relay</h1>
+    <p>An optional way to reach your Mac from anywhere, with no account. Here is when it's used, what it can see, and how to run your own.</p>
+  </div>
+
+  <div class="wrap">
+    <article class="prose">
+      <h2 id="order">How your devices reach your Mac</h2>
+      <p>Workbench on your iPhone, iPad, or another Mac uses the first of these that answers:</p>
+      <ol>
+        <li><strong>Your home network.</strong> Straight to your Mac on the same Wi-Fi. Nothing leaves your network.</li>
+        <li><strong>Tailscale.</strong> Straight to your Mac from anywhere, over your own private network.</li>
+        <li><strong>The relay,</strong> only if you turn it on, and only when neither of the first two answers.</li>
+      </ol>
+      <p>The first two connect your devices directly, with no server in between, and they always come first. The relay is off until you turn it on in Workbench &gt; Settings &gt; Remote Access on your Mac.</p>
+
+      <h2 id="what-it-sees">What the relay can and can't see</h2>
+      <p>With the relay on, your Mac and your device each connect out to a relay server, and it passes messages between them. Every message is encrypted on your devices with keys made from your pairing code. The relay never has the pairing code, so it can't read what it carries.</p>
+      <ul>
+        <li><strong>It can't see</strong> your projects, code, prompts, replies, file names, or anything else in a message.</li>
+        <li><strong>It can see</strong> a random room ID for your Mac, the network addresses of your Mac and device while they're connected, and how much data moves and when.</li>
+        <li><strong>It keeps</strong> nothing on disk and no log. The <a href="privacy.html">privacy policy</a> has the details.</li>
+      </ul>
+
+      <h2 id="host">Host your own</h2>
+      <p>The relay is a small open source Node program. Run it yourself and nothing of yours goes through ours. It needs Node 22 or later, and a host that keeps one process running and passes WebSockets through.</p>
+      <ol>
+        <li>Get the code. It's the <a href="https://github.com/mattbirchler/workbench/tree/main/relay-live"><code>relay-live</code></a> folder of the Workbench repository.
+          <pre><code>git clone https://github.com/mattbirchler/workbench.git
+cd workbench/relay-live
+npm install</code></pre>
+        </li>
+        <li>Run it. It listens on the port in <code>PORT</code>.
+          <pre><code>PORT=8080 npm start</code></pre>
+        </li>
+        <li>Put it somewhere your devices can reach over <code>wss://</code>, which means behind HTTPS. Any host that runs Node works. On <a href="https://railway.com">Railway</a>, for example:
+          <pre><code>railway login
+railway init --name my-relay
+railway add --service relay
+railway up --service relay --ci
+railway domain --service relay</code></pre>
+        </li>
+        <li>Check it's up. Opening <code>https://your-relay.example/health</code> should show <code>{"ok":true}</code> with a count of rooms and devices.</li>
+        <li>On your Mac, open Workbench &gt; Settings &gt; Remote Access, turn on the Workbench relay, and enter your address in Relay server, like <code>wss://your-relay.example</code>. The Relay row under Status should say Connected.</li>
+      </ol>
+      <p>Devices that are already paired hear the new address the next time they connect, so there's nothing to scan again.</p>
+
+      <h2 id="notes">Things to know</h2>
+      <ul>
+        <li><strong>Run one copy.</strong> A Mac and its devices meet inside one process, so two copies behind a load balancer can leave them unable to find each other.</li>
+        <li><strong>Limits.</strong> The relay caps how much each Mac can send in a day and how many devices can join. Each limit is an environment variable, listed in the <a href="https://github.com/mattbirchler/workbench/blob/main/relay-live/README.md#limits">README</a>.</li>
+        <li><strong>No reporting.</strong> A relay you host sends no usage numbers to anyone unless you set a PostHog key yourself.</li>
+        <li><strong>Restarts are fine.</strong> When the relay restarts, your Mac and devices reconnect on their own.</li>
+      </ul>
+    </article>
+  </div>
+</main>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <a class="brand" href="./"><img src="assets/img/app-icon.webp" alt="" width="30" height="30"><span>Workbench</span></a>
+    <nav aria-label="Footer">
+      <a href="releases.html">Version history</a>
+      <a href="support.html">Support</a>
+      <a href="privacy.html">Privacy</a>
+      <a href="mailto:matt@birchtree.me">Contact</a>
+    </nav>
+    <p class="legal">Made by <a href="https://birchtree.productions">Birchtree Productions</a>. Workbench is an independent app, not made by or affiliated with Anthropic or OpenAI. Claude and Claude Code are trademarks of Anthropic. Codex is a trademark of OpenAI.</p>
+  </div>
+</footer>
+</body>
+</html>

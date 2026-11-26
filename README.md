@@ -91,7 +91,7 @@ make phone-install   # builds the phone app and installs it on your iPhone
 ```
 
 The phone app needs iOS 27. At home it finds the Mac on your network. To
-reach it from anywhere, turn on the Workbench relay in Settings > iPhone (no
+reach it from anywhere, turn on the Workbench relay in Settings > Remote Access (no
 account, and the relay can't read what passes through), or sign the Mac in to
 Tailscale. The relay's code is in [`relay-live`](relay-live), with how to
 host your own.
