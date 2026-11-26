@@ -166,7 +166,7 @@ public final class CompanionClient {
     @ObservationIgnored public var opensSealedNotifications = false
     @ObservationIgnored private var dashboardToken: String?
 
-    @ObservationIgnored private var task: URLSessionWebSocketTask?
+    @ObservationIgnored private var task: (any CompanionSocket)?
     /// How this connection reached the Mac: set on the welcome, nil while
     /// there isn't one.
     public private(set) var path: ConnectionPath?
@@ -194,6 +194,9 @@ public final class CompanionClient {
     /// another.
     @ObservationIgnored private var pinnedSession: (pin: String, session: URLSession, mismatches: PinMismatches)?
     @ObservationIgnored private var pairing: PairingInfo?
+    /// The Mac said where its room on the relay is, or that it has none
+    /// now. The app saves it with the pairing, by host.
+    @ObservationIgnored public var onRelayChange: ((_ host: String, _ relay: RelayEndpoint?) -> Void)?
     @ObservationIgnored private var reconnect: Task<Void, Never>?
     @ObservationIgnored private var attempts = 0
     @ObservationIgnored private var wantsConnection = false
@@ -301,7 +304,7 @@ public final class CompanionClient {
             cancelAttempt()
             endLocalChecks()
             tailscaleNext = false
-            task?.cancel(with: .normalClosure, reason: nil)
+            task?.close()
             task = nil
             path = nil
         }
@@ -411,7 +414,7 @@ public final class CompanionClient {
         reconnect = nil
         cancelAttempt()
         endLocalChecks()
-        task?.cancel(with: .normalClosure, reason: nil)
+        task?.close()
         task = nil
         path = nil
         sentWatches = []
@@ -433,7 +436,7 @@ public final class CompanionClient {
         // Asking again by hand: the setting may have changed since.
         localDenied = false
         cancelAttempt()
-        task?.cancel(with: .normalClosure, reason: nil)
+        task?.close()
         task = nil
         if wantsConnection { open() }
     }
@@ -442,21 +445,21 @@ public final class CompanionClient {
         guard let pairing, attempt == nil else { return }
         let tailscale = pairing.socketURL
         let local = localDenied ? nil : pairing.local
-        // Without a home-network part, or once Tailscale has just answered,
+        let relay = relayRoom(of: pairing)
+        // With only Tailscale to try, or once Tailscale has just answered,
         // this is the plain Tailscale connection it always was.
-        if let tailscale, local == nil || tailscaleNext {
+        if let tailscale, (local == nil && relay == nil) || tailscaleNext {
             tailscaleNext = false
             status = .connecting
             let task = URLSession.shared.webSocketTask(with: tailscale)
-            task.maximumMessageSize = 32 << 20
             self.task = task
             taskPath = .tailscale
-            task.resume()
+            task.start()
             send(.hello(token: pairing.token, device: deviceName))
             Task { await receive(on: task) }
             return
         }
-        guard let local else {
+        if local == nil, relay == nil {
             // Nowhere to go, as before.
             guard pairing.local != nil else { return }
             // A home-network-only Mac, and this device said no to looking.
@@ -466,7 +469,7 @@ public final class CompanionClient {
             problem = Self.plain(LocalResolver.Failure.denied)
             return
         }
-        race(tailscale: tailscale, local: local, token: pairing.token)
+        race(tailscale: tailscale, local: local, relay: relay, token: pairing.token)
     }
 
     // MARK: Sessions
@@ -876,7 +879,7 @@ public final class CompanionClient {
     private func sendQueued(_ message: ClientMessage) -> Bool {
         guard let task, let data = try? CompanionCoding.encoder.encode(message) else { return false }
         let sessionID = message.sessionIDIfReply
-        task.send(.data(data)) { [weak self] error in
+        task.sendData(data) { [weak self] error in
             guard let error else { return }
             Task { @MainActor [weak self] in
                 guard let self, self.task === task else { return }
@@ -898,7 +901,7 @@ public final class CompanionClient {
     /// Every ten seconds while this task is the connection: a ping once
     /// the Mac has been quiet for a while, and the connection called
     /// failed once it's been quiet for far longer than a pong takes.
-    private func startKeepalive(for task: URLSessionWebSocketTask) {
+    private func startKeepalive(for task: any CompanionSocket) {
         keepalive?.cancel()
         lastHeard = .now
         keepalive = Task { [weak self] in
@@ -917,15 +920,10 @@ public final class CompanionClient {
 
     struct KeepaliveLapse: Error {}
 
-    private func receive(on task: URLSessionWebSocketTask) async {
+    private func receive(on task: any CompanionSocket) async {
         while self.task === task {
             do {
-                let message = try await task.receive()
-                let data: Data? = switch message {
-                case .string(let text): Data(text.utf8)
-                case .data(let data): data
-                @unknown default: nil
-                }
+                let data = try await task.receiveData()
                 // Decoded off the main actor: a conversation's opening frame
                 // can run to megabytes, and the screen shouldn't stall for it.
                 // One frame at a time, so messages still apply in order.
@@ -959,7 +957,8 @@ public final class CompanionClient {
             // Macs from before the home network all used Tailscale. Newer
             // ones have it unless they were paired without.
             macHasTailscale = demo == nil && !(pairing?.isLocalOnly ?? false)
-            if path == .local { startLocalChecks() } else { endLocalChecks() }
+            // Off Tailscale: keep checking whether it answers, to move to it.
+            if path == .local || path == .relay { startLocalChecks() } else { endLocalChecks() }
             if !macFeatures.contains(CompanionFeature.theme) { theme = nil }
             // Before asking for transcripts, so they come with results.
             let asked = wantedFeatures.intersection(macFeatures)
@@ -995,6 +994,13 @@ public final class CompanionClient {
             saveSnapshot(heardAt: lastUpdate ?? .now)
         case .icons(let data):
             icons = data
+        case .relay(let endpoint):
+            // Where to find this Mac through the relay from now on. The
+            // connection that's open carries on as it is.
+            guard var pairing, endpoint == nil || endpoint?.relayURL != nil, pairing.relay != endpoint else { break }
+            pairing.relay = endpoint
+            self.pairing = pairing
+            onRelayChange?(pairing.host, endpoint)
         case .error(let text):
             problem = text
             if text == PairingInfo.rejectedMessage { needsRepair = true }
@@ -1109,8 +1115,9 @@ public final class CompanionClient {
         // A Mac without Tailscale is only ever out of reach at home; the
         // Tailscale wording would send you looking in the wrong place.
         let error = pairing?.isLocalOnly == true && !(error is LocalResolver.Failure) && !(error is PinnedSession.Mismatch)
+            && !(error is RelayError)
             ? LocalResolver.Failure.notFound : error
-        if error is PinnedSession.Mismatch {
+        if error is PinnedSession.Mismatch || (error as? RelayError) == .wrongPairing {
             needsRepair = true
             problem = Self.plain(error)
         } else if !needsRepair, problem == nil || attempts == 0 {
@@ -1133,7 +1140,7 @@ public final class CompanionClient {
     /// For tests: a reconnect is waiting to run.
     var isReconnectScheduled: Bool { reconnect != nil }
     /// For tests: the socket in use or being opened, outside a race.
-    var currentSocket: URLSessionWebSocketTask? { task }
+    var currentSocket: (any CompanionSocket)? { task }
 
     /// The home network Mac answered with a certificate other than the paired one.
     static let certificateChanged = "This Mac's code has changed. Scan it again."
@@ -1152,6 +1159,20 @@ public final class CompanionClient {
             break
         }
         if error is PinnedSession.Mismatch { return certificateChanged }
+        switch error as? RelayError {
+        case .hostOffline:
+            return "Your Mac isn't connected. It's asleep, off, or offline."
+        case .wrongPairing:
+            return PairingInfo.rejectedMessage
+        case .overLimit:
+            return "This Mac has used today's allowance on the Workbench relay. It works again tomorrow, and on your home network until then."
+        case .roomFull:
+            return "Too many devices are connected to this Mac through the Workbench relay. Close Workbench on one of them."
+        case .hostGone, .replaced, .relayRestarting, .tooLarge, .closed:
+            return "Lost the connection to the Mac through the Workbench relay."
+        case nil:
+            break
+        }
         if error is KeepaliveLapse {
             return "The Mac stopped answering. Is it awake, with Tailscale connected?"
         }
@@ -1179,13 +1200,24 @@ public final class CompanionClient {
 // MARK: Choosing a path
 
 extension CompanionClient {
+    /// The Mac's room on the relay, when the pairing has one and this app
+    /// uses the relay.
+    private func relayRoom(of pairing: PairingInfo) -> (url: URL, room: String)? {
+        guard wantedFeatures.contains(CompanionFeature.relay), let relay = pairing.relay, let url = relay.relayURL else { return nil }
+        return (url, relay.room)
+    }
+
+    /// How long the relay gets to answer once it has started.
+    static let relayTimeout: TimeInterval = 12
+
     /// Starts Tailscale, gives it a head start, then starts the home
-    /// network too. The first to answer its hello wins, Tailscale if both
-    /// answer close together; the other is closed. The winner then runs
-    /// through the same receive loop as ever.
-    private func race(tailscale: URL?, local: PairingInfo.LocalEndpoint, token: String) {
+    /// network too, and the relay as the fallback. The first to answer its
+    /// hello wins, with Tailscale ahead of the home network and both ahead
+    /// of the relay when they answer close together; the others are
+    /// closed. The winner then runs through the same receive loop as ever.
+    private func race(tailscale: URL?, local: PairingInfo.LocalEndpoint?, relay: (url: URL, room: String)?, token: String) {
         status = .connecting
-        let attempt = PathAttempt(race: ConnectionRace(hasTailscale: tailscale != nil, hasLocal: true))
+        let attempt = PathAttempt(race: ConnectionRace(hasTailscale: tailscale != nil, hasLocal: local != nil, hasRelay: relay != nil))
         self.attempt = attempt
         let hello = ClientMessage.hello(token: token, device: deviceName)
         if let tailscale {
@@ -1193,14 +1225,14 @@ extension CompanionClient {
                 URLSession.shared.webSocketTask(with: tailscale)
             }
         }
-        let (session, mismatches) = pinnedSession(for: local.fingerprint)
+        let pinned = local.map { pinnedSession(for: $0.fingerprint) }
         // Only what this attempt's home network try runs into counts.
-        _ = mismatches.take()
+        _ = pinned?.1.take()
         attempt.driver = Task { [weak self] in
             while !Task.isCancelled {
                 guard let self, self.attempt === attempt else { return }
                 let elapsed = attempt.elapsed
-                if !attempt.startedLocal, attempt.race.startsLocal(at: elapsed) {
+                if let local, let session = pinned?.0, !attempt.startedLocal, attempt.race.startsLocal(at: elapsed) {
                     attempt.startedLocal = true
                     attempt.start(.local, client: self, hello: hello) {
                         let url = try await LocalResolver.resolve(mac: local.mac, timeout: ConnectionRace.localTimeout - 1)
@@ -1209,6 +1241,16 @@ extension CompanionClient {
                 }
                 if attempt.startedLocal, attempt.isOpen(.local), attempt.race.localTimedOut(at: elapsed) {
                     self.attemptFailed(.local, LocalResolver.Failure.notFound, in: attempt)
+                    if self.attempt !== attempt { return }
+                }
+                if let relay, attempt.relayStartedAt == nil, attempt.race.startsRelay(at: elapsed) {
+                    attempt.relayStartedAt = elapsed
+                    attempt.start(.relay, client: self, hello: hello) {
+                        RelayCompanionSocket(relay: relay.url, room: relay.room, token: token)
+                    }
+                }
+                if let started = attempt.relayStartedAt, attempt.isOpen(.relay), elapsed - started >= Self.relayTimeout {
+                    self.attemptFailed(.relay, URLError(.timedOut), in: attempt)
                     if self.attempt !== attempt { return }
                 }
                 if let winner = attempt.race.tick(at: elapsed) {
@@ -1252,9 +1294,15 @@ extension CompanionClient {
             return
         }
         cancelAttempt()
-        // Both are out. Say what went wrong with Tailscale, as before, or
-        // with the home network for a Mac that only has that.
-        let shown = pairing?.isLocalOnly == true ? attempt.errors[.local] : attempt.errors[.tailscale]
+        // All are out. When the relay itself said why (the Mac isn't
+        // connected, the code is wrong), that's the answer. Otherwise say
+        // what went wrong with Tailscale, as before, or with the home
+        // network for a Mac that only has that.
+        let relaySaid: Error? = switch attempt.errors[.relay] as? RelayError {
+        case .hostOffline, .wrongPairing, .overLimit, .roomFull: attempt.errors[.relay]
+        default: nil
+        }
+        let shown = relaySaid ?? (pairing?.isLocalOnly == true ? attempt.errors[.local] : attempt.errors[.tailscale])
         failed(shown ?? error)
     }
 
@@ -1289,27 +1337,26 @@ extension CompanionClient {
     /// back, and every minute.
     public func tryTailscaleQuietly() {
         // Once Tailscale has answered, the next connection uses it anyway.
-        guard demo == nil, path == .local, tailscaleProbe == nil, !tailscaleNext,
+        guard demo == nil, path == .local || path == .relay, tailscaleProbe == nil, !tailscaleNext,
               let pairing, let url = pairing.socketURL else { return }
         let hello = ClientMessage.hello(token: pairing.token, device: deviceName)
         tailscaleProbe = Task { [weak self] in
             let task = URLSession.shared.webSocketTask(with: url)
-            task.maximumMessageSize = 32 << 20
-            task.resume()
+            task.start()
             let welcome = try? await Self.handshake(task, hello: hello, within: .seconds(10))
             // Whoever cancelled this has already let it go.
             guard let self, !Task.isCancelled else {
-                task.cancel(with: .normalClosure, reason: nil)
+                task.close()
                 return
             }
             self.tailscaleProbe = nil
             guard let welcome, case .welcome = welcome,
-                  self.path == .local, self.pairing == pairing else {
-                task.cancel(with: .normalClosure, reason: nil)
+                  self.path == .local || self.path == .relay, self.pairing == pairing else {
+                task.close()
                 return
             }
             if self.isMidReply {
-                task.cancel(with: .normalClosure, reason: nil)
+                task.close()
                 self.tailscaleNext = true
                 return
             }
@@ -1318,7 +1365,7 @@ extension CompanionClient {
             self.task = task
             self.taskPath = .tailscale
             self.sentWatches = []
-            old?.cancel(with: .normalClosure, reason: nil)
+            old?.close()
             self.apply(welcome)
             Task { await self.receive(on: task) }
         }
@@ -1354,22 +1401,18 @@ extension CompanionClient {
     /// Sends the hello and waits for the first answer. Nil if the
     /// connection fails or nothing comes in time.
     fileprivate nonisolated static func handshake(
-        _ task: URLSessionWebSocketTask, hello: ClientMessage, within limit: Duration? = nil
+        _ task: any CompanionSocket, hello: ClientMessage, within limit: Duration? = nil
     ) async throws -> ServerMessage {
         let exchange: @Sendable () async throws -> ServerMessage = {
             let data = try CompanionCoding.encoder.encode(hello)
-            try await task.send(.data(data))
-            let reply = try await task.receive()
-            let bytes: Data? = switch reply {
-            case .string(let text): Data(text.utf8)
-            case .data(let data): data
-            @unknown default: nil
+            try await task.sendData(data)
+            guard let bytes = try await task.receiveData(), let message = await decode(bytes) else {
+                throw URLError(.cannotParseResponse)
             }
-            guard let bytes, let message = await decode(bytes) else { throw URLError(.cannotParseResponse) }
             return message
         }
         guard let limit else { return try await exchange() }
-        let answer = await Deadline.first(within: limit) { try? await exchange() } onTimeout: { task.cancel() }
+        let answer = await Deadline.first(within: limit) { try? await exchange() } onTimeout: { task.close() }
         guard let answer else { throw URLError(.timedOut) }
         return answer
     }
@@ -1394,7 +1437,9 @@ private final class PathAttempt {
     var race: ConnectionRace
     let started = ContinuousClock.now
     var startedLocal = false
-    var tasks: [ConnectionPath: URLSessionWebSocketTask] = [:]
+    /// When the relay started, in seconds since the attempt did.
+    var relayStartedAt: TimeInterval?
+    var tasks: [ConnectionPath: any CompanionSocket] = [:]
     var answers: [ConnectionPath: ServerMessage] = [:]
     var errors: [ConnectionPath: Error] = [:]
     private var workers: [ConnectionPath: Task<Void, Never>] = [:]
@@ -1413,16 +1458,15 @@ private final class PathAttempt {
     /// Opens a path's socket, sends the hello and reports the first answer.
     func start(
         _ path: ConnectionPath, client: CompanionClient, hello: ClientMessage,
-        makeTask: @escaping @MainActor () async throws -> URLSessionWebSocketTask
+        makeTask: @escaping @MainActor () async throws -> any CompanionSocket
     ) {
         workers[path] = Task { [weak client] in
             do {
                 let task = try await makeTask()
-                task.maximumMessageSize = 32 << 20
                 // Timed out or lost the race while it was finding the Mac.
-                guard !Task.isCancelled, self.isOpen(path) else { task.cancel(); throw CancellationError() }
+                guard !Task.isCancelled, self.isOpen(path) else { task.close(); throw CancellationError() }
                 self.tasks[path] = task
-                task.resume()
+                task.start()
                 // The socket's own error, so the wording is what it always was.
                 let answer = try await CompanionClient.handshake(task, hello: hello)
                 client?.attemptAnswered(path, answer, in: self)
@@ -1434,14 +1478,14 @@ private final class PathAttempt {
 
     func close(_ path: ConnectionPath) {
         workers[path]?.cancel()
-        tasks[path]?.cancel(with: .normalClosure, reason: nil)
+        tasks[path]?.close()
         tasks[path] = nil
     }
 
     func cancel() {
         driver?.cancel()
         workers.values.forEach { $0.cancel() }
-        for task in tasks.values { task.cancel(with: .normalClosure, reason: nil) }
+        for task in tasks.values { task.close() }
         tasks = [:]
     }
 }

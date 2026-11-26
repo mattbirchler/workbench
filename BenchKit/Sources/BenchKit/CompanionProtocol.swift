@@ -60,6 +60,9 @@ public enum CompanionFeature {
     /// The phone can reach the Mac over the home network, found with
     /// Bonjour and checked against the certificate pinned in the pairing.
     public static let localNetwork = "localNetwork"
+    /// The client can reach the Mac through the Workbench relay, and wants
+    /// to hear where (`ServerMessage.relay`).
+    public static let relay = "relay"
     /// Everything in a project's right-click menu on the Mac, for another
     /// Mac's sidebar: renaming, icons, hidden worktrees, removing, phone
     /// notifications, and which Claude account it uses.
@@ -822,6 +825,11 @@ public enum ClientMessage: Codable, Sendable {
 public enum ServerMessage: Codable, Sendable {
     /// The token was accepted.
     case welcome(macName: String, protocolVersion: Int, features: [String]? = nil, appVersion: String? = nil)
+    /// The Mac's room on the relay, or nil when it has none. Sent after the
+    /// welcome to clients that asked for `CompanionFeature.relay`, and again
+    /// whenever it changes, so a device paired before the Mac turned the
+    /// relay on doesn't have to scan again.
+    case relay(RelayEndpoint?)
     /// The whole sidebar, sent on hello and whenever anything changes.
     case projects(ProjectsSnapshot)
     /// Sidebar icons as PNG data, sent on hello and when they change.

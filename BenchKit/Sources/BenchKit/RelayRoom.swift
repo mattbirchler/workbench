@@ -53,6 +53,27 @@ public struct RelayRoom: Sendable, Hashable, Codable {
     }
 }
 
+/// Where a device finds a Mac's room: which relay, and the room's id. It
+/// rides in the pairing code, and the Mac sends it to devices paired before
+/// it turned the relay on.
+public struct RelayEndpoint: Codable, Sendable, Hashable {
+    /// The relay's address, like "wss://relay.example".
+    public var url: String
+    public var room: String
+
+    public init(url: String, room: String) {
+        self.url = url
+        self.room = room
+    }
+
+    /// Nil unless it's a WebSocket address and the room looks like one.
+    public var relayURL: URL? {
+        guard let parsed = URL(string: url), let scheme = parsed.scheme?.lowercased(), parsed.host() != nil,
+              scheme == "wss" || scheme == "ws", room.count == 64, room.allSatisfy(\.isHexDigit) else { return nil }
+        return parsed
+    }
+}
+
 /// Why a relay connection ended or couldn't start.
 public enum RelayError: Error, Equatable, Sendable {
     /// The Mac isn't connected to the relay: asleep, off, or offline.

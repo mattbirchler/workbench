@@ -305,6 +305,7 @@ private struct MacRow: View {
         switch path {
         case .tailscale: "Connected over Tailscale"
         case .local: "Connected over your home network"
+        case .relay: "Connected through the Workbench relay"
         }
     }
 }
