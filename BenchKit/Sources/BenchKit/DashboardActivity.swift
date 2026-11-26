@@ -1,5 +1,7 @@
 import Foundation
-#if os(iOS)
+// On the Mac, Live Activities came with macOS 27.3, whose SDK ships with
+// Swift 6.4.4. Older toolchains build the Mac side without them.
+#if os(iOS) || (os(macOS) && compiler(>=6.4.4))
 import ActivityKit
 #endif
 
@@ -64,7 +66,8 @@ public struct DashboardColors: Codable, Sendable, Hashable {
     }
 }
 
-#if os(iOS)
+#if os(iOS) || (os(macOS) && compiler(>=6.4.4))
+@available(macOS 27.3, *)
 extension DashboardAttributes: ActivityAttributes {}
 #endif
 
