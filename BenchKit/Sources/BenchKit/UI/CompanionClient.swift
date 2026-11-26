@@ -1169,7 +1169,7 @@ public final class CompanionClient {
         case .roomFull:
             return "Too many devices are connected to this Mac through the Workbench relay. Close Workbench on one of them."
         case .hostGone, .replaced, .relayRestarting, .tooLarge, .closed:
-            return "Lost the connection to the Mac through the Workbench relay."
+            return "Couldn't reach your Mac through the Workbench relay. Check that this device is online."
         case nil:
             break
         }
@@ -1302,7 +1302,13 @@ extension CompanionClient {
         case .hostOffline, .wrongPairing, .overLimit, .roomFull: attempt.errors[.relay]
         default: nil
         }
-        let shown = relaySaid ?? (pairing?.isLocalOnly == true ? attempt.errors[.local] : attempt.errors[.tailscale])
+        // A certificate that changed is a reason to scan again, and wins
+        // over anything vaguer. With a relay in the pairing, a device
+        // that reached nothing is most likely offline, and the Tailscale
+        // wording would send someone who doesn't use it looking for it.
+        let pinChanged: Error? = attempt.errors[.local] is PinnedSession.Mismatch ? attempt.errors[.local] : nil
+        let usual = pairing?.isLocalOnly == true ? attempt.errors[.local] : attempt.errors[.tailscale]
+        let shown = relaySaid ?? pinChanged ?? attempt.errors[.relay] ?? usual
         failed(shown ?? error)
     }
 

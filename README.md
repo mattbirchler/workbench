@@ -80,7 +80,8 @@ edits the tab follows the disk as it always has.
 
 ## iPhone companion
 
-Workbench can mirror your sessions to an iPhone over Tailscale: read each
+Workbench can mirror your sessions to an iPhone over your home network,
+Tailscale, or the Workbench relay: read each
 conversation as a chat, reply, allow or deny a tool, browse changes and diffs,
 and get a notification when Claude needs you or finishes. Turn it on in
 Workbench's settings and scan the pairing code with the phone app.
@@ -89,7 +90,11 @@ Workbench's settings and scan the pairing code with the phone app.
 make phone-install   # builds the phone app and installs it on your iPhone
 ```
 
-The phone app needs iOS 27 and the Mac's Tailscale to be signed in.
+The phone app needs iOS 27. At home it finds the Mac on your network. To
+reach it from anywhere, turn on the Workbench relay in Settings > iPhone (no
+account, and the relay can't read what passes through), or sign the Mac in to
+Tailscale. The relay's code is in [`relay-live`](relay-live), with how to
+host your own.
 
 ## The `bench` command
 
