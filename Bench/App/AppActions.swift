@@ -251,7 +251,7 @@ struct AppActions {
     /// With another Mac's project on screen, the tasks go to that Mac.
     func startSendTasks() { store.startSendTasks(remoteHost: store.selectedRemote?.host) }
 
-    func showOverview() { store.showsOverview = true }
+    func showOverview(from source: AppStore.OverviewSource) { store.showOverview(from: source) }
 
     func showUsage() { store.showsUsage = true }
 
@@ -319,7 +319,7 @@ struct AppActions {
         actions.append(CommandBarAction(id: "add-project", title: "Add Project…", symbol: "folder.badge.plus",
                                         shortcut: "⌘O", keywords: ["open", "folder"]) { ProjectPicker.present(store: store) })
         actions.append(CommandBarAction(id: "overview", title: "Overview", symbol: "square.grid.2x2",
-                                        keywords: ["sessions", "dashboard"]) { showOverview() })
+                                        keywords: ["sessions", "dashboard"]) { showOverview(from: .commandBar) })
         actions.append(CommandBarAction(id: "next-needing-you", title: "Next Session Needing You", symbol: "bell",
                                         shortcut: "⌘J", keywords: ["waiting", "attention"]) { jumpToNextNeedingYou() })
         if store.selectedProjectID != nil {

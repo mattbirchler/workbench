@@ -148,7 +148,7 @@ struct MenuBarPanel: View {
             HStack {
                 Button("Open Overview") {
                     bringForward()
-                    store.showsOverview = true
+                    store.showOverview(from: .menuBar)
                 }
                 Spacer()
                 Button("Quit Workbench") { NSApp.terminate(nil) }
