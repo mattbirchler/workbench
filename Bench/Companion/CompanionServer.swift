@@ -64,6 +64,11 @@ final class CompanionServer {
     /// Set by the companion, which keeps the push tokens.
     @ObservationIgnored var onRegisterPush: ((_ token: String, _ device: String, _ sealed: Bool) -> Void)?
     @ObservationIgnored var onRegisterDashboard: ((_ token: String, _ ended: Bool) -> Void)?
+    /// This Mac's room on the relay, or nil when the relay is off. Set by
+    /// the companion.
+    @ObservationIgnored var relayEndpoint: (() -> RelayEndpoint?)?
+    /// Counts of what went through the relay, for the daily usage total.
+    @ObservationIgnored var onRelayUsage: ((RelayUsage) -> Void)?
     @ObservationIgnored var onNotificationPrefs: ((_ token: String, _ muted: [CompanionNotificationKind]) -> Void)?
     /// The usage and summary last sent, and when usage was last re-read.
     @ObservationIgnored private var lastUsage: CompanionUsage?
@@ -72,7 +77,12 @@ final class CompanionServer {
     @ObservationIgnored private var pendingSideQuestions: Set<UUID> = []
 
     private final class Client {
-        let connection: NWConnection
+        /// The socket, for a client that connected straight to this Mac.
+        let connection: NWConnection?
+        /// The sealed connection, for one that came through the relay.
+        let relay: RelayHostConnection?
+        /// Messages on their way out through the relay, in order.
+        private var relayOutgoing: AsyncStream<Data>.Continuation?
         /// Came in on the home network listener rather than through Tailscale.
         let isLocal: Bool
         /// The remote host, which the throttle goes by.
@@ -95,8 +105,32 @@ final class CompanionServer {
         /// frame's pictures takes a moment, and a frame with none mustn't
         /// overtake one with some.
         private var transcriptChain: Task<Void, Never>?
+        init(relay: RelayHostConnection, sent: @escaping @Sendable (Int) -> Void) {
+            connection = nil
+            self.relay = relay
+            isLocal = false
+            address = "relay"
+            // One task sends everything, so messages keep their order.
+            let (stream, outgoing) = AsyncStream<Data>.makeStream()
+            relayOutgoing = outgoing
+            Task {
+                for await data in stream {
+                    if (try? await relay.send(data)) != nil { sent(data.count) }
+                }
+            }
+        }
+
+        func sendThroughRelay(_ data: Data) { relayOutgoing?.yield(data) }
+
+        func close() {
+            connection?.cancel()
+            relayOutgoing?.finish()
+            if let relay { Task { await relay.close() } }
+        }
+
         init(connection: NWConnection, isLocal: Bool) {
             self.connection = connection
+            relay = nil
             self.isLocal = isLocal
             if case .hostPort(let host, _) = connection.endpoint {
                 address = "\(host)"
@@ -132,7 +166,8 @@ final class CompanionServer {
                            CompanionFeature.imagePreviews, CompanionFeature.paging, CompanionFeature.sendTasks,
                            CompanionFeature.branchControls, CompanionFeature.agentLifecycle, CompanionFeature.shortcuts, CompanionFeature.dashboard,
                            CompanionFeature.codeReview, CompanionFeature.keepalive, CompanionFeature.offlineQueue,
-                           CompanionFeature.localNetwork, CompanionFeature.sideQuestions, CompanionFeature.editFiles, CompanionFeature.addProject]
+                           CompanionFeature.localNetwork, CompanionFeature.sideQuestions, CompanionFeature.editFiles, CompanionFeature.addProject,
+                           CompanionFeature.relay]
 
     /// The port this server listens on: the app's, unless a test picks
     /// a free one of its own.
@@ -341,9 +376,48 @@ final class CompanionServer {
         }
     }
 
+    /// Takes a device that came through the relay. Its pairing code was
+    /// already checked by the relay handshake, and its hello is checked
+    /// again like anyone's.
+    func accept(relay connection: RelayHostConnection) {
+        let client = Client(relay: connection, sent: { [weak self] bytes in
+            Task { @MainActor in self?.onRelayUsage?(.init(messagesOut: 1, bytesOut: bytes)) }
+        })
+        clients[ObjectIdentifier(client)] = client
+        onRelayUsage?(.init(connections: 1))
+        Task { [weak self, weak client] in
+            do {
+                for try await data in connection.messages {
+                    guard let self, let client else { return }
+                    self.onRelayUsage?(.init(messagesIn: 1, bytesIn: data.count))
+                    self.handle(data, from: client)
+                }
+            } catch {}
+            if let self, let client { self.remove(client) }
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 15) { [weak self, weak client] in
+            MainActor.assumeIsolated {
+                guard let self, let client, !client.isAuthorized else { return }
+                self.remove(client)
+            }
+        }
+    }
+
+    /// Tells every client that asked where this Mac's room on the relay
+    /// is now, or that it has none.
+    func relayChanged() {
+        let endpoint = relayEndpoint?()
+        for client in clients.values where client.isAuthorized && client.features.contains(CompanionFeature.relay) {
+            send(.relay(endpoint), to: client)
+        }
+    }
+
+    /// True when a device is connected through the relay right now.
+    var hasRelayClients: Bool { clients.values.contains { $0.relay != nil } }
+
     private func remove(_ client: Client) {
         guard clients.removeValue(forKey: ObjectIdentifier(client)) != nil else { return }
-        client.connection.cancel()
+        client.close()
         for monitor in client.watchingFiles.values { monitor.release() }
         client.watchingFiles = [:]
         sentFiles[ObjectIdentifier(client)] = nil
@@ -358,7 +432,7 @@ final class CompanionServer {
     }
 
     private func receive(_ client: Client) {
-        client.connection.receiveMessage { [weak self, weak client] data, context, _, error in
+        client.connection?.receiveMessage { [weak self, weak client] data, context, _, error in
             MainActor.assumeIsolated {
                 guard let self, let client else { return }
                 if error != nil {
@@ -475,6 +549,9 @@ final class CompanionServer {
         case .features(let wanted):
             guard client.isAuthorized else { return }
             client.features = Set(wanted).intersection(Self.features)
+            if client.features.contains(CompanionFeature.relay) {
+                send(.relay(relayEndpoint?()), to: client)
+            }
             if client.features.contains(CompanionFeature.theme) {
                 send(.theme(snapshots.themeColors()), to: client)
             }
@@ -963,9 +1040,13 @@ final class CompanionServer {
     private func send(data: Data, to client: Client) {
         // Binary, so neither end makes a UTF-8 string of a frame that can
         // run to megabytes. Clients have always taken both.
+        guard let connection = client.connection else {
+            client.sendThroughRelay(data)
+            return
+        }
         let metadata = NWProtocolWebSocket.Metadata(opcode: .binary)
         let context = NWConnection.ContentContext(identifier: "message", metadata: [metadata])
-        client.connection.send(content: data, contentContext: context, isComplete: true, completion: .contentProcessed { _ in })
+        connection.send(content: data, contentContext: context, isComplete: true, completion: .contentProcessed { _ in })
     }
 
     /// Passes a tab's side question on to the clients watching it. While
