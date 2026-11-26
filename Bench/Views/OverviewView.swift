@@ -84,34 +84,48 @@ struct OverviewView: View {
         return items.enumerated().sorted { ($0.element.rank, $0.offset) < ($1.element.rank, $1.offset) }.map(\.element)
     }
 
+    /// 0 for today, 1 for yesterday.
+    @State private var daysBack = 0
+    /// When you last left the Overview, read once as it opens.
+    @State private var lastLooked: Date?
+    @AppStorage("overviewLastLooked") private var lastLookedStamp = 0.0
+
     var body: some View {
         let items = Self.items(store: store, terminals: terminals)
+        let hasDay = !DayActivity.shared.projects.isEmpty
         VStack(alignment: .leading, spacing: 0) {
-            header(items)
+            header
                 .padding(.horizontal, 28)
                 .padding(.top, 22)
                 .padding(.bottom, 16)
-            if items.isEmpty {
-                EmptyStateScaffold(title: "No Agent Sessions",
-                                   message: "Open an agent tab in any project and it shows up here, or use Brain Dump to start work in several projects at once.",
-                                   actionTitle: "Brain Dump…", action: { store.startSendTasks() }) {
-                    SessionsEmptyIllustration(appeared: $0)
-                }
-                .environment(\.companionPalette, TerminalTheme.shared.chatPalette)
-            } else {
-                ScrollView {
-                    // Cards start at the top of their row, not centered in it.
-                    LazyVGrid(columns: [GridItem(.adaptive(minimum: 380), spacing: 14, alignment: .top)], spacing: 14) {
-                        ForEach(items) { item in
-                            OverviewCard(item: item, monitor: monitors.monitor(for: item.project)) {
-                                store.selectedProjectID = item.project.id
-                                store.selectTab(item.tab.id, in: item.project.id)
+            ScrollView {
+                VStack(alignment: .leading, spacing: 24) {
+                    OverviewDay(items: items, daysBack: daysBack, lastLooked: lastLooked, showsQuiet: !items.isEmpty)
+                    if items.isEmpty, !hasDay {
+                        EmptyStateScaffold(title: "No Agent Sessions",
+                                           message: "Open an agent tab in any project and it shows up here, or use Brain Dump to start work in several projects at once.",
+                                           actionTitle: "Brain Dump…", action: { store.startSendTasks() }) {
+                            SessionsEmptyIllustration(appeared: $0)
+                        }
+                        .environment(\.companionPalette, TerminalTheme.shared.chatPalette)
+                        .frame(minHeight: 420)
+                    } else if !items.isEmpty {
+                        VStack(alignment: .leading, spacing: 12) {
+                            sessionsHeading(items)
+                            // Cards start at the top of their row, not centered in it.
+                            LazyVGrid(columns: [GridItem(.adaptive(minimum: 380), spacing: 14, alignment: .top)], spacing: 14) {
+                                ForEach(items) { item in
+                                    OverviewCard(item: item, monitor: monitors.monitor(for: item.project)) {
+                                        store.selectedProjectID = item.project.id
+                                        store.selectTab(item.tab.id, in: item.project.id)
+                                    }
+                                }
                             }
                         }
                     }
-                    .padding(.horizontal, 28)
-                    .padding(.bottom, 28)
                 }
+                .padding(.horizontal, 28)
+                .padding(.bottom, 28)
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
@@ -121,17 +135,19 @@ struct OverviewView: View {
             // Line counts for projects that aren't selected, which aren't watched live.
             for project in Set(items.map(\.project)) { monitors.monitor(for: project).refresh() }
         }
+        .onAppear { lastLooked = lastLookedStamp > 0 ? Date(timeIntervalSince1970: lastLookedStamp) : nil }
+        .onDisappear { lastLookedStamp = Date().timeIntervalSince1970 }
     }
 
-    private func header(_ items: [OverviewItem]) -> some View {
-        let count = { (states: [TabActivity]) in items.filter { states.contains($0.activity) }.count }
-        return HStack(spacing: 10) {
+    private var header: some View {
+        let today = Calendar.current.startOfDay(for: .now)
+        let day = Calendar.current.date(byAdding: .day, value: -daysBack, to: today) ?? today
+        return HStack(alignment: .firstTextBaseline, spacing: 12) {
             Text("Overview")
                 .font(.ui(size: 22, weight: .semibold))
-            CountChip(count: count([.waiting]), label: "needs you", color: ActivityBackground.waiting, text: Theme.Status.waiting)
-            CountChip(count: count([.working, .remoteWorking]), label: "working", color: ActivityBackground.working, text: Theme.Status.working)
-            CountChip(count: count([.done]), label: "done", color: ActivityBackground.done, text: Theme.Status.done)
-            CountChip(count: count([.idle, .attention]), label: "idle", color: .secondary, text: .secondary)
+            Text(day.formatted(.dateTime.weekday(.wide).month(.wide).day()))
+                .font(.ui(size: 13))
+                .foregroundStyle(.secondary)
             Spacer()
             if !offlineQueue.failed.isEmpty {
                 let n = offlineQueue.failed.count
@@ -140,6 +156,24 @@ struct OverviewView: View {
                 }
                 .controlSize(.small)
             }
+            Picker("Day", selection: $daysBack) {
+                Text("Today").tag(0)
+                Text("Yesterday").tag(1)
+            }
+            .pickerStyle(.segmented)
+            .labelsHidden()
+            .fixedSize()
+        }
+    }
+
+    private func sessionsHeading(_ items: [OverviewItem]) -> some View {
+        let count = { (states: [TabActivity]) in items.filter { states.contains($0.activity) }.count }
+        return HStack(spacing: 10) {
+            DayHeading("Right now")
+            CountChip(count: count([.waiting]), label: "needs you", color: ActivityBackground.waiting, text: Theme.Status.waiting)
+            CountChip(count: count([.working, .remoteWorking]), label: "working", color: ActivityBackground.working, text: Theme.Status.working)
+            CountChip(count: count([.done]), label: "done", color: ActivityBackground.done, text: Theme.Status.done)
+            CountChip(count: count([.idle, .attention]), label: "idle", color: .secondary, text: .secondary)
         }
     }
 }
