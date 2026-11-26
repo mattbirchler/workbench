@@ -34,6 +34,7 @@ final class MenuBarActivity {
     /// Finished sessions drop off the dashboard after a while, with no
     /// change in the store to say so.
     private var timer: Timer?
+    private var activation: NSObjectProtocol?
 
     init(store: AppStore, terminals: TerminalManager) {
         self.store = store
@@ -46,6 +47,18 @@ final class MenuBarActivity {
         timer = Timer.scheduledTimer(withTimeInterval: 60, repeats: true) { [weak self] _ in
             MainActor.assumeIsolated { self?.queueRefresh() }
         }
+        // The system only lets an app start an activity while it's in
+        // front. One refused in the background gets another go here.
+        activation = NotificationCenter.default.addObserver(forName: NSApplication.didBecomeActiveNotification, object: nil, queue: .main) { [weak self] _ in
+            MainActor.assumeIsolated { self?.queueRefresh() }
+        }
+        #if DEBUG
+        if Self.demo != nil {
+            Timer.scheduledTimer(withTimeInterval: 15, repeats: false) { [weak self] _ in
+                MainActor.assumeIsolated { self?.queueRefresh() }
+            }
+        }
+        #endif
         refresh()
     }
 
@@ -53,6 +66,7 @@ final class MenuBarActivity {
     func remove() {
         removed = true
         timer?.invalidate()
+        if let activation { NotificationCenter.default.removeObserver(activation) }
         end()
     }
 
@@ -60,7 +74,7 @@ final class MenuBarActivity {
         refreshQueued = false
         guard !removed else { return }
         let state = withObservationTracking {
-            Self.state(OverviewView.items(store: store, terminals: terminals))
+            Self.demo ?? Self.state(OverviewView.items(store: store, terminals: terminals))
         } onChange: { [weak self] in
             DispatchQueue.main.async { self?.queueRefresh() }
         }
@@ -129,6 +143,32 @@ final class MenuBarActivity {
             await activity.end(nil, dismissalPolicy: .immediate)
         }
     }
+
+    /// BENCH_LIVE_ACTIVITY_DEMO=1 shows made-up sessions, to look it over
+    /// in a test copy. Set to "waiting", one of them starts out needing you.
+    private static var demo: DashboardAttributes.ContentState? {
+        #if DEBUG
+        guard let mode = ProcessInfo.processInfo.environment["BENCH_LIVE_ACTIVITY_DEMO"] else { return nil }
+        var rows = [
+            DashboardRow(id: UUID(uuidString: "00000000-0000-0000-0000-000000000001")!, project: "Recipes", activity: "working",
+                         text: "Adding a shopping list", since: demoStart, stepsDone: 2, stepsTotal: 5),
+            DashboardRow(id: UUID(uuidString: "00000000-0000-0000-0000-000000000002")!, project: "Quick Notes", activity: "done",
+                         text: "Fixed the sync crash", checks: "passing"),
+        ]
+        // A quarter of a minute in, one starts waiting.
+        let asks = mode == "waiting" || Date.now.timeIntervalSince(demoStart) > 12
+        if asks {
+            rows.insert(DashboardRow(id: UUID(uuidString: "00000000-0000-0000-0000-000000000003")!, project: "Website", activity: "waiting",
+                                     text: "Allow npm run build?", since: demoStart), at: 0)
+        }
+        return .init(rows: rows, more: 0, working: 1, waiting: asks ? 1 : 0, done: 1)
+        #else
+        return nil
+        #endif
+    }
+    #if DEBUG
+    private static let demoStart = Date.now
+    #endif
 
     private static var macName: String { Host.current().localizedName ?? "Mac" }
 
