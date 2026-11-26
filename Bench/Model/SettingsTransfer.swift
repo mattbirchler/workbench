@@ -66,7 +66,7 @@ nonisolated enum SettingsTransfer {
                              "resumesClaudeTabsAtLaunch", "autoCleanMergedWorktrees", "worktreesFolder",
                              "trashRemovedWorktrees", "editorBundleID",
                              "installsUpdatesWhenIdle", "monthlyBudget", "planUsageShown", "planUsagePace",
-                             "showsMacActivity", "showsSimulators", "analyticsOptedOut", "fileViewWraps", "inspectorMode",
+                             "showsMacActivity", "showsSimulators", "showsMenuBarIcon", "analyticsOptedOut", "fileViewWraps", "inspectorMode",
                              "inspectorShowsFiles", "usage.days", "usage.showsTokens",
                              "dictation.enabled", "dictation.key", "dictation.fixesTerms"]
             case .accounts, .pairedMacs: []

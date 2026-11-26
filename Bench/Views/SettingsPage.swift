@@ -311,6 +311,7 @@ private struct GeneralSettings: View {
     @AppStorage(SimulatorWatch.shownKey) private var showsSimulators = true
     @AppStorage(PlanUsageMonitor.paceKey) private var showsPace = true
     @AppStorage(Analytics.optedOutKey) private var analyticsOptedOut = false
+    @AppStorage(MenuBarItem.shownKey) private var showsMenuBarIcon = false
 
     var body: some View {
         KeepWorkingSettings()
@@ -371,6 +372,12 @@ private struct GeneralSettings: View {
                         detail: "A tick on each ring: an arc past its tick is going faster than the window.",
                         isOn: $showsPace)
                 .disabled(!showsPlanUsage)
+        }
+        SettingsGroup(title: "Menu Bar") {
+            SettingsRow("Show Workbench in the menu bar",
+                        detail: "An icon that counts the agents working or waiting for you.",
+                        more: "The icon shows how many agents are waiting for you, or how many are working when none are waiting. Click it for a list of them, and click one to jump to its tab. Handy when Workbench is behind other windows.",
+                        isOn: $showsMenuBarIcon)
         }
         SettingsGroup(title: "Privacy") {
             SettingsRow("Share anonymous usage data",

@@ -5,6 +5,7 @@ import SwiftUI
 /// The menu bar icon: what your Claude sessions are doing while Bench is in
 /// the background. An exclamation and a count when any are waiting for you,
 /// a sparkle and a count while any are working. Clicking it opens the panel.
+/// Off until you turn it on in Settings.
 ///
 /// A status item of our own rather than SwiftUI's `MenuBarExtra`. That one
 /// redrew its icon whenever the store changed, sometimes from inside the
@@ -34,6 +35,10 @@ final class MenuBarItem: NSObject, NSPopoverDelegate {
         }
     }
 
+    /// The setting that shows the icon. Off unless you turn it on.
+    static let shownKey = "showsMenuBarIcon"
+    static var isShown: Bool { UserDefaults.standard.bool(forKey: shownKey) }
+
     private let store: AppStore
     private let terminals: TerminalManager
     private let item: NSStatusItem
@@ -42,6 +47,8 @@ final class MenuBarItem: NSObject, NSPopoverDelegate {
     /// True from a change until the icon catches up, so a burst of changes
     /// costs one update.
     private var refreshQueued = false
+    /// Set once the icon is gone, so a change already on its way is dropped.
+    private var removed = false
 
     init(store: AppStore, terminals: TerminalManager) {
         self.store = store
@@ -73,8 +80,15 @@ final class MenuBarItem: NSObject, NSPopoverDelegate {
         button.setAccessibilityLabel(status.spoken)
     }
 
+    /// Takes the icon out of the menu bar, for when the setting is turned off.
+    func remove() {
+        removed = true
+        popover.performClose(nil)
+        NSStatusBar.system.removeStatusItem(item)
+    }
+
     private func queueRefresh() {
-        guard !refreshQueued else { return }
+        guard !refreshQueued, !removed else { return }
         refreshQueued = true
         DispatchQueue.main.async { [weak self] in self?.refresh() }
     }
