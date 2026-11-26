@@ -30,6 +30,7 @@ struct OpenPullRequestTests {
         let pullRequests = PullRequests()
 
         #expect(actions.pullRequestURL(in: pullRequests, macs: RemoteMacs()) == nil)
+        #expect(actions.pullRequestTitle(in: pullRequests, macs: RemoteMacs()) == "Open Pull Request")
         #expect(!actions.commandBarActions(pullRequests: pullRequests, macs: RemoteMacs())
             .contains { $0.id == "open-pull-request" })
     }
@@ -47,10 +48,11 @@ struct OpenPullRequestTests {
 
         #expect(actions.pullRequestURL(in: pullRequests, macs: RemoteMacs())?.absoluteString
             == "https://github.com/o/r/pull/11")
+        #expect(actions.pullRequestTitle(in: pullRequests, macs: RemoteMacs()) == "Open Pull Request #11")
 
         let entry = try #require(actions.commandBarActions(pullRequests: pullRequests, macs: RemoteMacs())
             .first { $0.id == "open-pull-request" })
-        #expect(entry.title == "Open Pull Request")
+        #expect(entry.title == "Open Pull Request #11")
         #expect(entry.shortcut == "⇧⌘G")
         #expect(entry.keywords == ["pr", "github", "browser", "review"])
     }

@@ -183,6 +183,17 @@ struct AppActions {
         return store.selectedProjectID.flatMap { pullRequests.info[$0]?.url }
     }
 
+    /// The menu and ⌘K title, with the number like the right-click menu's.
+    func pullRequestTitle(in pullRequests: PullRequests, macs: RemoteMacs) -> String {
+        let number: Int?
+        if let remote = store.selectedRemote {
+            number = macs.client(for: remote.host)?.snapshot?.projects.first { $0.id == remote.projectID }?.pullRequest?.number
+        } else {
+            number = store.selectedProjectID.flatMap { pullRequests.info[$0]?.number }
+        }
+        return number.map { "Open Pull Request #\($0)" } ?? "Open Pull Request"
+    }
+
     /// Opens the project's pull request in the browser, like the sidebar's
     /// Open Pull Request.
     func openPullRequest(in pullRequests: PullRequests, macs: RemoteMacs) {
@@ -278,7 +289,7 @@ struct AppActions {
             actions.append(CommandBarAction(id: "new-agent", title: "New Agent on a Branch…", symbol: "arrow.triangle.branch",
                                             shortcut: "⇧⌘N", keywords: ["worktree", "branch"]) { store.startNewAgent() })
             if let url = pullRequestURL(in: pullRequests, macs: macs) {
-                actions.append(CommandBarAction(id: "open-pull-request", title: "Open Pull Request", symbol: "arrow.triangle.pull",
+                actions.append(CommandBarAction(id: "open-pull-request", title: pullRequestTitle(in: pullRequests, macs: macs), symbol: "arrow.triangle.pull",
                                                 shortcut: "⇧⌘G", keywords: ["pr", "github", "browser", "review"]) { NSWorkspace.shared.open(url) })
             }
         }

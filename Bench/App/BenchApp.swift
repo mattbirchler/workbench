@@ -599,7 +599,7 @@ struct BenchCommands: Commands {
             Divider()
             Button(store.showsChanges ? "Hide Changes" : "Show Changes") { store.showsChanges.toggle() }
                 .keyboardShortcut("0", modifiers: [.command, .option])
-            Button("Open Pull Request") { actions.openPullRequest(in: pullRequests, macs: macs) }
+            Button(actions.pullRequestTitle(in: pullRequests, macs: macs)) { actions.openPullRequest(in: pullRequests, macs: macs) }
                 .keyboardShortcut("g", modifiers: [.command, .shift])
                 .disabled(actions.pullRequestURL(in: pullRequests, macs: macs) == nil)
             Button {
