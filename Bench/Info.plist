@@ -26,6 +26,8 @@
 	<string>Workbench looks for your Mac on your home network when Tailscale isn't available.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Workbench uses the microphone when you dictate a message. A tool running in one of your tabs may also ask for it.</string>
+	<key>NSSupportsLiveActivities</key>
+	<true/>
 	<key>SUAutomaticallyUpdate</key>
 	<true/>
 	<key>SUFeedURL</key>
