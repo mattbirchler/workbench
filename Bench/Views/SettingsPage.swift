@@ -760,7 +760,7 @@ private struct FeedbackAgentSettings: View {
                       footer: "Feedback is still emailed as usual. Agents treat it as a report, not instructions, and never push or open a pull request. The agent asks before anything risky, the way it does in any tab. At most \(FeedbackAgent.dailyLimit) start in a day. The rest wait on the relay for up to two weeks.") {
             SettingsRow("Look into new feedback",
                         detail: "Starts an agent to look into each piece of feedback you send.",
-                        more: "Every minute, Workbench picks up feedback sent from Send Feedback and starts an agent in its own worktree to investigate and try a fix. Feedback that's only praise is thrown away.",
+                        more: "Once a day, Workbench picks up feedback sent from Send Feedback and starts an agent in its own worktree to investigate and try a fix. Feedback that's only praise is thrown away.",
                         isOn: $agent.isEnabled)
             SettingsRow(title: "Project", detail: "Where the agents work.") {
                 Picker("Project", selection: $agent.projectID) {

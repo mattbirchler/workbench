@@ -37,6 +37,17 @@ public struct FeedbackItem: Codable, Sendable, Equatable, Identifiable {
 /// How an agent is set up to look into a feedback item: the files it
 /// reads, the branch it works on, and what it's asked to do.
 public enum FeedbackTask {
+    /// How long the Mac waits between looks at the relay's queue.
+    public static let checkInterval: TimeInterval = 24 * 60 * 60
+
+    /// Whether it's time to look again: never looked, a day has passed, or
+    /// the clock moved back past the last look.
+    public static func isCheckDue(lastCheck: Date?, now: Date) -> Bool {
+        guard let lastCheck else { return true }
+        let since = now.timeIntervalSince(lastCheck)
+        return since >= checkInterval || since < 0
+    }
+
     /// The folder in the worktree the feedback is saved in. Git ignores
     /// it, through a .gitignore inside it, so it's never committed.
     public static let folder = ".workbench-feedback"
