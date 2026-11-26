@@ -239,3 +239,21 @@ test("limits can be set from the environment", () => {
   assert.equal(limits.roomBytesPerDay, 500);
   assert.equal(limits.pingMs, DEFAULT_LIMITS.pingMs);
 });
+
+test("totals count what passed, and start over once taken", async () => {
+  const { relay, base } = await relayWith();
+  const mac = await host(base);
+  const phone = await guest(base, mac.id);
+  await mac.socket.next();
+  phone.send(Buffer.alloc(100));
+  await mac.socket.next();
+  mac.socket.send(toGuest(1, "four"));
+  await phone.next();
+  const wrong = open(`${base}/v1/rooms/${mac.id}/host`, { headers: { authorization: `Bearer ${newKey()}` } });
+  await wrong.next();
+
+  assert.deepEqual(relay.takeTotals(), { hosts: 1, guests: 1, frames: 2, bytes: 104, refused: 1, peakRooms: 1, peakGuests: 1 });
+  assert.deepEqual(relay.takeTotals(), { hosts: 0, guests: 0, frames: 0, bytes: 0, refused: 0, peakRooms: 1, peakGuests: 0 });
+  await relay.close();
+});
+

@@ -20,6 +20,12 @@ that come from the pairing code. The relay never has those keys.
 Nothing is written to disk and nothing is logged. The only state is in
 memory: which rooms are open, and how many bytes each has used today.
 
+With `POSTHOG_KEY` set, the relay sends one event an hour, `relay_hour`,
+with totals: Macs and devices that joined, frames and bytes carried,
+refusals, and the most rooms and devices open at once. No room ids and no
+addresses. Without the key it reports to nobody, which is how a relay you
+host for yourself runs. `POSTHOG_HOST` picks the PostHog region.
+
 ## How it works
 
 A Mac makes a random 32-byte key. The room's id is that key's SHA-256, so

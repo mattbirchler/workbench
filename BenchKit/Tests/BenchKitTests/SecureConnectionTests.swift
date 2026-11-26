@@ -98,8 +98,10 @@ struct CompanionClientRepairTests {
         #expect(client.currentSocket != nil)
         #expect(client.currentSocket !== first)
         // Closing a socket takes a moment.
-        for _ in 0..<40 where first?.state == .running { try? await Task.sleep(for: .milliseconds(25)) }
-        #expect(first?.state != .running)
+        let old = first as? URLSessionWebSocketTask
+        for _ in 0..<40 where old?.state == .running { try? await Task.sleep(for: .milliseconds(25)) }
+        #expect(old != nil)
+        #expect(old?.state != .running)
         client.disconnect()
     }
 

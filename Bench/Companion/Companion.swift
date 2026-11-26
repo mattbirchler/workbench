@@ -49,6 +49,10 @@ final class Companion {
     /// `servePath` is a guess, and a remembered identity keeps its path.
     @ObservationIgnored private var servePathKnown = false
     let server: CompanionServer
+    /// This Mac's room on the Workbench relay, for reaching it from away
+    /// without Tailscale. Off unless turned on.
+    let relay: CompanionRelay
+    @ObservationIgnored private let relayToken: TokenBox
     let push = CompanionPush()
     @ObservationIgnored private let sleepGuard = SleepGuard()
     @ObservationIgnored private let snapshots: CompanionSnapshots
@@ -77,6 +81,15 @@ final class Companion {
         var current = token
         server = CompanionServer(snapshots: snapshots, token: { current })
         tokenReader = { current = $0 }
+        let server = server
+        // The relay reads the token from a place it can reach off the main
+        // actor, kept in step with the one above.
+        let shared = TokenBox(token)
+        relayToken = shared
+        relay = CompanionRelay(support: BenchPaths.support, token: { shared.value }, accept: { server.accept(relay: $0) })
+        server.relayEndpoint = { [weak self] in self?.relay.endpoint }
+        server.onRelayUsage = { [weak self] in self?.relay.note($0) }
+        relay.onChange = { [weak self] in self?.server.relayChanged() }
         identityHost = UserDefaults.standard.string(forKey: Self.identityHostKey)
         server.onRegisterPush = { [weak self] token, device, sealed in self?.push.register(token: token, device: device, sealed: sealed) }
         push.pairingToken = token
@@ -215,9 +228,10 @@ final class Companion {
     var pairing: PairingInfo? {
         if let localIdentity, let identityHost {
             return PairingInfo(host: identityHost, token: token,
-                               local: .init(mac: localIdentity.macID, fingerprint: localIdentity.fingerprint))
+                               local: .init(mac: localIdentity.macID, fingerprint: localIdentity.fingerprint),
+                               relay: relay.endpoint)
         }
-        return address.map { PairingInfo(host: $0, token: token) }
+        return address.map { PairingInfo(host: $0, token: token, relay: relay.endpoint) }
     }
 
     /// Makes a new token. Paired phones have to scan the new code.
@@ -225,6 +239,10 @@ final class Companion {
         onTokenWillChange?(token)
         token = PairingInfo.makeToken()
         tokenReader(token)
+        relayToken.value = token
+        // A new code means a new room, so the old code can't find this
+        // Mac on the relay either.
+        relay.newRoom()
         push.pairingToken = token
         try? Data(token.utf8).write(to: Self.tokenFile, options: .atomic)
         // Readable by you only, as it is when first made.
@@ -235,6 +253,7 @@ final class Companion {
 
     private func start() {
         server.start()
+        relay.start()
         loadIdentity()
         Task { await publish() }
         activityTimer?.invalidate()
@@ -247,6 +266,7 @@ final class Companion {
     }
 
     private func stop() {
+        relay.stop()
         server.stop()
         isServing = false
         hasTailscale = false
@@ -318,5 +338,18 @@ final class Companion {
         try? Data(token.utf8).write(to: tokenFile, options: .atomic)
         try? FileManager.default.setAttributes([.posixPermissions: 0o600], ofItemAtPath: tokenFile.path)
         return token
+    }
+}
+
+/// The pairing token, readable from the relay's own task.
+nonisolated final class TokenBox: @unchecked Sendable {
+    private let lock = NSLock()
+    private var token: String
+
+    init(_ token: String) { self.token = token }
+
+    var value: String {
+        get { lock.withLock { token } }
+        set { lock.withLock { token = newValue } }
     }
 }

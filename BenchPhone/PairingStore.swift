@@ -129,6 +129,13 @@ final class PairingStore {
         names[host] ?? String(host.split(separator: ".").first ?? Substring(host))
     }
 
+    /// Keeps what a Mac said about its room on the relay with its pairing.
+    func setRelay(_ relay: RelayEndpoint?, for host: String) {
+        guard let index = macs.firstIndex(where: { $0.host == host }), macs[index].relay != relay else { return }
+        macs[index].relay = relay
+        save()
+    }
+
     private func save() {
         NotificationKeys.save(macs)
         guard !isEphemeral else { return }

@@ -76,6 +76,14 @@ enum Analytics {
         case iphoneEnabled = "iphone_enabled"
         case iphonePaired = "iphone_paired"
         case remoteMacAdded = "remote_mac_added"
+        /// The Workbench relay was turned on or off (property `on`).
+        case relayToggled = "relay_toggled"
+        /// Once a day on a Mac with the relay on: how much went through it
+        /// (connections, messages and bytes each way). Counts only.
+        case relayUsage = "relay_usage"
+        /// At most once a day for each way a client reached a Mac
+        /// (property `path`: tailscale, local or relay).
+        case connectionPath = "connection_path"
         case feedbackSent = "feedback_sent"
         case claudeModelUsed = "claude_model_used"
         case modelSwitched = "model_switched"
@@ -115,6 +123,15 @@ enum Analytics {
         guard started else { return }
         noteVersion()
         capture(.appLaunched, properties)
+    }
+
+    /// Notes how a client reached a Mac ("tailscale", "local" or "relay"),
+    /// at most once a day for each way.
+    static func connectionPath(_ name: String) {
+        let key = "analytics.connectionPath.\(name)", today = Int(Date.now.timeIntervalSince1970 / 86_400)
+        guard UserDefaults.standard.integer(forKey: key) != today else { return }
+        UserDefaults.standard.set(today, forKey: key)
+        capture(.connectionPath, ["path": name])
     }
 
     static func capture(_ event: Event, _ properties: [String: Any] = [:]) {

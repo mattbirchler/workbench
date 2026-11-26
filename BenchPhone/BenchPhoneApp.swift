@@ -15,7 +15,7 @@ struct BenchPhoneApp: App {
         // First, so a crash anywhere in launch is reported next time.
         Analytics.start()
         let client = CompanionClient(deviceName: UIDevice.current.name,
-                                     features: [CompanionFeature.turnTimes, CompanionFeature.results, CompanionFeature.interrupt, CompanionFeature.theme, CompanionFeature.queue, CompanionFeature.editQueue, CompanionFeature.agents, CompanionFeature.sendNow, CompanionFeature.placement, CompanionFeature.planUsage, CompanionFeature.artifacts, CompanionFeature.slashCommands, CompanionFeature.notificationPrefs, CompanionFeature.usage, CompanionFeature.imagePreviews, CompanionFeature.paging, CompanionFeature.sendTasks, CompanionFeature.agentLifecycle, CompanionFeature.shortcuts, CompanionFeature.branchControls, CompanionFeature.dashboard, CompanionFeature.codeReview, CompanionFeature.keepalive, CompanionFeature.sideQuestions])
+                                     features: [CompanionFeature.turnTimes, CompanionFeature.results, CompanionFeature.interrupt, CompanionFeature.theme, CompanionFeature.queue, CompanionFeature.editQueue, CompanionFeature.agents, CompanionFeature.sendNow, CompanionFeature.placement, CompanionFeature.planUsage, CompanionFeature.artifacts, CompanionFeature.slashCommands, CompanionFeature.notificationPrefs, CompanionFeature.usage, CompanionFeature.imagePreviews, CompanionFeature.paging, CompanionFeature.sendTasks, CompanionFeature.agentLifecycle, CompanionFeature.shortcuts, CompanionFeature.branchControls, CompanionFeature.dashboard, CompanionFeature.codeReview, CompanionFeature.keepalive, CompanionFeature.sideQuestions, CompanionFeature.relay])
         // The notification extension opens sealed notifications.
         client.opensSealedNotifications = true
         // Keeps each Mac's last project list, for when it's asleep.
@@ -24,6 +24,9 @@ struct BenchPhoneApp: App {
         _pairing = State(initialValue: pairing)
         Analytics.launched(["paired_macs": pairing.macs.count])
         client.onSend = { PhoneAnalytics.log($0) }
+        // The Mac says where its room on the relay is, so a pairing made
+        // before it turned the relay on doesn't need scanning again.
+        client.onRelayChange = { host, relay in pairing.setRelay(relay, for: host) }
         _client = State(initialValue: client)
         AppDelegate.client = client
         // Here rather than when the first screen appears: a button on a
@@ -94,6 +97,9 @@ struct BenchPhoneApp: App {
             }
             .onChange(of: client.status) { _, status in
                 if status == .connected { activities.resendTokens() }
+            }
+            .onChange(of: client.path) { _, path in
+                if let path { Analytics.connectionPath("\(path)") }
             }
             .onChange(of: client.started?.sessionID) { _, _ in
                 if let started = client.started {

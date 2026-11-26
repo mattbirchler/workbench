@@ -59,7 +59,8 @@ enum NotificationAnswers {
             own = nil
             client = main
         } else {
-            let fresh = CompanionClient(deviceName: UIDevice.current.name)
+            // With the relay, so an answer gets through away from home too.
+            let fresh = CompanionClient(deviceName: UIDevice.current.name, features: [CompanionFeature.relay])
             fresh.connect(info)
             own = fresh
             client = fresh

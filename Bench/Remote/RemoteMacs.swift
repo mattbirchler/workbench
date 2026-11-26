@@ -24,8 +24,11 @@ final class RemoteMacs {
         /// Its home-network side, from the pairing code. Nil for codes
         /// made before that existed.
         var local: PairingInfo.LocalEndpoint?
+        /// Its room on the Workbench relay, from the pairing code or from
+        /// the Mac itself once connected. Nil when it has none.
+        var relay: RelayEndpoint?
         var id: String { host }
-        var info: PairingInfo { PairingInfo(host: host, token: token, local: local) }
+        var info: PairingInfo { PairingInfo(host: host, token: token, local: local, relay: relay) }
     }
 
     private(set) var macs: [Mac] = []
@@ -92,7 +95,7 @@ final class RemoteMacs {
         let isNew = old == nil && !macs.contains { $0.host == info.host }
         if let old { forget(host: old) }
         macs.removeAll { $0.host == info.host }
-        let mac = Mac(host: info.host, token: info.token, name: name, local: info.local)
+        let mac = Mac(host: info.host, token: info.token, name: name, local: info.local, relay: info.relay)
         macs.append(mac)
         clients[info.host]?.disconnect()
         clients[info.host] = nil
@@ -180,11 +183,16 @@ final class RemoteMacs {
     private func connect(_ mac: Mac) {
         let client = CompanionClient(deviceName: Host.current().localizedName ?? "Mac",
                                      features: [CompanionFeature.turnTimes, CompanionFeature.results, CompanionFeature.interrupt, CompanionFeature.queue, CompanionFeature.editQueue, CompanionFeature.agents, CompanionFeature.sendNow, CompanionFeature.placement, CompanionFeature.branchControls, CompanionFeature.agentLifecycle, CompanionFeature.sendTasks, CompanionFeature.shortcuts,
-                                                CompanionFeature.imagePreviews, CompanionFeature.keepalive, CompanionFeature.sideQuestions])
+                                                CompanionFeature.imagePreviews, CompanionFeature.keepalive, CompanionFeature.sideQuestions, CompanionFeature.relay])
         clients[mac.host] = client
         let host = mac.host
         client.onFileSaved = { projectID, path, problem in
             RemoteFileDrafts.shared.saved(.init(host: host, projectID: projectID, path: path), problem: problem)
+        }
+        client.onRelayChange = { [weak self] host, relay in
+            guard let self, let index = self.macs.firstIndex(where: { $0.host == host }), self.macs[index].relay != relay else { return }
+            self.macs[index].relay = relay
+            self.save()
         }
         client.connect(mac.info)
         watchSessions(of: client, host: mac.host)

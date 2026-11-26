@@ -115,6 +115,10 @@ export async function startRelay({ port = 0, limits: given = {}, now = Date.now 
   // id -> { day, bytes }, kept after a room closes so a reconnect can't
   // reset its count.
   const used = new Map();
+  // Totals since the last time anyone asked, for a usage report. Counts
+  // only: no room ids, no addresses.
+  const fresh = () => ({ hosts: 0, guests: 0, frames: 0, bytes: 0, refused: 0, peakRooms: rooms.size, peakGuests: 0 });
+  let totals = fresh();
   const hostJoins = counter(60 * 60 * 1000, now);
   const guestJoins = counter(60 * 1000, now);
 
@@ -128,6 +132,8 @@ export async function startRelay({ port = 0, limits: given = {}, now = Date.now 
       used.set(id, entry);
     }
     entry.bytes += bytes;
+    totals.frames += 1;
+    totals.bytes += bytes;
     return entry.bytes <= limits.roomBytesPerDay;
   }
 
@@ -165,6 +171,8 @@ export async function startRelay({ port = 0, limits: given = {}, now = Date.now 
     if (rooms.size >= limits.maxRooms) return socket.close(CLOSE.overLimit, "relay full");
     const room = { host: socket, guests: new Map(), next: 1 };
     rooms.set(id, room);
+    totals.hosts += 1;
+    totals.peakRooms = Math.max(totals.peakRooms, rooms.size);
 
     socket.on("message", (data, isBinary) => {
       if (!isBinary) {
@@ -203,6 +211,10 @@ export async function startRelay({ port = 0, limits: given = {}, now = Date.now 
     const connection = room.next;
     room.next = room.next >= 0xffffffff ? 1 : room.next + 1;
     room.guests.set(connection, socket);
+    totals.guests += 1;
+    let open = 0;
+    for (const other of rooms.values()) open += other.guests.size;
+    totals.peakGuests = Math.max(totals.peakGuests, open);
     forward(room.host, JSON.stringify({ t: "open", c: connection }), false);
 
     const silent = setTimeout(() => socket.close(CLOSE.silent, "said nothing"), limits.firstFrameMs);
@@ -249,6 +261,12 @@ export async function startRelay({ port = 0, limits: given = {}, now = Date.now 
       // Refusals happen after the upgrade, so the app gets a close code it
       // can read. A failed HTTP upgrade tells it nothing.
       ws.on("error", () => ws.terminate());
+      // 4404 is a phone finding its Mac asleep, which isn't a refusal.
+      ws.on("close", (code) => {
+        if (code >= 4400 && code < 4500 && code !== CLOSE.hostOffline && code !== CLOSE.hostGone && code !== CLOSE.replaced) {
+          totals.refused += 1;
+        }
+      });
       ws.alive = true;
       ws.on("pong", () => (ws.alive = true));
       const caller = callerOf(request);
@@ -286,6 +304,12 @@ export async function startRelay({ port = 0, limits: given = {}, now = Date.now 
   return {
     port: server.address().port,
     rooms,
+    /// What happened since the last call, and starts counting again.
+    takeTotals() {
+      const taken = totals;
+      totals = fresh();
+      return taken;
+    },
     async close() {
       clearInterval(pings);
       for (const ws of sockets.clients) ws.close(1001, "relay restarting");

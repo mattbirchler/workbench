@@ -9,6 +9,9 @@ public struct PairingInfo: Codable, Sendable, Hashable {
     /// How to reach the Mac over the home network. Nil for codes made
     /// before that existed.
     public var local: LocalEndpoint?
+    /// The Mac's room on the Workbench relay, for reaching it from away
+    /// without Tailscale. Nil when the Mac hasn't turned that on.
+    public var relay: RelayEndpoint?
 
     /// The Mac's home-network side: its random Bonjour id and the
     /// certificate's SHA-256 fingerprint, in lowercase hex.
@@ -22,10 +25,11 @@ public struct PairingInfo: Codable, Sendable, Hashable {
         }
     }
 
-    public init(host: String, token: String, local: LocalEndpoint? = nil) {
+    public init(host: String, token: String, local: LocalEndpoint? = nil, relay: RelayEndpoint? = nil) {
         self.host = host
         self.token = token
         self.local = local
+        self.relay = relay
     }
 
     private static let localOnlySuffix = ".local-only.workbench"
@@ -55,7 +59,8 @@ public struct PairingInfo: Codable, Sendable, Hashable {
     }
 
     /// What the QR code holds: `bench://pair?host=…&token=…`, plus
-    /// `&mac=…&fp=…` when the Mac offers the home network.
+    /// `&mac=…&fp=…` when the Mac offers the home network and
+    /// `&relay=…&room=…` when it offers the relay.
     public var url: URL? {
         var parts = URLComponents()
         parts.scheme = "bench"
@@ -64,6 +69,10 @@ public struct PairingInfo: Codable, Sendable, Hashable {
         if let local {
             items.append(URLQueryItem(name: "mac", value: local.mac))
             items.append(URLQueryItem(name: "fp", value: local.fingerprint))
+        }
+        if let relay {
+            items.append(URLQueryItem(name: "relay", value: relay.url))
+            items.append(URLQueryItem(name: "room", value: relay.room))
         }
         parts.queryItems = items
         return parts.url
@@ -81,7 +90,14 @@ public struct PairingInfo: Codable, Sendable, Hashable {
            let fp = items.first(where: { $0.name == "fp" })?.value, !fp.isEmpty {
             local = LocalEndpoint(mac: mac, fingerprint: fp)
         }
-        self.init(host: host, token: token, local: local)
+        // The same for the relay, and only an address that makes sense.
+        var relay: RelayEndpoint?
+        if let address = items.first(where: { $0.name == "relay" })?.value,
+           let room = items.first(where: { $0.name == "room" })?.value {
+            let endpoint = RelayEndpoint(url: address, room: room)
+            if endpoint.relayURL != nil { relay = endpoint }
+        }
+        self.init(host: host, token: token, local: local, relay: relay)
     }
 
     /// A fresh token: 32 random bytes, as letters and digits.

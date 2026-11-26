@@ -21,11 +21,29 @@ public protocol RelaySocket: Sendable {
 public final class WebSocketRelaySocket: RelaySocket {
     private let task: URLSessionWebSocketTask
 
-    public init(request: URLRequest, session: URLSession = .shared) {
+    /// `pingEvery` checks the line that often and closes the socket when a
+    /// ping gets no answer, so an end that keeps a socket open for hours (a
+    /// Mac hosting its room) notices a network that went away quietly.
+    public init(request: URLRequest, session: URLSession = .shared, pingEvery: Duration? = nil) {
         task = session.webSocketTask(with: request)
         // The relay's own frames top out at 256 KB.
         task.maximumMessageSize = 1024 * 1024
         task.resume()
+        guard let pingEvery else { return }
+        let task = task
+        Task.detached {
+            while task.state == .running {
+                try? await Task.sleep(for: pingEvery)
+                guard task.state == .running else { return }
+                let answered = await withCheckedContinuation { (continuation: CheckedContinuation<Bool, Never>) in
+                    task.sendPing { continuation.resume(returning: $0 == nil) }
+                }
+                if !answered {
+                    task.cancel(with: .goingAway, reason: nil)
+                    return
+                }
+            }
+        }
     }
 
     public func send(_ frame: RelayFrame) {
@@ -136,7 +154,8 @@ public actor RelayHost {
 
     /// Hosts `room` on a relay. Call `run` to start.
     public init(relay: URL, room: RelayRoom, token: @escaping @Sendable () -> String, session: URLSession = .shared) {
-        self.init(socket: WebSocketRelaySocket(request: room.hostRequest(relay: relay), session: session), room: room.id, token: token)
+        self.init(socket: WebSocketRelaySocket(request: room.hostRequest(relay: relay), session: session, pingEvery: .seconds(25)),
+                  room: room.id, token: token)
     }
 
     /// The same over any socket.
