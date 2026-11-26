@@ -13,6 +13,16 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Martian+Mono:wdth,wght@75..112.5,300..700&display=swap">
 <link rel="stylesheet" href="assets/site.css">
 <script src="assets/site.js"></script>
+<style>
+  .agent-copy {
+    display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;
+    margin: 20px 0; padding: 16px 18px;
+    background: var(--surface-2); border: 1px solid var(--line-strong); border-radius: 12px;
+  }
+  .agent-copy div { flex: 1 1 260px; display: flex; flex-direction: column; gap: 4px; }
+  .agent-copy span { color: var(--muted, inherit); opacity: 0.8; font-size: 0.95em; }
+  .agent-copy .btn { cursor: pointer; font: inherit; font-weight: 600; font-size: 14px; }
+</style>
 </head>
 <body>
 <a class="skip" href="#main">Skip to content</a>
@@ -56,6 +66,36 @@
 
       <h2 id="host">Host your own</h2>
       <p>The relay is a small open source Node program. Run it yourself and nothing of yours goes through ours. It needs Node 22 or later, and a host that keeps one process running and passes WebSockets through.</p>
+      <div class="agent-copy">
+        <div>
+          <strong>Setting this up with an agent?</strong>
+          <span>Copy these steps as a prompt and paste them into Claude Code, Codex, or whatever you use.</span>
+        </div>
+        <button type="button" class="btn btn-primary btn-small" id="copy-for-agent">Copy for agent</button>
+      </div>
+      <script type="text/plain" id="agent-prompt">Set up my own Workbench relay and tell me its address.
+
+Background: Workbench (https://workbenchapp.dev) is a Mac app with an iPhone app. Its relay is a small Node WebSocket server that passes end-to-end encrypted messages between my Mac and my devices when they can't reach each other directly. It can't read what it carries, needs no database and no accounts, and writes nothing to disk. I want to run my own copy.
+
+Steps:
+1. Check that Node 22 or later and git are installed. If not, stop and tell me what's missing.
+2. Clone https://github.com/mattbirchler/workbench.git and go into its relay-live folder. Read relay-live/README.md first: it is the source of truth if anything here disagrees with it.
+3. Run `npm install`, then `npm test`. Stop and show me the output if a test fails.
+4. Ask me where I want to host it, unless I already said. It needs a host that keeps one Node process running, passes WebSockets through, and serves it over HTTPS so the address starts with wss://. Railway is the path the README documents:
+   railway login
+   railway init --name my-relay
+   railway add --service relay
+   railway up --service relay --ci
+   railway domain --service relay
+   On any other host, run `npm start` from relay-live. It listens on the port in the PORT environment variable.
+5. Run exactly one copy. Do not add replicas or put several copies behind a load balancer: a Mac and its devices have to land in the same process to find each other.
+6. Do not set POSTHOG_KEY. Without it the relay reports usage to nobody.
+7. Leave the limits at their defaults unless I ask. Each one is an environment variable listed under "Limits" in the README.
+8. Check it works: an HTTPS GET of /health on the new address should return JSON starting with {"ok":true.
+9. Finish by giving me the address in the form wss://my-relay.example and these instructions: on the Mac, open Workbench > Settings > Remote Access, turn on "Workbench relay", and paste the address into "Relay server". The Relay row under Status should then say Connected. Devices that are already paired pick up the new address the next time they connect.
+
+Ask before doing anything that costs money or creates an account for me.</script>
+      <p>Or follow the steps yourself:</p>
       <ol>
         <li>Get the code. It's the <a href="https://github.com/mattbirchler/workbench/tree/main/relay-live"><code>relay-live</code></a> folder of the Workbench repository.
           <pre><code>git clone https://github.com/mattbirchler/workbench.git
@@ -86,6 +126,38 @@ railway domain --service relay</code></pre>
       </ul>
     </article>
   </div>
+  <script>
+    (function () {
+      var button = document.getElementById("copy-for-agent");
+      var text = document.getElementById("agent-prompt").textContent.trim();
+      var reset;
+      function done(label) {
+        button.textContent = label;
+        clearTimeout(reset);
+        reset = setTimeout(function () { button.textContent = "Copy for agent"; }, 2000);
+      }
+      function fallback() {
+        var area = document.createElement("textarea");
+        area.value = text;
+        area.setAttribute("readonly", "");
+        area.style.position = "fixed";
+        area.style.opacity = "0";
+        document.body.appendChild(area);
+        area.select();
+        var ok = false;
+        try { ok = document.execCommand("copy"); } catch (e) {}
+        document.body.removeChild(area);
+        done(ok ? "Copied" : "Couldn't copy");
+      }
+      button.addEventListener("click", function () {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).then(function () { done("Copied"); }, fallback);
+        } else {
+          fallback();
+        }
+      });
+    })();
+  </script>
 </main>
 
 <footer class="site-footer">
