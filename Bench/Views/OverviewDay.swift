@@ -78,6 +78,12 @@ struct OverviewDay: View {
         return result
     }
 
+    /// A project's name in a row: an agent's worktree goes by its branch,
+    /// under its project's icon.
+    static func label(_ project: Project) -> String {
+        project.isWorktree ? (project.branch ?? project.name) : project.name
+    }
+
     private func open(_ project: Project) {
         // The tab that needs you, or is working, when there is one.
         let tab = items.first { $0.project.id == project.id && $0.activity == .waiting }
@@ -108,21 +114,29 @@ struct OverviewDay: View {
     private func tiles(_ rows: [(project: Project, day: ProjectDay)]) -> some View {
         let waiting = activity.waitingTime
         let prompts = activity.promptCount
-        return LazyVGrid(columns: [GridItem(.adaptive(minimum: 190), spacing: 12, alignment: .top)], spacing: 12) {
-            DayTile(caption: rows.count == 1 ? "of agent work in 1 project" : "of agent work across \(rows.count) projects") {
-                Text(DayText.duration(activity.workingTime))
+        let work = DayTile(caption: rows.count == 1 ? "of agent work in 1 project" : "of agent work across \(rows.count) projects") {
+            Text(DayText.duration(activity.workingTime))
+        }
+        let asked = DayTile(caption: prompts == 1 ? "prompt from you" : "prompts from you") {
+            Text(prompts.formatted())
+        }
+        let lines = DayTile(caption: "lines written and removed by agents") {
+            HStack(spacing: 8) {
+                Text("+\(activity.linesAdded.formatted())").foregroundStyle(Theme.Status.done)
+                Text("−\(activity.linesRemoved.formatted())").foregroundStyle(Theme.Status.failed)
             }
-            DayTile(caption: prompts == 1 ? "prompt from you" : "prompts from you") {
-                Text(prompts.formatted())
+        }
+        let waited = DayTile(caption: "agents spent waiting on you", tint: waiting >= 60 ? Theme.Status.waiting : nil) {
+            Text(DayText.duration(waiting))
+        }
+        // Four across, or two rows of two in a narrow window.
+        return ViewThatFits(in: .horizontal) {
+            HStack(alignment: .top, spacing: 12) {
+                Group { work; asked; lines; waited }.frame(minWidth: 170)
             }
-            DayTile(caption: "lines written and removed by agents") {
-                HStack(spacing: 8) {
-                    Text("+\(activity.linesAdded.formatted())").foregroundStyle(Theme.Status.done)
-                    Text("−\(activity.linesRemoved.formatted())").foregroundStyle(Theme.Status.failed)
-                }
-            }
-            DayTile(caption: "agents spent waiting on you", tint: waiting >= 60 ? Theme.Status.waiting : nil) {
-                Text(DayText.duration(waiting))
+            Grid(alignment: .topLeading, horizontalSpacing: 12, verticalSpacing: 12) {
+                GridRow { work; asked }
+                GridRow { lines; waited }
             }
         }
     }
@@ -143,7 +157,9 @@ struct OverviewDay: View {
         let readAt = activity.readAt ?? .now
         var events: [Event] = []
         for (project, day) in rows {
-            for span in day.work {
+            // Work still going. Finished work is in the feed as its finish.
+            if daysBack == 0, let span = day.work.last, readAt.timeIntervalSince(span.end) < 2,
+               items.contains(where: { $0.project.id == project.id && $0.activity == .working }) {
                 events.append(Event(id: "s\(project.id)\(span.start.timeIntervalSince1970)", at: span.start, project: project, kind: .started, text: span.text))
             }
             for wait in day.waits {
@@ -153,7 +169,8 @@ struct OverviewDay: View {
                 events.append(Event(id: "w\(project.id)\(wait.start.timeIntervalSince1970)", at: wait.start, project: project,
                                     kind: stillWaiting ? .needsYou : .waited, text: wait.text, length: wait.duration))
             }
-            for finish in day.finishes {
+            // Claude Code's own note for a background report isn't news.
+            for finish in day.finishes where finish.summary != "No response requested." {
                 events.append(Event(id: "f\(project.id)\(finish.at.timeIntervalSince1970)", at: finish.at, project: project, kind: .finished,
                                     text: finish.summary ?? finish.prompt))
             }
@@ -188,7 +205,7 @@ struct OverviewDay: View {
 
     private func row(_ event: Event) -> some View {
         let (color, verb): (Color, String) = switch event.kind {
-        case .started: (ActivityBackground.working, "started.")
+        case .started: (ActivityBackground.working, "is working.")
         case .needsYou: (Theme.Status.waiting, "needs you.")
         case .waited: (Theme.Status.waiting, "waited \(DayText.duration(event.length)) for you.")
         case .finished: (Theme.Status.done, "finished.")
@@ -200,7 +217,7 @@ struct OverviewDay: View {
                     .foregroundStyle(.secondary)
                     .frame(width: 62, alignment: .leading)
                 Circle().fill(color).frame(width: 8, height: 8)
-                (Text("\(event.project.name) \(verb)").fontWeight(.semibold)
+                (Text("\(OverviewDay.label(event.project)) \(verb)").fontWeight(.semibold)
                     + Text(event.text.map { " \($0)" } ?? "").foregroundStyle(.secondary))
                     .font(.ui(size: 13))
                     .lineLimit(2)
@@ -233,7 +250,7 @@ struct OverviewDay: View {
                 ForEach(top, id: \.project.id) { project, day in
                     HStack(spacing: 10) {
                         ProjectIcon(project: project, image: icons.image(for: project), size: 16)
-                        Text(project.name)
+                        Text(OverviewDay.label(project))
                             .lineLimit(1)
                             .frame(width: 96, alignment: .leading)
                         GeometryReader { geo in
@@ -295,7 +312,7 @@ private struct DayTimelinePanel: View {
     let readAt: Date
     let open: (Project) -> Void
 
-    private static let labelWidth: CGFloat = 140
+    private static let labelWidth: CGFloat = 168
 
     /// The hours on show: from the first activity to a little past now,
     /// and never less than six hours.
@@ -332,10 +349,10 @@ private struct DayTimelinePanel: View {
                     Button { open(project) } label: {
                         HStack(spacing: 8) {
                             ProjectIcon(project: project, image: icons.image(for: project), size: 16)
-                            Text(project.name)
-                                .font(.ui(size: 13, weight: .semibold))
+                            Text(OverviewDay.label(project))
+                                .font(.ui(size: 13, weight: project.isWorktree ? .regular : .semibold))
                                 .lineLimit(1)
-                                .truncationMode(.middle)
+                                .truncationMode(.tail)
                             Spacer(minLength: 4)
                         }
                         .contentShape(Rectangle())
@@ -387,12 +404,12 @@ private struct DayTimelinePanel: View {
                 ForEach(day.waits, id: \.self) { span in
                     bar(span, color: Theme.Status.waiting, x: x)
                 }
-                ForEach(day.finishes, id: \.self) { finish in
+                ForEach(Self.stops(in: day), id: \.self) { finish in
                     Circle()
                         .fill(Theme.Status.done)
-                        .frame(width: 10, height: 10)
+                        .frame(width: 9, height: 9)
                         .overlay(Circle().strokeBorder(Color(nsColor: .controlBackgroundColor), lineWidth: 1.5))
-                        .offset(x: x(finish.at) - 5)
+                        .offset(x: x(finish.at) - 4.5)
                         .help("Finished at \(finish.at.formatted(date: .omitted, time: .shortened))" + (finish.summary.map { "\n\($0)" } ?? ""))
                 }
                 if isToday {
@@ -407,6 +424,14 @@ private struct DayTimelinePanel: View {
         .frame(height: 22)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("\(DayText.duration(day.workingTime)) working, \(DayText.duration(day.waitingTime)) waiting on you")
+    }
+
+    /// The finishes worth a mark: where the work stopped for a while. In a
+    /// back-and-forth, every reply is a finish, and a dot on each hides the bars.
+    static func stops(in day: ProjectDay) -> [DayFinish] {
+        day.finishes.filter { finish in
+            !day.work.contains { $0.start > finish.at && $0.start.timeIntervalSince(finish.at) < 10 * 60 }
+        }
     }
 
     private func bar(_ span: DaySpan, color: Color, x: (Date) -> CGFloat) -> some View {
@@ -459,7 +484,7 @@ private struct DayTimelinePanel: View {
     }
 
     private func longestWait(_ project: Project, _ wait: DaySpan) -> some View {
-        Text("Longest wait: \(project.name), \(DayText.duration(wait.duration)) from \(wait.start.formatted(date: .omitted, time: .shortened))")
+        Text("Longest wait: \(OverviewDay.label(project)), \(DayText.duration(wait.duration)) from \(wait.start.formatted(date: .omitted, time: .shortened))")
             .lineLimit(1)
             .help(wait.text ?? "")
     }
