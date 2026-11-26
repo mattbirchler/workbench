@@ -1,4 +1,6 @@
-New in this build: answering from notifications, widgets, and git actions from the phone. Several of these need the newest Workbench on your Mac. With an older Mac they simply won't appear.
+New in this build: reach your Mac from anywhere without Tailscale, through the Workbench relay. It needs the newest Workbench on your Mac, with "Use the Workbench relay" turned on in Settings > iPhone. Also in this build: answering from notifications, widgets, and git actions from the phone. Several of these need the newest Workbench on your Mac. With an older Mac they simply won't appear.
+
+• The Workbench relay. Once your Mac has it turned on, open the app once on your home Wi-Fi or Tailscale so the phone learns about it (no need to scan again). After that it connects from anywhere. Your home network and Tailscale are still used first when they answer. Settings shows which way you're connected. Messages are sealed on your devices, so the relay can't read them.
 
 • Answer from a notification. Long press a "needs you" notification for Allow, Deny and Reply, or a "finished" one for Reply. The answer goes to your Mac without opening the app. Allow and Reply ask you to unlock first. If it can't be sent, a second notification tells you. (Needs the new Mac build.)
 
@@ -12,4 +14,4 @@ New in this build: answering from notifications, widgets, and git actions from t
 
 • Fixed: on a narrow screen (an iPhone Duo's outer display) the model and permission pills pushed the whole chat off the left edge. The permission pill now shrinks to its symbol when there isn't room.
 
-Things to look for: notification buttons that don't show or don't reach the Mac, an Allow that answers the wrong question, widgets that stay empty after you've opened the app, dashboard colors that are hard to read on your wallpaper, and git actions that finish without saying how they went.
+Things to look for: slow or failed connections away from home with Tailscale off, a connection that stays on the relay when you're back home, notification buttons that don't show or don't reach the Mac, an Allow that answers the wrong question, widgets that stay empty after you've opened the app, dashboard colors that are hard to read on your wallpaper, and git actions that finish without saying how they went.
