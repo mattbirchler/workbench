@@ -1,4 +1,4 @@
-Workbench's iPhone app is a companion to Workbench, a free Mac app. It connects to Workbench on the user's own Mac over their private Tailscale network, so it can't connect to anything without that setup.
+Workbench's iPhone app is a companion to Workbench, a free Mac app. It connects to Workbench on the user's own Mac: over their home network, their private Tailscale network, or an optional end-to-end encrypted relay the user turns on in the Mac app. It can't connect to anything without a Mac running Workbench.
 
 To review the app without a Mac, tap "Try a Demo" on the first screen. The demo shows sample projects served from inside the app: a session that updates every few seconds, one waiting for Allow or Deny, a finished agent with a pull request, and changed files with diffs. You can reply to a session, tap Allow or Deny, and browse changes and files. Exit the demo from Settings (the gear button at the top of the project list).
 

@@ -1,6 +1,6 @@
 Workbench lets you keep an eye on Claude Code sessions running on your Mac, from your iPhone.
 
-Workbench is a free Mac app that runs Claude Code in tabs, one window per project. This app connects to it over your own Tailscale network, so you can step away from your desk and still know what Claude is doing.
+Workbench is a free Mac app that runs Claude Code in tabs, one window per project. This app connects to it over your home network, your own Tailscale network, or Workbench's optional encrypted relay, so you can step away from your desk and still know what Claude is doing.
 
 SEE EVERY SESSION
 Each project shows whether Claude is working, done, or waiting on you, with a running timer and its checklist.
@@ -15,9 +15,9 @@ START NEW WORK
 Open a new Claude session, start an agent in its own branch, or resume a past conversation.
 
 PRIVATE BY DESIGN
-Your phone talks straight to your Mac over Tailscale. Nothing goes through our servers, and the app collects no data.
+At home and over Tailscale, your phone talks straight to your Mac with no server in between. If you turn on the optional Workbench relay to connect from anywhere without Tailscale, everything is encrypted on your devices and the relay can't read it. The app collects no data.
 
-Requires Workbench on a Mac with Apple silicon, Claude Code, and Tailscale on both devices. Get Workbench at workbenchapp.dev.
+Requires Workbench on a Mac with Apple silicon, and Claude Code. To connect away from home, use Tailscale on both devices or turn on the Workbench relay on your Mac. Get Workbench at workbenchapp.dev.
 
 Not sure yet? Tap Try a Demo on the first screen to explore with sample projects.
 

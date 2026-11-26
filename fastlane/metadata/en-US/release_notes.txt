@@ -1,3 +1,6 @@
+REACH YOUR MAC WITHOUT TAILSCALE
+With the newest Workbench on your Mac, you can turn on the Workbench relay in Settings > Remote Access and connect from anywhere, with no account and nothing else to install. Your home network and Tailscale are still used first, and the relay steps in only when neither connects. Everything is encrypted on your devices, so the relay can't read it.
+
 ANSWER WITHOUT OPENING A SESSION
 A session waiting on permission shows its command with Deny and Allow right on its row, and a plain question shows its answers as buttons. With the newest Workbench on your Mac, notifications have Allow, Deny and Reply buttons too.
 
