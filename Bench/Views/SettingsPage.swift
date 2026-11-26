@@ -312,6 +312,7 @@ private struct GeneralSettings: View {
     @AppStorage(PlanUsageMonitor.paceKey) private var showsPace = true
     @AppStorage(Analytics.optedOutKey) private var analyticsOptedOut = false
     @AppStorage(MenuBarItem.shownKey) private var showsMenuBarIcon = false
+    @AppStorage("showsLiveActivity") private var showsLiveActivity = false
 
     var body: some View {
         KeepWorkingSettings()
@@ -378,6 +379,14 @@ private struct GeneralSettings: View {
                         detail: "An icon that counts the agents working or waiting for you.",
                         more: "The icon shows how many agents are waiting for you, or how many are working when none are waiting. Click it for a list of them, and click one to jump to its tab. Handy when Workbench is behind other windows.",
                         isOn: $showsMenuBarIcon)
+            #if compiler(>=6.4.4)
+            if #available(macOS 27.3, *) {
+                SettingsRow("Show sessions as a Live Activity",
+                            detail: "Counts in the menu bar while agents are working or waiting. Click for the list.",
+                            more: "While any agent is working, waiting for you, or has just finished, a Live Activity sits in the menu bar (or the Dynamic Island on a MacBook that has one). It opens by itself when an agent starts waiting for you, and goes away once everything is quiet.",
+                            isOn: $showsLiveActivity)
+            }
+            #endif
         }
         SettingsGroup(title: "Privacy") {
             SettingsRow("Share anonymous usage data",

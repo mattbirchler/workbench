@@ -432,6 +432,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     static weak var terminals: TerminalManager?
     static weak var store: AppStore?
     private var menuBarItem: MenuBarItem?
+    /// A `MenuBarActivity`, on macOS 27.3 and later. Untyped so it can be
+    /// stored on older systems too.
+    private var menuBarActivity: AnyObject?
     /// Set once you've already agreed to a restart, so quitting doesn't ask again.
     static var skipsQuitConfirmation = false
 
@@ -457,6 +460,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             item.remove()
             menuBarItem = nil
         }
+        #if compiler(>=6.4.4)
+        if #available(macOS 27.3, *) {
+            let wanted = MenuBarActivity.isShown
+            if wanted, menuBarActivity == nil, let store = Self.store, let terminals = Self.terminals {
+                menuBarActivity = MenuBarActivity(store: store, terminals: terminals)
+            } else if !wanted, let activity = menuBarActivity as? MenuBarActivity {
+                activity.remove()
+                menuBarActivity = nil
+            }
+        }
+        #endif
     }
 
     /// Closing the window leaves Workbench running, as Mac apps do. Its
