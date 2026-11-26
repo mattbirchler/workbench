@@ -1,10 +1,11 @@
-# The relay's tests, on pull requests that change it. Linux, a few seconds.
+# The relays' tests, on pull requests that change them. Linux, a few seconds.
 name: Relay
 
 on:
   pull_request:
     paths:
       - "relay/**"
+      - "relay-live/**"
       - ".github/workflows/relay.yml"
 
 permissions:
@@ -22,3 +23,17 @@ jobs:
           node-version: 24
       - run: npm test
         working-directory: relay
+
+  live:
+    name: Live relay
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+      - run: npm ci
+        working-directory: relay-live
+      - run: npm test
+        working-directory: relay-live
