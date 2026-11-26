@@ -98,4 +98,71 @@ import Testing
         let tailscaleOnly = ConnectionRace(hasTailscale: true, hasLocal: false)
         #expect(!tailscaleOnly.waitsOnClock)
     }
+
+    // MARK: The relay
+
+    /// Away from home with no Tailscale: the home network gets a moment,
+    /// then the relay starts, answers, and wins after a short hold.
+    @Test func theRelayWinsWhenTheHomeNetworkDoesntAnswer() {
+        var race = ConnectionRace(hasTailscale: false, hasLocal: true, hasRelay: true)
+        #expect(race.startsLocal(at: 0))
+        #expect(!race.startsRelay(at: 0.4))
+        #expect(race.startsRelay(at: 0.5))
+        do { let got = race.welcomed(.relay, at: 0.9); #expect(got == nil) }
+        do { let got = race.tick(at: 1.5); #expect(got == nil) }
+        do { let got = race.tick(at: 1.6); #expect(got == .relay) }
+    }
+
+    /// At home the home network answers during the relay's hold, and wins.
+    @Test func aDirectPathThatAnswersInTimeBeatsTheRelay() {
+        var race = ConnectionRace(hasTailscale: false, hasLocal: true, hasRelay: true)
+        do { let got = race.welcomed(.relay, at: 0.9); #expect(got == nil) }
+        do { let got = race.welcomed(.local, at: 1.2); #expect(got == .local) }
+
+        var both = ConnectionRace(hasTailscale: true, hasLocal: true, hasRelay: true)
+        #expect(!both.startsRelay(at: 1.4))
+        #expect(both.startsRelay(at: 1.5))
+        do { let got = both.welcomed(.relay, at: 1.8); #expect(got == nil) }
+        do { let got = both.welcomed(.tailscale, at: 2.0); #expect(got == .tailscale) }
+    }
+
+    /// The home network answered and is waiting out its hold for Tailscale.
+    /// The relay answering in that time doesn't take the connection.
+    @Test func theRelayNeverBeatsAHomeNetworkThatHasAnswered() {
+        var race = ConnectionRace(hasTailscale: true, hasLocal: true, hasRelay: true)
+        do { let got = race.welcomed(.local, at: 1.7); #expect(got == nil) }
+        do { let got = race.welcomed(.relay, at: 1.8); #expect(got == nil) }
+        do { let got = race.tick(at: 2.6); #expect(got == .local) }
+    }
+
+    /// With every direct path out, the relay starts and wins at once.
+    @Test func theRelayGoesStraightAwayOnceNothingElseIsLeft() {
+        var only = ConnectionRace(hasTailscale: false, hasLocal: false, hasRelay: true)
+        #expect(only.startsRelay(at: 0))
+        do { let got = only.welcomed(.relay, at: 0.3); #expect(got == .relay) }
+
+        var race = ConnectionRace(hasTailscale: true, hasLocal: true, hasRelay: true)
+        do { let got = race.failed(.tailscale); #expect(!got) }
+        #expect(!race.startsRelay(at: 0.1))
+        do { let got = race.failed(.local); #expect(!got) }
+        #expect(race.startsRelay(at: 0.1))
+        do { let got = race.welcomed(.relay, at: 0.4); #expect(got == .relay) }
+    }
+
+    @Test func everythingFailingIncludesTheRelay() {
+        var race = ConnectionRace(hasTailscale: true, hasLocal: true, hasRelay: true)
+        do { let got = race.failed(.tailscale); #expect(!got) }
+        do { let got = race.failed(.local); #expect(!got) }
+        #expect(race.waitsOnClock)
+        do { let got = race.failed(.relay); #expect(got) }
+        #expect(!race.waitsOnClock)
+    }
+
+    /// Without a relay nothing changes.
+    @Test func noRelayNoChange() {
+        var race = ConnectionRace(hasTailscale: true, hasLocal: true)
+        #expect(!race.startsRelay(at: 100))
+        do { let got = race.failed(.tailscale); #expect(!got) }
+        do { let got = race.failed(.local); #expect(got) }
+    }
 }
