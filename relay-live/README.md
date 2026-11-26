@@ -90,17 +90,28 @@ PORT=8080 npm start
 
 ## Deploy on Railway
 
+Ours runs as the `relay` service in the Railway project `workbench-relay`.
+To deploy a change:
+
 ```sh
 cd relay-live
-railway login          # once
-railway init           # once: a project, such as "workbench-relay"
-railway up             # builds from package.json and starts `node start.js`
-railway domain         # once: gives the service a public address
+railway up --service relay --ci
 ```
 
-In the service's settings, set the root directory to `relay-live` if it's
-deployed from the GitHub repo instead of `railway up`. `railway.json` sets
-the start command and the `/health` check.
+Setting one up from nothing:
+
+```sh
+cd relay-live
+railway login                              # once
+railway init --name workbench-relay        # a project
+railway add --service relay                # an empty service in it
+railway up --service relay --ci            # builds from package.json, runs `npm start`
+railway domain --service relay             # a public address
+```
+
+Railway reads the start command from `package.json`. If the service is
+deployed from the GitHub repo instead of `railway up`, set its root
+directory to `relay-live`.
 
 Keep it at **one replica**. A room lives in one process, so with two, a
 Mac and its phone could land on different ones and never meet. More than
