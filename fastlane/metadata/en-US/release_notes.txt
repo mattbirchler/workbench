@@ -1,12 +1,19 @@
-CODEX SESSIONS
-If you run Codex in Workbench 0.10 on your Mac, its sessions show up here as Codex: their name in the list and the chat, their permission cards, and their own models and effort levels when you switch models.
+ANSWER WITHOUT OPENING A SESSION
+A session waiting on permission shows its command with Deny and Allow right on its row, and a plain question shows its answers as buttons. With the newest Workbench on your Mac, notifications have Allow, Deny and Reply buttons too.
 
-WORKBENCH'S OWN COLORS
-The plain System look now uses Workbench's blue (mint in dark mode) instead of Claude's orange, from the very first screen.
+A LIST THAT LEADS WITH WHAT NEEDS YOU
+The title is now a headline like "2 need you". Rows show checklist progress step by step, pull requests and their checks, and how much is uncommitted. The current step gets the whole row.
 
-READY FOR IPHONE DUO
-In a chat, Back, Changes and the menu sit in the bar down the side of the screen when the Duo is closed, or open and turned sideways. The welcome and pairing screens are centered on an open Duo, and a diff's colors run to the edge of the screen.
+A CLEARER CHAT
+The status has a line of its own. The model and a new permission mode switch sit in the message box. A finished turn lists the files it changed, and typing @ suggests files and folders.
+
+COMMIT, PUSH AND OPEN A PULL REQUEST
+The Changes screen has a button for the next step. It asks the project's agent to do it and shows how it went.
+
+WIDGETS
+Add Sessions to your Home Screen or Lock Screen to see what needs you and what's working. The Lock Screen dashboard shows checklist steps and uses your theme.
 
 MORE
-A one-line command no longer gets a permission card seven lines tall.
-The welcome screen shows the app's real icon.
+New Agent is a full page, Files can search the whole project, and Past Sessions are easier to scan.
+Haptics when a session finishes, a step completes, or you answer.
+Fixed the chat sliding off the left edge on an iPhone Duo's outer display.
