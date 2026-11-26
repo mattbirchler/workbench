@@ -993,6 +993,7 @@ private struct ProjectRow: View {
         Button("Show in Finder") {
             NSWorkspace.shared.activateFileViewerSelecting([project.url])
         }
+        Button(Editors.menuTitle) { Editors.open(project.url) }
         phoneToggle
         Divider()
         if project.isExternalWorktree {
@@ -1044,6 +1045,7 @@ private struct ProjectRow: View {
         Button("Show in Finder") {
             NSWorkspace.shared.activateFileViewerSelecting([project.url])
         }
+        Button(Editors.menuTitle) { Editors.open(project.url) }
         if project.hiddenWorktrees?.isEmpty == false {
             Button("Show Hidden Worktrees") { store.showHiddenWorktrees(of: project.id) }
         }

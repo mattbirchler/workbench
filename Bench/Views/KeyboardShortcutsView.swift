@@ -24,6 +24,7 @@ struct KeyboardShortcutsView: View {
                 Key(action: "Next session needing you", keys: "⌘J"),
                 Key(action: "Overview", keys: "⇧⌘O"),
                 Key(action: "Add a project", keys: "⌘O"),
+                Key(action: "Open the project in your editor", keys: "⇧⌘E"),
                 Key(action: "New tab", keys: "⌘T"),
                 Key(action: "New agent tab", keys: "⌘T twice"),
                 Key(action: "New shell tab", keys: "⇧⌘T"),
