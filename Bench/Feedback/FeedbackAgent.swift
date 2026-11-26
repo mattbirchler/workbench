@@ -4,7 +4,7 @@ import Observation
 import UserNotifications
 
 /// Looks into feedback on its own. When it's on, Workbench checks the
-/// relay's feedback queue every minute and starts an agent for each new
+/// relay's feedback queue once a day and starts an agent for each new
 /// message, in its own worktree of the chosen project, with the message
 /// and screenshots saved there for it to read. Meant for the developer's
 /// own Mac, so it's hidden until `availableKey` is set.
@@ -22,6 +22,7 @@ final class FeedbackAgent {
     private static let secretKey = "feedbackAgentSecret"
     private static let startsKey = "feedbackAgentStarts"
     private static let worktreesKey = "feedbackAgentWorktrees"
+    private static let lastCheckKey = "feedbackAgentLastCheck"
 
     static let dailyLimit = 5
     static var queueURL: URL {
@@ -31,12 +32,16 @@ final class FeedbackAgent {
         #endif
         return PushSender.relayURL.deletingLastPathComponent().appendingPathComponent("feedback-queue")
     }
-    private static let interval: TimeInterval = 60
+    /// How often to see whether a day has gone by since the queue last
+    /// answered. Only that daily check reaches the relay: every request
+    /// there counts against the queue database's monthly allowance. A
+    /// check that failed is tried again on the next tick.
+    private static let tick: TimeInterval = 60 * 60
 
     var isEnabled: Bool {
         didSet {
             UserDefaults.standard.set(isEnabled, forKey: Self.enabledKey)
-            if isEnabled { checkSoon() } else { status = nil }
+            if isEnabled { checkSoon(force: true) } else { status = nil }
         }
     }
 
@@ -77,8 +82,8 @@ final class FeedbackAgent {
         secret = defaults.string(forKey: Self.secretKey) ?? ""
         starts = (defaults.array(forKey: Self.startsKey) as? [Date]) ?? []
         worktrees = Set((defaults.stringArray(forKey: Self.worktreesKey) ?? []).compactMap(UUID.init))
-        timer = Timer.scheduledTimer(withTimeInterval: Self.interval, repeats: true) { [weak self] _ in
-            MainActor.assumeIsolated { self?.check() }
+        timer = Timer.scheduledTimer(withTimeInterval: Self.tick, repeats: true) { [weak self] _ in
+            MainActor.assumeIsolated { self?.checkIfDue() }
         }
         if isEnabled { checkSoon() }
     }
@@ -94,21 +99,32 @@ final class FeedbackAgent {
         starts.filter { Date().timeIntervalSince($0) < 24 * 60 * 60 }.count
     }
 
-    private func checkSoon() {
-        DispatchQueue.main.asyncAfter(deadline: .now() + 3) { [weak self] in self?.check() }
+    private func checkSoon(force: Bool = false) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 3) { [weak self] in
+            if force { self?.check() } else { self?.checkIfDue() }
+        }
+    }
+
+    /// The daily check: does nothing until a day has passed since the
+    /// queue last answered, so relaunching doesn't ask again.
+    private func checkIfDue() {
+        let last = UserDefaults.standard.object(forKey: Self.lastCheckKey) as? Date
+        guard FeedbackTask.isCheckDue(lastCheck: last, now: Date()) else { return }
+        check()
     }
 
     // MARK: Checking
 
     /// Picks up waiting feedback and starts an agent for each, up to the
-    /// daily limit.
+    /// daily limit. Asks the relay right away, whenever it last did: this
+    /// is what Check Now and turning the agent on do.
     func check() {
         guard isEnabled, isReady, !isChecking, Self.isAvailable else { return }
         isChecking = true
         Task {
             defer { isChecking = false }
-            // A few per check, so a pile of messages doesn't start them all at once.
-            for _ in 0..<3 {
+            // The daily limit is the brake on a pile of messages.
+            for _ in 0..<Self.dailyLimit {
                 guard startsToday < Self.dailyLimit else {
                     report("Paused: \(Self.dailyLimit) agents started in the last day. The rest wait on the relay.", problem: false)
                     return
@@ -120,6 +136,7 @@ final class FeedbackAgent {
                     report(error.localizedDescription, problem: true)
                     return
                 }
+                UserDefaults.standard.set(Date(), forKey: Self.lastCheckKey)
                 guard let item = answer.item else {
                     // Keep the last thing that happened on screen, unless it was a problem.
                     if status == nil || isProblem { report("No feedback waiting.", problem: false) }
@@ -144,7 +161,7 @@ final class FeedbackAgent {
         do {
             (data, response) = try await URLSession.shared.data(for: request)
         } catch {
-            throw Failure(message: "Couldn't reach the feedback queue. Workbench tries again in a minute.")
+            throw Failure(message: "Couldn't reach the feedback queue. Workbench tries again in an hour.")
         }
         let status = (response as? HTTPURLResponse)?.statusCode ?? 0
         guard status == 200 else {

@@ -16,6 +16,16 @@ struct FeedbackTaskTests {
         #expect(empty.item == nil)
     }
 
+    @Test func checksOnceADay() {
+        let now = Date(timeIntervalSince1970: 1_800_000_000)
+        #expect(FeedbackTask.isCheckDue(lastCheck: nil, now: now))
+        #expect(!FeedbackTask.isCheckDue(lastCheck: now.addingTimeInterval(-60), now: now))
+        #expect(!FeedbackTask.isCheckDue(lastCheck: now.addingTimeInterval(-23 * 3600), now: now))
+        #expect(FeedbackTask.isCheckDue(lastCheck: now.addingTimeInterval(-24 * 3600), now: now))
+        // A clock set back shouldn't put the next check off for good.
+        #expect(FeedbackTask.isCheckDue(lastCheck: now.addingTimeInterval(3600), now: now))
+    }
+
     @Test func branchComesFromTheMessage() {
         #expect(FeedbackTask.branch(for: item) == "feedback/sidebar-crashes-when-open-387d")
         #expect(FeedbackTask.branch(for: FeedbackItem(id: "", message: "!!!")) == "feedback/agent")
