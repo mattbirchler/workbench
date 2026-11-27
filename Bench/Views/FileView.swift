@@ -20,6 +20,8 @@ struct FileView: View {
     @State private var content: FileContent?
     @State private var marks: [Int: ChangeMark] = [:]
     @State private var jump = ChangeJump()
+    /// For a Markdown file, whether it shows as text rather than rendered.
+    @AppStorage("markdownFilesShowSource") private var showsSource = false
 
     private var url: URL { project.fileURL(forPath: path) }
 
@@ -40,6 +42,15 @@ struct FileView: View {
         ["html", "htm", "xhtml"].contains(url.pathExtension.lowercased())
     }
 
+    /// A Markdown file small enough to render, shown rendered unless
+    /// Source is picked.
+    private var rendersMarkdown: Bool {
+        guard MarkdownFileView.isMarkdown(path), case .text(let text) = shown else { return false }
+        return text.utf8.count <= MarkdownFileView.renderLimit
+    }
+
+    private var showsRendered: Bool { rendersMarkdown && !showsSource }
+
     /// This file's entry in the changes panel, if it has changed.
     private var change: FileChange? {
         guard let snapshot = repos.monitor(for: project).snapshot else { return nil }
@@ -48,14 +59,17 @@ struct FileView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            FileHeader(path: path, content: shown, badge: isEdited ? "Edited" : nil) {
+            FileHeader(path: path, content: shown, badge: isEdited ? "Edited" : nil, showsWrap: !showsRendered) {
                 if isEdited {
                     Button("Save") { drafts.saveOrExplain(url) }
                         .controlSize(.small)
                         .help("Save your changes (⌘S)")
                 }
+                if rendersMarkdown {
+                    MarkdownModeSwitch(showsSource: $showsSource)
+                }
                 if let change {
-                    if !marks.isEmpty {
+                    if !marks.isEmpty && !showsRendered {
                         ChangeStepButtons(hasKeys: isFocused) { forward in
                             jump = ChangeJump(id: jump.id + 1, forward: forward)
                         }
@@ -102,8 +116,12 @@ struct FileView: View {
             }
             // The marks are for the file on disk, so they'd sit on the
             // wrong lines beside unsaved edits.
-            FileContentView(content: shown, path: path, marks: isEdited ? [:] : marks, jump: jump, onRunOut: runOut,
-                            editor: FileEditor(edit: edit))
+            if showsRendered, case .text(let text) = shown {
+                MarkdownFileView(text: text, folder: url.deletingLastPathComponent(), openFile: openLinked)
+            } else {
+                FileContentView(content: shown, path: path, marks: isEdited ? [:] : marks, jump: jump, onRunOut: runOut,
+                                editor: FileEditor(edit: edit))
+            }
         }
         .background(TerminalTheme.shared.canvas)
         .onDisappear { drafts.release(url) }
@@ -173,6 +191,15 @@ struct FileView: View {
         if next != marks { marks = next }
     }
 
+    /// A file a Markdown link points to, in its own tab: by its path in
+    /// the project when it's inside it.
+    private func openLinked(_ target: URL) {
+        let root = project.url.standardizedFileURL.path
+        let full = target.path
+        let inside = full.hasPrefix(root + "/") ? String(full.dropFirst(root.count + 1)) : full
+        store.openFile(inside, in: project.id)
+    }
+
     /// Past the last change, on to the next changed file (or back to the
     /// previous one), in this same tab.
     private func runOut(_ forward: Bool) {
@@ -196,15 +223,18 @@ struct FileHeader<Leading: View, Actions: View>: View {
     let content: FileContent?
     /// A word beside the name, like "Edited".
     var badge: String?
+    /// The wrap toggle, which a rendered file has no use for.
+    var showsWrap = true
     @ViewBuilder let leading: () -> Leading
     @ViewBuilder let actions: () -> Actions
     @AppStorage("fileViewWraps") private var wraps = false
 
-    init(path: String, content: FileContent?, badge: String? = nil, @ViewBuilder leading: @escaping () -> Leading,
+    init(path: String, content: FileContent?, badge: String? = nil, showsWrap: Bool = true, @ViewBuilder leading: @escaping () -> Leading,
          @ViewBuilder actions: @escaping () -> Actions) {
         self.path = path
         self.content = content
         self.badge = badge
+        self.showsWrap = showsWrap
         self.leading = leading
         self.actions = actions
     }
@@ -218,12 +248,14 @@ struct FileHeader<Leading: View, Actions: View>: View {
                 Text(Self.lineCount(text))
                     .font(.callout.monospacedDigit())
                     .foregroundStyle(.secondary)
-                Toggle(isOn: $wraps) {
-                    Image(systemName: "text.word.spacing")
+                if showsWrap {
+                    Toggle(isOn: $wraps) {
+                        Image(systemName: "text.word.spacing")
+                    }
+                    .toggleStyle(.button)
+                    .buttonStyle(.borderless)
+                    .help(wraps ? "Stop wrapping long lines" : "Wrap long lines")
                 }
-                .toggleStyle(.button)
-                .buttonStyle(.borderless)
-                .help(wraps ? "Stop wrapping long lines" : "Wrap long lines")
                 CopyFileButton { text }
             }
             actions()
