@@ -240,8 +240,14 @@ public final class HostSessions {
     /// like whether to trust the folder. No hook has run yet, so the screen
     /// is the only place to find it.
     func startupPrompt(_ runtime: Runtime) -> StartupPrompt? {
-        guard runtime.terminal.isRunning, !isRecorded(runtime.tabID), let screen = runtime.terminal.screen else { return nil }
-        return driver.startupPrompt(in: screen)
+        guard runtime.terminal.isRunning, let screen = runtime.terminal.screen else { return nil }
+        if !isRecorded(runtime.tabID), let prompt = driver.startupPrompt(in: screen) { return prompt }
+        // Anything else Claude Code asks in its terminal alone. Its hooks
+        // report its questions and permission requests, so only look
+        // while they say nothing is going on.
+        let state = effectiveState(runtime)
+        guard state != .waiting, state != .working else { return nil }
+        return TerminalPicker.prompt(in: screen)
     }
 
     func planApproval(_ runtime: Runtime) -> CompanionQuestion? {
@@ -396,6 +402,14 @@ public final class HostSessions {
 
     /// Types a message into a session and sends it. Returns the problem
     /// if it can't.
+    /// Writes what each session's terminal shows to the log, for working
+    /// out why one is stuck. `kill -USR1` asks for it.
+    public func logScreens() {
+        for runtime in runtimes.values {
+            hostLog("screen of \(runtime.tabID):\n\(runtime.terminal.screen ?? "(nothing)")")
+        }
+    }
+
     public func reply(_ text: String, images: [Data] = [], tabID: UUID) -> String? {
         let text = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard let runtime = runtimes[tabID] else { return "That session is gone." }

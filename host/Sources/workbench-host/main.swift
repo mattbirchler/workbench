@@ -73,6 +73,12 @@ case "serve":
         source.resume()
         sources.append(source)
     }
+    // kill -USR1: log what each session's terminal shows.
+    signal(SIGUSR1, SIG_IGN)
+    let screens = DispatchSource.makeSignalSource(signal: SIGUSR1, queue: .main)
+    screens.setEventHandler { host.sessions.logScreens() }
+    screens.resume()
+    sources.append(screens)
     dispatchMain()
 
 case "pair":
