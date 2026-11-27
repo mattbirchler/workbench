@@ -92,9 +92,12 @@ final class TerminalTheme {
         darkThemeID = defaults.string(forKey: Self.darkThemeKey) ?? BuiltInTheme.defaultDarkID
         // A built-in theme's colors are known without asking Ghostty, so
         // the first thing drawn (the welcome, for a new user) is already
-        // in the theme and not the plain look until a terminal loads.
+        // in the theme and not the plain look until a terminal loads. It
+        // goes by Workbench's own Light or Dark choice, as Ghostty does
+        // once it loads: starting in the Mac's look and then switching
+        // left parts of the window in the old one.
         if source == .builtIn {
-            let dark = defaults.string(forKey: "AppleInterfaceStyle") == "Dark"
+            let dark = AppAppearance.startsDark { defaults.string(forKey: $0) }
             let theme = dark ? darkTheme : lightTheme
             func color(_ rgb: TerminalColors.RGB) -> NSColor { NSColor(srgbRed: rgb.r, green: rgb.g, blue: rgb.b, alpha: 1) }
             background = color(theme.background)

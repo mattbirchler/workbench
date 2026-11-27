@@ -47,4 +47,16 @@ final class AppAppearance {
     func apply() {
         NSApplication.shared.appearance = mode.appearance
     }
+
+    /// Whether Workbench is dark at launch: the choice in Settings, or the
+    /// Mac's own appearance when following it. Read from the settings
+    /// rather than NSApp, which may not have settled this early. `setting`
+    /// reads a saved value by key.
+    static func startsDark(_ setting: (String) -> String? = { UserDefaults.standard.string(forKey: $0) }) -> Bool {
+        switch setting(key).flatMap(Mode.init(rawValue:)) ?? .system {
+        case .dark: true
+        case .light: false
+        case .system: setting("AppleInterfaceStyle") == "Dark"
+        }
+    }
 }
