@@ -14,6 +14,7 @@ public final class WorkbenchHost {
     public let server: HostServer
     private var listener: WebSocketListener?
     private var relay: RelayLink?
+    private let push: HostPush
     private var pairingRead = Date.distantPast
     private var pairingTimer: DispatchSourceTimer?
 
@@ -24,6 +25,25 @@ public final class WorkbenchHost {
         sessions = HostSessions(paths: paths, store: store)
         server = HostServer(store: store, sessions: sessions, pairing: HostPairing.load(paths.pairing),
                             name: Self.machineName, version: Self.version)
+        push = HostPush(file: paths.pushDevices)
+        push.hostName = server.pairing.hostName
+        push.pairingToken = server.pairing.token
+        server.onRegisterPush = { [push] token, device, sealed in push.register(token: token, device: device, sealed: sealed) }
+        sessions.onEvent = { [weak self] event in self?.tellPhones(event) }
+    }
+
+    private func tellPhones(_ event: HostSessions.Event) {
+        switch event {
+        case .waiting(let tabID, let projectID, let question, let allowOrDeny):
+            let project = store.projects.first { $0.id == projectID }?.name ?? "a project"
+            push.notify(title: "Claude needs you", body: question ?? "Waiting for your permission in \(project).",
+                        projectID: projectID, sessionID: tabID,
+                        category: allowOrDeny ? NotificationActions.permissionCategory : NotificationActions.replyCategory)
+        case .finished(let tabID, let projectID, let summary):
+            let project = store.projects.first { $0.id == projectID }?.name ?? "Workbench"
+            push.notify(title: "\(project): finished", body: summary ?? "Claude is done and waiting for your next message.",
+                        projectID: projectID, sessionID: tabID, category: NotificationActions.replyCategory)
+        }
     }
 
     /// This machine's name, as the sidebar shows it.
@@ -70,6 +90,8 @@ public final class WorkbenchHost {
         let changed = fresh.relayKey != server.pairing.relayKey || fresh.relayAddress != server.pairing.relayAddress
             || fresh.token != server.pairing.token
         server.pairing = fresh
+        push.hostName = fresh.hostName
+        push.pairingToken = fresh.token
         if changed { startRelay() } else { pairingRead = pairingModified }
     }
 

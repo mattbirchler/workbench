@@ -6,7 +6,7 @@ import Foundation
 public enum Reach {
     /// Runs a program and returns what it printed, or nil if it isn't
     /// there or failed.
-    static func run(_ program: String, _ arguments: [String], timeout: TimeInterval = 15) -> (status: Int32, output: String)? {
+    public static func run(_ program: String, _ arguments: [String], timeout: TimeInterval = 15) -> (status: Int32, output: String)? {
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/usr/bin/env")
         process.arguments = [program] + arguments

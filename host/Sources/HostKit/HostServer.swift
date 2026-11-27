@@ -13,6 +13,9 @@ public struct HostPairing: Codable, Sendable {
     /// A made-up name for this host, for a pairing that has no tailnet
     /// name to go by. Devices only use it to tell hosts apart.
     public var id: String?
+    /// The name in the last pairing link, which a phone's notification
+    /// key is made from.
+    public var hostName: String?
 
     public static func load(_ file: URL) -> HostPairing {
         if let data = try? Data(contentsOf: file), let saved = try? JSONDecoder().decode(HostPairing.self, from: data) {

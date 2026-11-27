@@ -30,6 +30,8 @@ public struct HostPaths: Sendable {
     public var store: URL { root.appendingPathComponent("state.json") }
     /// The pairing code and relay room.
     public var pairing: URL { root.appendingPathComponent("pairing.json") }
+    /// The phones that asked for notifications.
+    public var pushDevices: URL { root.appendingPathComponent("push-devices.json") }
     /// One word per session ("working", "waiting", "done") and the JSON of
     /// its latest events. Named as on the Mac, where the same hooks write.
     public var stateFolder: URL { root.appendingPathComponent("claude-state", isDirectory: true) }

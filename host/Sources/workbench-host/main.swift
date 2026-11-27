@@ -9,6 +9,8 @@ import HostKit
 //   workbench-host pair [--relay] [--host NAME]
 //   workbench-host add <folder>
 //   workbench-host projects
+//   workbench-host service install | remove
+//   workbench-host status
 
 func fail(_ message: String, code: Int32 = 1) -> Never {
     FileHandle.standardError.write(Data((message + "\n").utf8))
@@ -22,6 +24,9 @@ let usage = """
       pair [--relay] [--host NAME]        Print the link that pairs a Mac or iPhone.
       add <folder>                        Add a folder as a project.
       projects                            List the projects.
+      service install [--port N]          Keep the host running in the background (systemd).
+      service remove                      Stop doing that.
+      status                              Whether it's running, and what it needs.
       version
 
     """
@@ -106,6 +111,9 @@ case "pair":
     }
     let id = pairing.id ?? UUID().uuidString.lowercased()
     let info = PairingInfo(host: name ?? PairingInfo.localOnlyHost(mac: id), token: pairing.token, relay: pairing.relayEndpoint)
+    pairing.id = id
+    pairing.hostName = info.host
+    pairing.save(paths.pairing)
     for note in notes { print(note) }
     print("""
 
@@ -135,6 +143,40 @@ case "projects":
     let store = HostStore(file: HostPaths.standard.store)
     if store.projects.isEmpty { print("No projects yet. Add one with: workbench-host add <folder>") }
     for project in store.projects { print("\(project.name)\t\(project.path)") }
+
+case "service":
+    switch plain.first {
+    case "install":
+        do {
+            for line in try Service.install(port: options["port"].flatMap(Int.init) ?? WorkbenchHost.defaultPort) { print(line) }
+        } catch {
+            fail("workbench-host: couldn't set up the service: \(error.localizedDescription)")
+        }
+    case "remove", "uninstall":
+        for line in Service.uninstall() { print(line) }
+    default:
+        fail(usage, code: 64)
+    }
+
+case "status":
+    print("Workbench host \(WorkbenchHost.version)")
+    switch Service.state {
+    case "active"?: print("Service:   running in the background")
+    case let state?: print("Service:   \(state). Look at:  journalctl --user -u workbench-host")
+    case nil: print("Service:   not set up. Run:  workbench-host service install")
+    }
+    let shell = ProcessInfo.processInfo.environment["SHELL"] ?? "/bin/sh"
+    let claude = Reach.run(shell, ["-l", "-c", "PATH=\"$HOME/.local/bin:$PATH\"; command -v claude"], timeout: 10)
+    if let claude, claude.status == 0 {
+        print("Claude:    \(claude.output.split(separator: "\n").last.map(String.init) ?? "installed")")
+    } else {
+        print("Claude:    not found. Install Claude Code, then run claude once here to sign in.")
+    }
+    let pairing = HostPairing.load(HostPaths.standard.pairing)
+    if let tailnet = Reach.tailnetName() { print("Tailscale: \(tailnet)") } else { print("Tailscale: not on a tailnet") }
+    print("Relay:     \(pairing.relayEndpoint == nil ? "off (turn on with: workbench-host pair --relay)" : "on")")
+    let count = HostStore(file: HostPaths.standard.store).projects.count
+    print("Projects:  \(count)")
 
 default:
     fail(usage, code: 64)
