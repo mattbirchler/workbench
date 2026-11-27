@@ -169,7 +169,7 @@ struct DashboardNothing: View {
     @Environment(\.dashboardLook) private var look
 
     var body: some View {
-        Text("DashboardNothing running right now")
+        Text("Nothing running right now")
             .font(.footnote)
             .foregroundStyle(look.muted)
     }
