@@ -160,8 +160,8 @@ targets:
         # installs keep their settings and updates.
         PRODUCT_NAME: Workbench
         PRODUCT_MODULE_NAME: Bench
-        MARKETING_VERSION: "0.10.2"
-        CURRENT_PROJECT_VERSION: 70
+        MARKETING_VERSION: "0.10.3"
+        CURRENT_PROJECT_VERSION: 71
         SWIFT_VERSION: 6.0
         SWIFT_DEFAULT_ACTOR_ISOLATION: MainActor
         SWIFT_APPROACHABLE_CONCURRENCY: YES
@@ -211,8 +211,8 @@ targets:
         # Widget extensions must be sandboxed, though the app isn't.
         CODE_SIGN_ENTITLEMENTS: BenchMacWidgets/BenchMacWidgets.entitlements
         ENABLE_HARDENED_RUNTIME: YES
-        MARKETING_VERSION: "0.10.2"
-        CURRENT_PROJECT_VERSION: 70
+        MARKETING_VERSION: "0.10.3"
+        CURRENT_PROJECT_VERSION: 71
         SWIFT_VERSION: 6.0
         SWIFT_DEFAULT_ACTOR_ISOLATION: MainActor
         SWIFT_APPROACHABLE_CONCURRENCY: YES
