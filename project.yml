@@ -179,12 +179,12 @@ targets:
         ARCHS: arm64
 
   # The Mac app's Live Activity: the sessions dashboard in the menu bar.
-  # Needs macOS 27.3 (and Xcode 27.3 to build). The app itself still runs
-  # on macOS 26, where the system just never loads this.
+  # Live Activities need macOS 27.3, and Xcode 27.3 to build them in. An
+  # older Xcode builds this with nothing in it, and on an older macOS the
+  # system never asks it for anything.
   BenchWidgets:
     type: app-extension
     platform: macOS
-    deploymentTarget: "27.3"
     sources:
       - path: BenchMacWidgets
       # The dashboard's drawing, shared with the phone's Lock Screen.

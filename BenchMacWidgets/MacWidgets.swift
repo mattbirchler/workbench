@@ -1,18 +1,26 @@
-import ActivityKit
 import BenchKit
 import SwiftUI
 import WidgetKit
 
+// Live Activities reached the Mac in the macOS 27.3 SDK (Xcode 27.3, Swift
+// 6.4.4). An older Xcode still has to build this target, since the app
+// embeds it, so there it builds an extension with nothing in it.
+#if compiler(>=6.4.4)
+import ActivityKit
+
 @main
 struct BenchMacWidgets: WidgetBundle {
     var body: some Widget {
-        MacDashboardActivityWidget()
+        if #available(macOS 27.3, *) {
+            MacDashboardActivityWidget()
+        }
     }
 }
 
 /// Every session on this Mac as a Live Activity: counts in the menu bar
 /// (or the Dynamic Island on a MacBook that has one), and the roster when
 /// it's opened. The drawing is the phone dashboard's (DashboardViews).
+@available(macOS 27.3, *)
 struct MacDashboardActivityWidget: Widget {
     var body: some WidgetConfiguration {
         ActivityConfiguration(for: DashboardAttributes.self) { context in
@@ -69,6 +77,7 @@ struct MacDashboardActivityWidget: Widget {
 }
 
 /// The roster, opened from the menu bar.
+@available(macOS 27.3, *)
 private struct MacRoster: View {
     let context: ActivityViewContext<DashboardAttributes>
     @Environment(\.colorScheme) private var scheme
@@ -83,3 +92,20 @@ private struct MacRoster: View {
             .activitySystemActionForegroundColor(look.ink)
     }
 }
+
+#else
+
+@main
+struct BenchMacWidgets: WidgetBundle {
+    var body: some Widget {
+        NoWidget()
+    }
+}
+
+struct NoWidget: Widget {
+    var body: some WidgetConfiguration {
+        EmptyWidgetConfiguration()
+    }
+}
+
+#endif
