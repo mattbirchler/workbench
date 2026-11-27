@@ -231,26 +231,49 @@ final class PullRequests {
         }
     }
 
+    private nonisolated static let fields = "number,title,url,state,isDraft,statusCheckRollup,headRefOid,mergeCommit,mergedAt"
+
     private nonisolated static func load(gh: String, root: URL, branch: String) -> PullRequestInfo? {
+        // Fork pull requests aren't the branch's PR in the repo `gh` picks:
+        // GitHub indexes them under owner:branch, which `pr view <branch>`
+        // doesn't match, so ask the list for the branch's pull requests.
+        let list = run(gh, ["pr", "list", "--head", branch, "--state", "all", "--json", fields, "--limit", "10"], root: root)
+        guard let json = try? JSONSerialization.jsonObject(with: list) as? [[String: Any]] else { return nil }
+        return pick(from: json)
+    }
+
+    /// A branch usually has one pull request; pick the open one, falling
+    /// back to the first of any state (a merged branch's last PR).
+    nonisolated static func pick(from json: [[String: Any]]) -> PullRequestInfo? {
+        let parsed = json.compactMap(parse)
+        return parsed.first { $0.state == .open } ?? parsed.first
+    }
+
+    /// Runs gh and returns its output; exits non-zero when there's no PR,
+    /// no GitHub remote, or no login.
+    private nonisolated static func run(_ gh: String, _ arguments: [String], root: URL) -> Data {
         let process = Process()
         process.executableURL = URL(fileURLWithPath: gh)
-        process.arguments = ["pr", "view", branch, "--json", "number,title,url,state,isDraft,statusCheckRollup,headRefOid,mergeCommit,mergedAt"]
+        process.arguments = arguments
         process.currentDirectoryURL = root
         process.environment = Tools.environment
         let pipe = Pipe()
         process.standardOutput = pipe
         process.standardError = FileHandle.nullDevice
-        do { try process.run() } catch { return nil }
+        do { try process.run() } catch { return Data() }
         let data = pipe.fileHandleForReading.readDataToEndOfFile()
         process.waitUntilExit()
-        // Exits non-zero when there's no PR, no GitHub remote, or no login.
-        guard process.terminationStatus == 0 else { return nil }
-        return parse(data)
+        guard process.terminationStatus == 0 else { return Data() }
+        return data
     }
 
     nonisolated static func parse(_ data: Data) -> PullRequestInfo? {
-        guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-              let number = json["number"] as? Int,
+        guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else { return nil }
+        return parse(from: json)
+    }
+
+    nonisolated static func parse(from json: [String: Any]) -> PullRequestInfo? {
+        guard let number = json["number"] as? Int,
               let urlString = json["url"] as? String, let url = URL(string: urlString) else { return nil }
         let state: PullRequestInfo.State
         switch json["state"] as? String {
