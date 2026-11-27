@@ -405,6 +405,8 @@ public final class HostServer {
         // Read whether or not anyone is connected: a phone that isn't
         // still wants to hear when an agent needs it.
         sessions.refresh()
+        // `workbench-host add` writes the project list from outside.
+        store.reloadIfChanged()
         guard !clients.isEmpty else {
             lastSnapshot = nil
             return

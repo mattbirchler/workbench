@@ -58,9 +58,30 @@ public final class HostStore {
 
     public private(set) var projects: [HostProject] = []
     private let file: URL
+    /// The file's date as of the last read or save here, to notice when
+    /// something else (`workbench-host add`) has written it since.
+    private var fileDate: Date?
 
     public init(file: URL) {
         self.file = file
+        load()
+    }
+
+    private var dateOnDisk: Date? {
+        (try? file.resourceValues(forKeys: [.contentModificationDateKey]))?.contentModificationDate
+    }
+
+    /// Reads the file again if another process changed it. True if it did.
+    @discardableResult
+    public func reloadIfChanged() -> Bool {
+        guard let onDisk = dateOnDisk, onDisk != fileDate else { return false }
+        let before = projects
+        load()
+        return projects != before
+    }
+
+    private func load() {
+        fileDate = dateOnDisk
         if let data = try? Data(contentsOf: file) {
             let decoder = JSONDecoder()
             decoder.dateDecodingStrategy = .iso8601
@@ -81,6 +102,7 @@ public final class HostStore {
         guard let data = try? encoder.encode(Saved(projects: projects)) else { return }
         do {
             try data.write(to: file, options: .atomic)
+            fileDate = dateOnDisk
         } catch {
             hostLog("couldn't save projects: \(error.localizedDescription)")
         }
