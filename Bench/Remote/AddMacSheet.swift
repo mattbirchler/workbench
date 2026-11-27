@@ -17,9 +17,9 @@ struct AddMacSheet: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             VStack(alignment: .leading, spacing: 4) {
-                Text("Add a Mac")
+                Text("Add a Mac or Server")
                     .font(.ui(size: 15, weight: .semibold))
-                Text("On the other Mac, open Workbench › Settings › Remote Access, turn on Let my iPhone and other Macs connect, and choose Copy Pairing Link. Paste it here. Both Macs need to be on your Tailscale network.")
+                Text("On the other Mac, open Workbench › Settings › Remote Access, turn on Let my iPhone and other Macs connect, and choose Copy Pairing Link. Paste it here. Both Macs need to be on your Tailscale network.\n\nFor a Linux server, run workbench-host pair there and paste the link it prints.")
                     .font(.ui(size: 12))
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
@@ -97,7 +97,9 @@ struct AddMacSheet: View {
     /// let us in. Checks what Tailscale on this Mac knows first, then makes
     /// one real connection.
     private static func problem(with info: PairingInfo) async -> (message: String, canAddAnyway: Bool)? {
-        if let found = await Tailscale.status()?.pairingProblem(host: info.host) {
+        // A link with no tailnet name (a server reached through the relay)
+        // has nothing for Tailscale to say about.
+        if !info.isLocalOnly, let found = await Tailscale.status()?.pairingProblem(host: info.host) {
             return (found.message, found != .thisDevice)
         }
         let client = CompanionClient(deviceName: Host.current().localizedName ?? "Mac", features: [CompanionFeature.relay])
@@ -110,6 +112,6 @@ struct AddMacSheet: View {
             if let problem = client.problem { return (problem, true) }
             try? await Task.sleep(for: .milliseconds(250))
         }
-        return ("Workbench on that Mac didn't answer. Check that it's awake, that Workbench is open there, and that the companion is on in its settings.", true)
+        return ("Workbench there didn't answer. For a Mac, check that it's awake, that Workbench is open, and that the companion is on in its settings. For a server, check that workbench-host is running.", true)
     }
 }

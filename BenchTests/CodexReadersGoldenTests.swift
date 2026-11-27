@@ -80,7 +80,7 @@ struct CodexReadersGoldenTests {
     }
 
     @Test func theChatStreamsACodexSession() async throws {
-        let streamer = TranscriptStreamer(options: .init(keepsResults: true))
+        let streamer = TranscriptStreamer(options: .init(keepsResults: true), format: { Agents.transcripts(for: $0).format })
         let transcript = path("tools")
         let opened = await withCheckedContinuation { done in
             streamer.opening(tabID: UUID(), path: transcript) { messages, _ in done.resume(returning: messages) }

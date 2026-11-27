@@ -1,0 +1,52 @@
+# The Workbench host (Workbench with no window, for Linux), built and
+# tested on Linux on pull requests that change it or the shared kit it is
+# built from. This is also what catches Mac-only code slipping into the
+# parts of BenchKit the host uses.
+#
+# No secrets, read-only: see mac.yml for why that matters here.
+name: Host
+
+on:
+  pull_request:
+    paths:
+      - "host/**"
+      - "BenchKit/Package.swift"
+      - "BenchKit/Sources/**"
+      - "scripts/build-host-terminal.sh"
+      - "scripts/build-ghostty.sh"
+      - ".github/workflows/host.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: host-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  host:
+    name: Host on Linux
+    runs-on: ubuntu-latest
+    container: swift:6.4.3
+    timeout-minutes: 30
+    steps:
+      - run: apt-get update && apt-get install -y --no-install-recommends curl xz-utils git ca-certificates
+      - uses: actions/checkout@v7
+      # Ghostty's terminal engine, which changes only when its pinned
+      # version does.
+      - name: Restore the terminal library
+        id: terminal
+        uses: actions/cache@v6
+        with:
+          path: build/ghostty-vt
+          key: ghostty-vt-linux-${{ hashFiles('scripts/build-ghostty.sh', 'scripts/build-host-terminal.sh') }}
+      - name: Build the terminal library
+        if: steps.terminal.outputs.cache-hit != 'true'
+        run: ./scripts/build-host-terminal.sh x86_64-linux-musl
+      - name: Build
+        run: swift build
+        working-directory: host
+      - name: Test
+        run: swift test
+        working-directory: host

@@ -75,6 +75,10 @@ public enum CompanionFeature {
     /// look through its folders to pick one (`ClientMessage.browseFolder`
     /// and `addProject`).
     public static let addProject = "addProject"
+    /// The other end is a Workbench host with no screen (a Linux box), not
+    /// a Mac running the app. Nobody can click anything there, so the apps
+    /// word things for a server and leave out what one can't do yet.
+    public static let headless = "headless"
 }
 
 /// A terminal theme's two main colors, which the rest of a theme is built

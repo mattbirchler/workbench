@@ -21,7 +21,8 @@ final class LocalChatSource: ChatSource {
 
     /// One streamer for every chat, kept by tab, so coming back to a tab
     /// reads what was added since rather than the whole file again.
-    @ObservationIgnored private static let streamer = TranscriptStreamer(options: .init(keepsResults: true, keepsQueue: true, keepsNotices: true, keepsTurnTimes: true, keepsCommands: true, keepsPatches: true))
+    @ObservationIgnored private static let streamer = TranscriptStreamer(options: .init(keepsResults: true, keepsQueue: true, keepsNotices: true, keepsTurnTimes: true, keepsCommands: true, keepsPatches: true), format: { Agents.transcripts(for: $0).format },
+                                                                  shrink: { ImagePreviews.shared.shrinkNow(&$0) })
     private var streamer: TranscriptStreamer { Self.streamer }
     @ObservationIgnored private var timer: Timer?
     @ObservationIgnored private var path: String?

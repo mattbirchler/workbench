@@ -96,6 +96,12 @@ account, and the relay can't read what passes through), or sign the Mac in to
 Tailscale. The relay's code is in [`relay-live`](relay-live), with how to
 host your own.
 
+## Linux servers
+
+`workbench-host` puts a Linux machine in Workbench alongside your Macs: its
+projects and Claude Code sessions, from your Mac or iPhone. One command
+installs it, one more pairs it. See [docs/linux-host.md](docs/linux-host.md).
+
 ## The `bench` command
 
 Every tab Workbench opens has `bench` on its PATH, so you (or Claude, from a

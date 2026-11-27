@@ -1,4 +1,8 @@
+#if canImport(CryptoKit)
 import CryptoKit
+#else
+@preconcurrency import Crypto
+#endif
 import Foundation
 
 /// The sealing between a Mac and one device over the relay. Over Tailscale
@@ -83,8 +87,9 @@ public enum RelayHandshake {
     }
 
     static func hello(publicKey: Curve25519.KeyAgreement.PublicKey) -> Data {
-        var random = [UInt8](repeating: 0, count: 16)
-        _ = SecRandomCopyBytes(kSecRandomDefault, random.count, &random)
+        // The system's generator, which is the secure one on every platform.
+        var generator = SystemRandomNumberGenerator()
+        let random = (0..<16).map { _ in UInt8.random(in: 0...255, using: &generator) }
         return Data([version]) + publicKey.rawRepresentation + Data(random)
     }
 

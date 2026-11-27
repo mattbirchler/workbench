@@ -1,3 +1,4 @@
+import BenchKit
 import Foundation
 
 /// One Claude tab's line on its project's sidebar card, when the project

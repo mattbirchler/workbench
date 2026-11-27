@@ -565,6 +565,7 @@ struct LoadingState: View {
 /// inspector's toggle on an iPad that has one, as on the Mac.
 struct ChangesButton: View {
     @Environment(\.inspector) private var inspector
+    @Environment(CompanionClient.self) private var client
     let project: CompanionProject
     /// In the system's bar, which draws the button itself from a symbol
     /// and a title. It only puts those in a bar down the side.
@@ -580,7 +581,7 @@ struct ChangesButton: View {
                 }
                 .accessibilityLabel(inspector.isShown ? "Hide Inspector" : "Show Inspector")
             }
-        } else if project.isGit != false {
+        } else if project.isGit != false, !client.isHeadless {
             NavigationLink(value: ChangesRoute(projectID: project.id)) {
                 if inBar {
                     Label("Changes", systemImage: "plus.forwardslash.minus")
@@ -1156,7 +1157,8 @@ private struct ProjectMenuButton: View {
             shortcuts: client.canRunShortcuts ? (project?.shortcuts ?? []) : [],
             canManageAgents: client.canManageAgents,
             isRemovableAgent: project?.isWorktree == true && project?.isExternalWorktree != true,
-            hasCleanup: project?.cleanup != nil
+            hasCleanup: project?.cleanup != nil,
+            showsChanges: !client.isHeadless
         )
     }
 
@@ -1227,6 +1229,8 @@ private struct ProjectMenuModel: Equatable {
     var canManageAgents: Bool
     var isRemovableAgent: Bool
     var hasCleanup: Bool
+    /// False for a server, which doesn't send changes yet.
+    var showsChanges = true
 }
 
 private enum ProjectMenuRequest {
@@ -1269,7 +1273,7 @@ private struct ProjectMenuList: View, Equatable {
                 }
             }
             Section(model.branchLine ?? "") {
-                if inspector == nil {
+                if inspector == nil, model.showsChanges {
                     NavigationLink(value: ChangesRoute(projectID: projectID)) {
                         Label("Changes", systemImage: "plus.forwardslash.minus")
                     }

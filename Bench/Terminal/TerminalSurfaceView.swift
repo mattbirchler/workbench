@@ -268,67 +268,7 @@ final class TerminalSurfaceView: NSView {
         }
     }
 
-    nonisolated enum SpecialKey: Equatable, Sendable {
-        case returnKey, escape
-        case rightArrow, downArrow, upArrow, backspace
-        /// Ctrl+Return: Claude Code's "send now" for queued messages.
-        case controlReturn
-        /// 1 through 9 on the top row: picks an option in Claude Code's pickers.
-        case digit(Int)
-        /// Shift+Tab: steps Claude Code to its next permission mode.
-        case backTab
-        /// N: opens the notes on the picked option, when Claude Code shows
-        /// a question's previews side by side.
-        case notes
-
-        var keyCode: UInt16 {
-            switch self {
-            case .returnKey, .controlReturn: 36
-            case .escape: 53
-            case .rightArrow: 124
-            case .downArrow: 125
-            case .upArrow: 126
-            case .backspace: 51
-            case .digit(let n): [18, 19, 20, 21, 23, 22, 26, 28, 25][max(0, min(8, n - 1))]
-            case .backTab: 48
-            case .notes: 45
-            }
-        }
-        var characters: String {
-            switch self {
-            case .returnKey, .controlReturn: "\r"
-            case .escape: "\u{1b}"
-            case .rightArrow: String(UnicodeScalar(UInt16(NSRightArrowFunctionKey))!)
-            case .downArrow: String(UnicodeScalar(UInt16(NSDownArrowFunctionKey))!)
-            case .upArrow: String(UnicodeScalar(UInt16(NSUpArrowFunctionKey))!)
-            case .backspace: "\u{7f}"
-            case .digit(let n): String(max(1, min(9, n)))
-            case .backTab: "\u{19}"
-            case .notes: "n"
-            }
-        }
-        var charactersIgnoringModifiers: String {
-            switch self {
-            case .backTab: "\t"
-            default: characters
-            }
-        }
-        /// Keys that type a character, which goes along with the press.
-        var isPrintable: Bool {
-            switch self {
-            case .digit, .notes: true
-            default: false
-            }
-        }
-        var modifiers: NSEvent.ModifierFlags {
-            switch self {
-            case .controlReturn: .control
-            case .backTab: .shift
-            case .rightArrow, .downArrow, .upArrow: [.numericPad, .function]
-            default: []
-            }
-        }
-    }
+    typealias SpecialKey = AgentKey
 
     /// The column the cursor is in, counting from 0.
     func cursorColumn() -> Int? {
@@ -920,5 +860,56 @@ extension TerminalSurfaceView {
         let file = folder.appendingPathComponent("Dropped image \(UUID().uuidString.prefix(8)).png")
         do { try png.write(to: file) } catch { return nil }
         return file
+    }
+}
+
+/// How the Mac presses an `AgentKey`: as the key event its keyboard would send.
+nonisolated extension AgentKey {
+    var keyCode: UInt16 {
+        switch self {
+        case .returnKey, .controlReturn: 36
+        case .escape: 53
+        case .rightArrow: 124
+        case .downArrow: 125
+        case .upArrow: 126
+        case .backspace: 51
+        case .digit(let n): [18, 19, 20, 21, 23, 22, 26, 28, 25][max(0, min(8, n - 1))]
+        case .backTab: 48
+        case .notes: 45
+        }
+    }
+    var characters: String {
+        switch self {
+        case .returnKey, .controlReturn: "\r"
+        case .escape: "\u{1b}"
+        case .rightArrow: String(UnicodeScalar(UInt16(NSRightArrowFunctionKey))!)
+        case .downArrow: String(UnicodeScalar(UInt16(NSDownArrowFunctionKey))!)
+        case .upArrow: String(UnicodeScalar(UInt16(NSUpArrowFunctionKey))!)
+        case .backspace: "\u{7f}"
+        case .digit(let n): String(max(1, min(9, n)))
+        case .backTab: "\u{19}"
+        case .notes: "n"
+        }
+    }
+    var charactersIgnoringModifiers: String {
+        switch self {
+        case .backTab: "\t"
+        default: characters
+        }
+    }
+    /// Keys that type a character, which goes along with the press.
+    var isPrintable: Bool {
+        switch self {
+        case .digit, .notes: true
+        default: false
+        }
+    }
+    var modifiers: NSEvent.ModifierFlags {
+        switch self {
+        case .controlReturn: .control
+        case .backTab: .shift
+        case .rightArrow, .downArrow, .upArrow: [.numericPad, .function]
+        default: []
+        }
     }
 }

@@ -320,7 +320,20 @@ struct ContentView: View {
                     .id(remote)
                     .terminalCanvasBackground()
                     .inspector(isPresented: $store.showsChanges) {
-                        RemoteInspector(host: remote.host, projectID: remote.projectID)
+                        Group {
+                            if macs.client(for: remote.host)?.isHeadless == true {
+                                // A server sends sessions and chat. Its
+                                // changes and files come later.
+                                Text("Changes and files aren't shown for a server yet.")
+                                    .font(.ui(size: 12))
+                                    .foregroundStyle(.secondary)
+                                    .multilineTextAlignment(.center)
+                                    .padding(20)
+                                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                            } else {
+                                RemoteInspector(host: remote.host, projectID: remote.projectID)
+                            }
+                        }
                             .id(remote)
                             .inspectorColumnWidth(min: 260, ideal: 320, max: 600)
                     }

@@ -113,8 +113,10 @@ struct RemoteProjectView: View {
             start: { client?.newClaudeTab(projectID: projectID, prompt: nil) },
             actions: [
                 .init(title: "Open Shell on \(macs.name(for: host))", symbol: "network") { _ = macs.shell(host: host, project: project) },
+            ] + (client?.isHeadless == true ? [] : [
+                // A server can't make worktree agents yet.
                 .init(title: "New Agent on a Branch…", symbol: "arrow.triangle.branch") { showsNewAgent = true },
-            ],
+            ]),
             recents: recents,
             resume: { client?.resume(projectID: projectID, sessionID: $0.id) },
             tint: client?.icons[project.parentID ?? project.id].map(IconTint.color(ofIcon:))
@@ -170,7 +172,7 @@ struct RemoteProjectView: View {
             Button("Open Shell on \(macs.name(for: host))") {
                 if let project { _ = macs.shell(host: host, project: project) }
             }
-            Button("New Agent on a Branch…") { showsNewAgent = true }
+            if client?.isHeadless != true { Button("New Agent on a Branch…") { showsNewAgent = true } }
             if client?.canRunShortcuts == true, let shortcuts = project?.shortcuts, !shortcuts.isEmpty {
                 Section("Shortcuts on \(macs.name(for: host))") {
                     ForEach(shortcuts) { shortcut in

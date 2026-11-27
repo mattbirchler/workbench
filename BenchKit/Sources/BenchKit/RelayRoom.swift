@@ -1,5 +1,12 @@
+#if canImport(CryptoKit)
 import CryptoKit
+#else
+@preconcurrency import Crypto
+#endif
 import Foundation
+#if canImport(FoundationNetworking)
+import FoundationNetworking
+#endif
 
 /// A Mac's room on the Workbench relay, the way a phone reaches it without
 /// Tailscale. The Mac makes a random key and keeps it. The room's id is the
@@ -16,7 +23,9 @@ public struct RelayRoom: Sendable, Hashable, Codable {
 
     public static func make() -> RelayRoom {
         var bytes = [UInt8](repeating: 0, count: 32)
-        _ = SecRandomCopyBytes(kSecRandomDefault, bytes.count, &bytes)
+        // The system's generator, which is the secure one on every platform.
+        var generator = SystemRandomNumberGenerator()
+        for index in bytes.indices { bytes[index] = UInt8.random(in: 0...255, using: &generator) }
         return RelayRoom(key: bytes.map { String(format: "%02x", $0) }.joined())
     }
 

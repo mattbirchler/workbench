@@ -1,4 +1,7 @@
 import Foundation
+#if canImport(FoundationNetworking)
+import FoundationNetworking
+#endif
 
 /// One WebSocket frame to or from the relay.
 public enum RelayFrame: Sendable, Equatable {
