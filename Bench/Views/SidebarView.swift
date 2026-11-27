@@ -351,6 +351,8 @@ struct SidebarView: View {
 
     /// Shows the ⌘1 to ⌘9 hints once Command has been held on its own for
     /// a moment. Without the wait they'd flash on every ⌘T, ⌘W, and so on.
+    /// They stay up through ⌘1 to ⌘9 themselves, so you can go to 4, then
+    /// 7, then back to 4 without letting go to read the numbers again.
     private func watchCommandKey() {
         guard keyMonitor == nil else { return }
         keyMonitor = NSEvent.addLocalMonitorForEvents(matching: [.flagsChanged, .keyDown]) { event in
@@ -364,6 +366,10 @@ struct SidebarView: View {
                         showsShortcuts = true
                     }
                 }
+            } else if event.type == .keyDown,
+                      SidebarShortcuts.keepsHints(characters: event.charactersIgnoringModifiers, modifiers: mods) {
+                // One of the shortcuts the hints are for: leave them (or
+                // the wait for them) alone while Command stays down.
             } else {
                 hideShortcuts()
             }

@@ -1,3 +1,4 @@
+import AppKit
 import BenchKit
 import Foundation
 
@@ -49,6 +50,15 @@ enum SidebarShortcuts {
             numbers[target] = index + 1
         }
         return numbers
+    }
+
+    /// Whether a key press leaves the hints showing: ⌘1 to ⌘9 and nothing
+    /// else, so the numbers are still there for the next one. The number
+    /// pad's digits count too.
+    static func keepsHints(characters: String?, modifiers: NSEvent.ModifierFlags) -> Bool {
+        guard modifiers.subtracting(.numericPad) == .command,
+              let characters, characters.count == 1, let digit = Int(characters) else { return false }
+        return (1...9).contains(digit)
     }
 
     /// Opens the row at `index` (0 for ⌘1).
