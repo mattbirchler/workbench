@@ -115,6 +115,24 @@ final class ChatTypography {
         return fonts
     }
 
+    /// The same Markdown a step up in size, for reading a whole Markdown
+    /// file in its tab: a 15pt body with headings stepping up to 24.
+    var readingMarkdown: MarkdownFonts {
+        let customized = Self.installed(textFamily) != nil || Self.installed(codeFamily) != nil
+        var fonts = MarkdownFonts(
+            heading1: text(24, weight: .bold),
+            heading2: text(19, weight: .bold),
+            heading3: text(16, weight: .semibold),
+            code: code(13),
+            tableHeader: text(13.5, weight: .semibold),
+            table: text(13.5),
+            inlineCode: customized ? code(14) : nil)
+        fonts.prose = ProseFonts(textFamily: Self.installed(textFamily), codeFamily: Self.installed(codeFamily),
+                                 bodySize: 15, codeSize: 14, heading1Size: 24, heading2Size: 19,
+                                 heading3Size: 16, lineSpacing: 4, scale: scale)
+        return fonts
+    }
+
     // MARK: Families
 
     /// The family, if it's still installed. One that's been removed falls
