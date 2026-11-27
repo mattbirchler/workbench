@@ -1,4 +1,3 @@
-import BenchKit
 import Foundation
 
 /// Follows the transcripts the phone is watching. Each file is read from
@@ -7,9 +6,9 @@ import Foundation
 /// A long conversation is read from its end: enough to open with, and
 /// then further back a page at a time as the phone asks for earlier
 /// messages. `parsedFrom` is how far back the reading has gone.
-final class TranscriptStreamer: @unchecked Sendable {
+public final class TranscriptStreamer: @unchecked Sendable {
     /// How much of a long conversation is read to start with.
-    static let openingLimit = 300
+    public static let openingLimit = 300
 
     private struct State {
         var path: String
@@ -38,19 +37,29 @@ final class TranscriptStreamer: @unchecked Sendable {
     private let queue = DispatchQueue(label: "Bench.TranscriptStreamer", qos: .userInitiated)
     private var states: [UUID: State] = [:]  // only touched on `queue`
     private let options: TranscriptParser.Options
+    /// Makes the pictures in freshly read messages small, where the
+    /// platform can. Read with the messages, off the main thread.
+    public typealias Shrink = @Sendable (inout [TranscriptMessage]) -> Void
+    private let shrink: Shrink
+    /// Which agent's session file a path is, so it's read the right way.
+    private let format: @Sendable (_ path: String) -> any TranscriptFormat
 
-    init(options: TranscriptParser.Options = .init()) {
+    public init(options: TranscriptParser.Options = .init(),
+                format: @escaping @Sendable (_ path: String) -> any TranscriptFormat = { _ in ClaudeTranscriptFormat() },
+                shrink: @escaping Shrink = { _ in }) {
         self.options = options
+        self.format = format
+        self.shrink = shrink
     }
 
     /// The conversation so far, for a phone that just started watching.
     /// Long files are read from the end, just far enough to fill it.
     /// `hasMore` is true when the conversation goes back further.
-    func opening(tabID: UUID, path: String, completion: @escaping @MainActor (_ messages: [TranscriptMessage], _ hasMore: Bool) -> Void) {
+    public func opening(tabID: UUID, path: String, completion: @escaping @MainActor (_ messages: [TranscriptMessage], _ hasMore: Bool) -> Void) {
         queue.async { [self] in
             var state = states[tabID] ?? State(path: path)
             if state.path != path { state = State(path: path) }
-            Self.readNew(into: &state, options: options)
+            Self.readNew(into: &state, options: options, format: format, shrink: shrink)
             states[tabID] = state
             var messages = state.messages
             // Results ride along with their steps, so they get room of their own.
@@ -64,7 +73,7 @@ final class TranscriptStreamer: @unchecked Sendable {
     /// Up to `count` messages before the one with `id`, reading further
     /// back in the file as needed. `hasMore` is true when there are
     /// earlier ones still. Nothing when `id` isn't known any more.
-    func earlier(tabID: UUID, path: String, before id: String, count: Int,
+    public func earlier(tabID: UUID, path: String, before id: String, count: Int,
                  completion: @escaping @MainActor (_ messages: [TranscriptMessage], _ hasMore: Bool) -> Void) {
         queue.async { [self] in
             guard var state = states[tabID], state.path == path else {
@@ -78,9 +87,9 @@ final class TranscriptStreamer: @unchecked Sendable {
                     DispatchQueue.main.async { MainActor.assumeIsolated { completion([], false) } }
                     return
                 }
-                var read = Self.readBackward(handle, end: at, want: count, format: Agents.transcripts(for: path).format, options: options)
+                var read = Self.readBackward(handle, end: at, want: count, format: format(path), options: options, shrink: shrink)
                 try? handle.close()
-                ImagePreviews.shared.shrinkNow(&read.messages)
+                shrink(&read.messages)
                 for message in read.messages { state.lineStarts[message.id] = read.parsedFrom }
                 states[tabID] = state
                 DispatchQueue.main.async { MainActor.assumeIsolated { completion(read.messages, read.parsedFrom > 0) } }
@@ -89,9 +98,9 @@ final class TranscriptStreamer: @unchecked Sendable {
             // What's kept may not reach back far enough: before what was
             // parsed, or before what was let go of. Read on from there.
             if index < count, let from = Self.unreadStart(state), let handle = FileHandle(forReadingAtPath: path) {
-                var read = Self.readBackward(handle, end: from, want: count - index, format: Agents.transcripts(for: path).format, options: options)
+                var read = Self.readBackward(handle, end: from, want: count - index, format: format(path), options: options, shrink: shrink)
                 try? handle.close()
-                ImagePreviews.shared.shrinkNow(&read.messages)
+                shrink(&read.messages)
                 for message in read.messages { state.lineStarts[message.id] = read.parsedFrom }
                 state.messages.insert(contentsOf: read.messages, at: 0)
                 if state.parsedFrom > 0 { state.parsedFrom = read.parsedFrom }
@@ -118,17 +127,17 @@ final class TranscriptStreamer: @unchecked Sendable {
     /// moved to a new transcript (after /clear) or the file was rewritten,
     /// in which case `messages` is the new conversation from the start.
     /// With `always`, it calls back even when there's nothing new.
-    func poll(tabID: UUID, path: String, always: Bool = false, completion: @escaping @MainActor ([TranscriptMessage], _ replaces: Bool) -> Void) {
+    public func poll(tabID: UUID, path: String, always: Bool = false, completion: @escaping @MainActor ([TranscriptMessage], _ replaces: Bool) -> Void) {
         queue.async { [self] in
             var state = states[tabID] ?? State(path: path)
             var replaces = state.path != path
             if replaces { state = State(path: path) }
             let before = state.messages.count
-            let rewritten = Self.readNew(into: &state, options: options)
+            let rewritten = Self.readNew(into: &state, options: options, format: format, shrink: shrink)
             if rewritten {
                 replaces = true
                 state = State(path: path)
-                _ = Self.readNew(into: &state, options: options)
+                _ = Self.readNew(into: &state, options: options, format: format, shrink: shrink)
             }
             states[tabID] = state
             let fresh = replaces ? state.messages : Array(state.messages[before...])
@@ -145,7 +154,7 @@ final class TranscriptStreamer: @unchecked Sendable {
         }
     }
 
-    func forget(except tabIDs: Set<UUID>) {
+    public func forget(except tabIDs: Set<UUID>) {
         queue.async { [self] in
             for id in states.keys where !tabIDs.contains(id) { states[id] = nil }
         }
@@ -154,15 +163,16 @@ final class TranscriptStreamer: @unchecked Sendable {
     /// Reads and parses whatever was appended. Returns true if the file got
     /// shorter, which means it was rewritten and should be read again.
     @discardableResult
-    private static func readNew(into state: inout State, options: TranscriptParser.Options) -> Bool {
+    private static func readNew(into state: inout State, options: TranscriptParser.Options,
+                                format lookup: (String) -> any TranscriptFormat, shrink: Shrink) -> Bool {
         guard let handle = FileHandle(forReadingAtPath: state.path) else { return false }
         defer { try? handle.close() }
-        let format = Agents.transcripts(for: state.path).format
+        let format = lookup(state.path)
         let end = (try? handle.seekToEnd()) ?? 0
         if end < state.offset { return true }
         guard end > state.offset else { return false }
         if state.offset == 0, end > tailChunk {
-            readTail(of: handle, end: end, into: &state, options: options)
+            readTail(of: handle, end: end, into: &state, options: options, format: lookup, shrink: shrink)
             return false
         }
         try? handle.seek(toOffset: state.offset)
@@ -187,7 +197,7 @@ final class TranscriptStreamer: @unchecked Sendable {
         }
         // Previews from here on: a screenshot is a megabyte or two, and a
         // conversation kept for hours held every one of them whole.
-        ImagePreviews.shared.shrinkNow(&fresh)
+        shrink(&fresh)
         PlanText.fill(&fresh, lastFile: &state.planFile)
         state.messages.append(contentsOf: fresh)
         return false
@@ -204,7 +214,8 @@ final class TranscriptStreamer: @unchecked Sendable {
     /// Long conversations run to hundreds of megabytes, almost all of it
     /// old tool output. Parse only enough of the end to fill the opening,
     /// so a big transcript opens about as fast as a small one.
-    private static func readTail(of handle: FileHandle, end: UInt64, into state: inout State, options: TranscriptParser.Options) {
+    private static func readTail(of handle: FileHandle, end: UInt64, into state: inout State, options: TranscriptParser.Options,
+                                 format lookup: (String) -> any TranscriptFormat, shrink: Shrink) {
         // The last line may still be being written: find where whole
         // lines end, and keep the rest for the next read.
         let peek = min(end, tailChunk)
@@ -216,7 +227,7 @@ final class TranscriptStreamer: @unchecked Sendable {
             partial = Data(tail[tail.index(after: lastNewline)...])
             lineEnd = end - UInt64(partial.count)
         }
-        let read = readBackward(handle, end: lineEnd, want: keptLimit(options), format: Agents.transcripts(for: state.path).format, options: options)
+        let read = readBackward(handle, end: lineEnd, want: keptLimit(options), format: lookup(state.path), options: options, shrink: shrink)
         state.messages = read.messages
         for message in read.messages { state.lineStarts[message.id] = read.parsedFrom }
         PlanText.fill(&state.messages, lastFile: &state.planFile)
@@ -229,7 +240,7 @@ final class TranscriptStreamer: @unchecked Sendable {
     /// there are `want` messages or the file's start. Returns them, oldest
     /// first, and the byte where the oldest parsed line starts.
     private static func readBackward(_ handle: FileHandle, end: UInt64, want: Int, format: any TranscriptFormat,
-                                     options: TranscriptParser.Options) -> (messages: [TranscriptMessage], parsedFrom: UInt64) {
+                                     options: TranscriptParser.Options, shrink: Shrink) -> (messages: [TranscriptMessage], parsedFrom: UInt64) {
         var messages: [TranscriptMessage] = []
         var parsedFrom = end
         var size = tailChunk
@@ -249,7 +260,7 @@ final class TranscriptStreamer: @unchecked Sendable {
             for line in data.split(separator: UInt8(ascii: "\n")) {
                 earlier.append(contentsOf: format.messages(in: Data(line), options: options))
             }
-            ImagePreviews.shared.shrinkNow(&earlier)
+            shrink(&earlier)
             var planFile: String?
             PlanText.fill(&earlier, lastFile: &planFile)
             messages = earlier + messages

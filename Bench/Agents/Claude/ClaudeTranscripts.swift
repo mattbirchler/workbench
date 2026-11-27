@@ -87,8 +87,7 @@ nonisolated struct ClaudeTranscripts: AgentTranscripts {
     /// "-": `/Users/matt/Apps/Bench` is `-Users-matt-Apps-Bench`. Each
     /// Claude account has its own.
     static func folder(forProject path: String, account: ClaudeProfile) -> URL {
-        let name = String(path.map { $0.isASCII && ($0.isLetter || $0.isNumber) ? $0 : "-" })
-        return account.projectsURL.appendingPathComponent(name, isDirectory: true)
+        ClaudeSessionFiles.folder(forProject: path, projects: account.projectsURL)
     }
 
     func sessionFiles(forProject path: String, account: ClaudeProfile) -> [URL] {

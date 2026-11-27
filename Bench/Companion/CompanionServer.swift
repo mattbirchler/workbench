@@ -54,7 +54,8 @@ final class CompanionServer {
     @ObservationIgnored private let snapshots: CompanionSnapshots
     @ObservationIgnored private let token: () -> String
     // Results are kept, and only go to clients that asked for them.
-    @ObservationIgnored private let transcripts = TranscriptStreamer(options: .init(keepsResults: true, keepsQueue: true, keepsNotices: true, keepsTurnTimes: true))
+    @ObservationIgnored private let transcripts = TranscriptStreamer(options: .init(keepsResults: true, keepsQueue: true, keepsNotices: true, keepsTurnTimes: true), format: { Agents.transcripts(for: $0).format },
+                                                                  shrink: { ImagePreviews.shared.shrinkNow(&$0) })
     @ObservationIgnored private var lastTheme: TerminalColors?
     @ObservationIgnored private var lastPlanUsage: PlanUsage?
     @ObservationIgnored private var lastChanges: [UUID: ChangesSnapshot] = [:]
