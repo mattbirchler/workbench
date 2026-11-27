@@ -88,9 +88,13 @@ public struct DashboardRow: Codable, Sendable, Hashable, Identifiable {
     /// done, and how many there are.
     public var stepsDone: Int?
     public var stepsTotal: Int?
+    /// On the Mac: the project's icon, as the name of a file in
+    /// `DashboardIcons.folder`.
+    public var icon: String?
 
     public init(id: UUID, project: String, activity: String, text: String, since: Date? = nil, checks: String? = nil,
-                stepsDone: Int? = nil, stepsTotal: Int? = nil) {
+                stepsDone: Int? = nil, stepsTotal: Int? = nil, icon: String? = nil) {
+        self.icon = icon
         self.id = id
         self.project = project
         self.activity = activity
@@ -102,6 +106,18 @@ public struct DashboardRow: Codable, Sendable, Hashable, Identifiable {
     }
 
     public var kind: ActivityKind { ActivityKind(rawValue: activity) ?? .idle }
+}
+
+/// Where the Mac app leaves project icons for the widget extension that
+/// draws its Live Activity. The extension is sandboxed and can't read the
+/// projects' own folders, so the two share an app group, named in each
+/// one's Info.plist as BenchAppGroup.
+public enum DashboardIcons {
+    public static var folder: URL? {
+        guard let group = Bundle.main.object(forInfoDictionaryKey: "BenchAppGroup") as? String, !group.hasPrefix("."),
+              let container = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: group) else { return nil }
+        return container.appendingPathComponent("ProjectIcons", isDirectory: true)
+    }
 }
 
 public enum DashboardActivity {

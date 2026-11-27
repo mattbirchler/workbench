@@ -282,6 +282,7 @@ struct BenchApp: App {
         _requests = State(initialValue: requests)
         AppDelegate.terminals = terminals
         AppDelegate.store = store
+        AppDelegate.icons = icons
         _updater = State(initialValue: Updater(terminals: terminals))
         // Before any tab starts, so kept tabs know whether to join a session.
         SessionKeeper.prepare()
@@ -431,6 +432,7 @@ struct BenchApp: App {
 final class AppDelegate: NSObject, NSApplicationDelegate {
     static weak var terminals: TerminalManager?
     static weak var store: AppStore?
+    static weak var icons: ProjectIcons?
     private var menuBarItem: MenuBarItem?
     /// A `MenuBarActivity`, on macOS 27.3 and later. Untyped so it can be
     /// stored on older systems too.
@@ -464,7 +466,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         if #available(macOS 27.3, *) {
             let wanted = MenuBarActivity.isShown
             if wanted, menuBarActivity == nil, let store = Self.store, let terminals = Self.terminals {
-                menuBarActivity = MenuBarActivity(store: store, terminals: terminals)
+                menuBarActivity = MenuBarActivity(store: store, terminals: terminals, icons: Self.icons)
             } else if !wanted, let activity = menuBarActivity as? MenuBarActivity {
                 activity.remove()
                 menuBarActivity = nil
