@@ -1,43 +1,44 @@
-import BenchKit
 import Foundation
 
 /// Claude Code's terminal: its keys, its window title and what its screen
 /// looks like.
-nonisolated struct ClaudeTerminalDriver: AgentTerminalDriver {
+public struct ClaudeTerminalDriver: AgentTerminalDriver {
+    public init() {}
+
     // MARK: Keys
 
-    var allowKey: Key { .returnKey }
-    var denyKey: Key { .escape }
-    var interruptKey: Key { .escape }
+    public var allowKey: Key { .returnKey }
+    public var denyKey: Key { .escape }
+    public var interruptKey: Key { .escape }
     /// Ctrl+Return.
-    var sendQueueNowKey: Key? { .controlReturn }
+    public var sendQueueNowKey: Key? { .controlReturn }
     /// Shift-Tab.
-    var nextModeKey: Key? { .backTab }
-    var takesBackQueue: Bool { true }
+    public var nextModeKey: Key? { .backTab }
+    public var takesBackQueue: Bool { true }
 
     // MARK: The window title
 
     /// The first character of Claude Code's title while it works. Older
     /// versions used a braille spinner; newer ones alternate ◐ and ◑.
     /// Anything else up front reads as Claude having left the terminal.
-    func isWorkingMark(_ scalar: Unicode.Scalar) -> Bool {
+    public func isWorkingMark(_ scalar: Unicode.Scalar) -> Bool {
         (0x2800...0x28FF).contains(scalar.value) || (0x25D0...0x25D3).contains(scalar.value)
     }
 
     /// Claude Code keeps the title: a spinner while it works, and
     /// "✳ Claude Code" or "✳ <task>" otherwise.
-    func titleIsAgents(_ title: String?) -> Bool {
+    public func titleIsAgents(_ title: String?) -> Bool {
         guard let title, let first = title.unicodeScalars.first else { return true }
         return first.value == 0x2733 || title.lowercased().hasPrefix("claude")
     }
 
-    func titleIsStarting(_ title: String?) -> Bool { title?.hasPrefix("claude") == true }
+    public func titleIsStarting(_ title: String?) -> Bool { title?.hasPrefix("claude") == true }
 
     // MARK: The screen
 
     /// What's in Claude Code's message box, from its screen: the lines
     /// between the last two rules, without the ❯. nil when it isn't there.
-    func messageBox(in screen: String?) -> String? {
+    public func messageBox(in screen: String?) -> String? {
         guard let lines = screen?.components(separatedBy: "\n") else { return nil }
         let rules = lines.indices.filter { index in
             let line = lines[index].trimmingCharacters(in: .whitespaces)
@@ -52,16 +53,16 @@ nonisolated struct ClaudeTerminalDriver: AgentTerminalDriver {
         return inside.joined(separator: "\n").trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
-    func isHint(_ box: String) -> Bool { box.hasPrefix("Press ") }
+    public func isHint(_ box: String) -> Bool { box.hasPrefix("Press ") }
 
-    func isQueueHint(_ box: String) -> Bool { box.hasPrefix("Press up to edit") }
+    public func isQueueHint(_ box: String) -> Bool { box.hasPrefix("Press up to edit") }
 
     /// From the line under the message box.
-    func permissionMode(in screen: String?) -> PermissionMode? { PermissionMode(screen: screen) }
+    public func permissionMode(in screen: String?) -> PermissionMode? { PermissionMode(screen: screen) }
 
     /// The folder Claude Code is asking you to trust ("" if it can't be
     /// read). Nil when it isn't asking.
-    func trustFolder(in screen: String) -> String? {
+    public func trustFolder(in screen: String) -> String? {
         guard screen.contains("Yes, I trust this folder"), screen.contains("No, exit") else { return nil }
         let lines = screen.components(separatedBy: "\n").map { $0.trimmingCharacters(in: .whitespaces) }
         // Still asking, not left on screen after Claude Code quit.
@@ -72,9 +73,9 @@ nonisolated struct ClaudeTerminalDriver: AgentTerminalDriver {
         return rest.prefix { !$0.isEmpty }.joined()
     }
 
-    func startupPrompt(in screen: String) -> StartupPrompt? {
+    public func startupPrompt(in screen: String) -> StartupPrompt? {
         guard let folder = trustFolder(in: screen) else { return nil }
-        let name = folder.isEmpty ? "this folder" : (folder as NSString).abbreviatingWithTildeInPath
+        let name = folder.isEmpty ? "this folder" : Self.withTilde(folder)
         let question = CompanionQuestion(
             question: "Do you trust the files in \(name)?",
             options: [.init(label: "Yes, I trust this folder", description: "Claude Code can read, edit and run files here. Only say yes for your own code or a project you know."),
@@ -85,13 +86,20 @@ nonisolated struct ClaudeTerminalDriver: AgentTerminalDriver {
                              answers: [.init(moves: [.downArrow], picked: "Yes, I trust this folder"), .init()])
     }
 
-    func showsMessageBox(in screen: String?) -> Bool { false }
+    /// A path with the home folder written as `~`, as Finder and shells show it.
+    static func withTilde(_ path: String, home: String = NSHomeDirectory()) -> String {
+        guard !home.isEmpty, home != "/" else { return path }
+        if path == home { return "~" }
+        return path.hasPrefix(home + "/") ? "~" + path.dropFirst(home.count) : path
+    }
+
+    public func showsMessageBox(in screen: String?) -> Bool { false }
 
     /// The plan picker's choices from a screen of Claude Code: the numbered
     /// lines after "Would you like to proceed?", while its cursor is on one.
     /// A last choice like "Type here to tell Claude what to change" becomes
     /// your own words rather than an option.
-    func planApproval(in screen: String?) -> CompanionQuestion? {
+    public func planApproval(in screen: String?) -> CompanionQuestion? {
         guard let lines = screen?.components(separatedBy: "\n").map({ $0.trimmingCharacters(in: .whitespaces) }),
               let heading = lines.lastIndex(where: { $0.contains("Would you like to proceed?") }) else { return nil }
         var labels: [String] = []
@@ -131,7 +139,7 @@ nonisolated struct ClaudeTerminalDriver: AgentTerminalDriver {
     /// only moves to an option and Return picks it. There's no "Type
     /// something" there: N opens notes on the option instead, and Return
     /// from the notes picks the option with them.
-    func answerSteps(questions: [CompanionQuestion], answers: [CompanionAnswer]) -> Result<[AnswerStep], AnswerProblem> {
+    public func answerSteps(questions: [CompanionQuestion], answers: [CompanionAnswer]) -> Result<[AnswerStep], AnswerProblem> {
         guard answers.count == questions.count else { return .failure(.init(message: "Those answers don't match Claude's questions.")) }
         var steps: [AnswerStep] = []
         for (question, answer) in zip(questions, answers) {

@@ -156,53 +156,6 @@ enum Agents {
     }
 }
 
-/// The shell commands Workbench's hooks are made of. Every agent that
-/// supports hooks runs them the same way (a command, with the event's
-/// JSON on its input), so a provider only decides which of its events
-/// run which of these.
-enum AgentHookCommands {
-    static func command(_ script: String) -> [String: Any] { ["type": "command", "command": script] }
-
-    /// Records the tab's state. Written via a temp file and a rename so
-    /// Workbench never reads a half-written file.
-    static func writeState(_ state: AgentState) -> [String: Any] {
-        command(#"if [ -n "$BENCH_STATE_FILE" ]; then printf '\#(state.rawValue)' > "$BENCH_STATE_FILE.tmp" && mv -f "$BENCH_STATE_FILE.tmp" "$BENCH_STATE_FILE"; fi"#)
-    }
-
-    /// Back to working once a tool finishes, unless the tab is waiting on
-    /// permission for a different command. An agent that runs several
-    /// commands at once finishes the ones that need no permission while
-    /// one is still asking, and that one has to stay on screen. The
-    /// command being asked about is in the saved permission event; a
-    /// finished tool whose event has the same command is the one allowed.
-    static let workingAfterTool = command(#"if [ -n "$BENCH_STATE_FILE" ]; then e=$(cat); q="$BENCH_STATE_FILE.question.json"; if [ "$(cat "$BENCH_STATE_FILE" 2>/dev/null)" = waiting ] && [ -f "$q" ]; then c=$(sed -nE 's/.*"tool_input":\{"command":("([^"\\]|\\.)*").*/\1/p' "$q" | head -n 1); case "$e" in *"\"command\":$c"*) ;; *) exit 0 ;; esac; fi; printf 'working' > "$BENCH_STATE_FILE.tmp" && mv -f "$BENCH_STATE_FILE.tmp" "$BENCH_STATE_FILE"; fi"#)
-
-    /// Saves the event's JSON as `<tab id>.<event>.json`, via a temp file
-    /// and a rename like `writeState`.
-    static func saveEvent(_ event: String) -> [String: Any] {
-        command(#"if [ -n "$BENCH_STATE_FILE" ]; then cat > "$BENCH_STATE_FILE.\#(event).tmp" && mv -f "$BENCH_STATE_FILE.\#(event).tmp" "$BENCH_STATE_FILE.\#(event).json"; fi"#)
-    }
-
-    /// Records the session that just started as the tab's own.
-    static let recordSession = command(#"if [ -n "$BENCH_SESSION_FILE" ]; then cat > "$BENCH_SESSION_FILE"; fi"#)
-    /// Forgets the tab's session, once you've ended it yourself.
-    static let forgetSession = command(#"if [ -n "$BENCH_SESSION_FILE" ]; then rm -f "$BENCH_SESSION_FILE"; fi"#)
-    /// Clears the tab's state when the agent exits.
-    static let clearState = command(#"if [ -n "$BENCH_STATE_FILE" ]; then rm -f "$BENCH_STATE_FILE"; fi"#)
-
-    /// Tells the agent, once, that `bench` has changed since its session
-    /// started. What it prints is added to the prompt being sent. The
-    /// file is found from the state file's folder so it also works in a
-    /// session started before this hook existed, if the agent picks the
-    /// hook up there.
-    static let commandsChanged = command(#"if [ -n "$BENCH_STATE_FILE" ]; then f="$(dirname "$(dirname "$BENCH_STATE_FILE")")/bench-commands"; m="$BENCH_STATE_FILE.commands"; now=$(head -n 1 "$f" 2>/dev/null); if [ -n "$now" ] && [ "$now" != "${BENCH_COMMANDS:-}" ] && [ "$now" != "$(cat "$m" 2>/dev/null)" ]; then printf '%s' "$now" > "$m"; tail -n +2 "$f"; fi; fi"#)
-}
-
-/// Single quotes keep the shell from touching anything inside.
-nonisolated func shellQuote(_ s: String) -> String {
-    "'" + s.replacingOccurrences(of: "'", with: #"'\''"#) + "'"
-}
-
 /// A string as TOML writes one: in double quotes, with what would end it
 /// or break the line escaped.
 nonisolated func tomlQuote(_ s: String) -> String {

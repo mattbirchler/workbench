@@ -1,4 +1,7 @@
 import Foundation
+#if canImport(FoundationNetworking)
+import FoundationNetworking
+#endif
 
 /// One sealed prompt as the relay holds it.
 public struct QueueItem: Codable, Sendable, Hashable {

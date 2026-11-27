@@ -1,4 +1,8 @@
+#if canImport(CryptoKit)
 import CryptoKit
+#else
+@preconcurrency import Crypto
+#endif
 import Foundation
 
 /// Builds the Mac's self-signed TLS certificate: X.509 v3, ECDSA P-256 with SHA-256.

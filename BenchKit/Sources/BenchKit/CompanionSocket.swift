@@ -1,4 +1,7 @@
 import Foundation
+#if canImport(FoundationNetworking)
+import FoundationNetworking
+#endif
 
 /// The socket a companion connection runs over, so the client doesn't care
 /// whether it reached the Mac directly (a WebSocket, over Tailscale or the

@@ -51,7 +51,9 @@ public enum CrossProjectEdits {
             return file.withUTF8 { bytes in
                 folders.first { folder in
                     bytes.count > folder.prefix.count && folder.prefix.withUnsafeBytes {
-                        memcmp($0.baseAddress, bytes.baseAddress, $0.count) == 0
+                        // An empty prefix has no address, and matches anything.
+                        guard let prefix = $0.baseAddress, let path = bytes.baseAddress else { return $0.isEmpty }
+                        return memcmp(prefix, path, $0.count) == 0
                     }
                 }?.id
             }

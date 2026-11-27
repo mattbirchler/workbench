@@ -1,4 +1,3 @@
-import BenchKit
 import Foundation
 
 /// How Workbench works an agent's terminal: which keys do what, and how to
@@ -10,8 +9,8 @@ import Foundation
 ///
 /// A nil key, or a false capability, means the agent has no such thing,
 /// and the app leaves that control out.
-nonisolated protocol AgentTerminalDriver: Sendable {
-    typealias Key = TerminalSurfaceView.SpecialKey
+public protocol AgentTerminalDriver: Sendable {
+    typealias Key = AgentKey
 
     // MARK: Keys
 
@@ -71,42 +70,58 @@ nonisolated protocol AgentTerminalDriver: Sendable {
 }
 
 /// One thing to do in an agent's picker: press a key, or type text.
-nonisolated enum AnswerStep: Equatable {
-    case key(TerminalSurfaceView.SpecialKey)
+public enum AnswerStep: Equatable, Sendable {
+    case key(AgentKey)
     case text(String)
 }
 
-nonisolated struct AnswerProblem: Error, Equatable { let message: String }
+public struct AnswerProblem: Error, Equatable, Sendable {
+    public let message: String
+
+    public init(message: String) { self.message = message }
+}
 
 /// A question an agent asks in its terminal before a session starts, as
 /// a card you can answer from the chat or another device.
-nonisolated struct StartupPrompt: Sendable {
+public struct StartupPrompt: Sendable {
     /// How to pick one of the question's options.
-    struct Answer: Sendable {
+    public struct Answer: Sendable {
         /// Keys that move to the option, when the cursor doesn't start on it.
-        var moves: [TerminalSurfaceView.SpecialKey] = []
+        public var moves: [AgentKey]
         /// Words on the option's line, checked to be on the cursor's line
         /// after the moves and before confirming.
-        var picked: String?
-        var confirm: TerminalSurfaceView.SpecialKey = .returnKey
+        public var picked: String?
+        public var confirm: AgentKey
+
+        public init(moves: [AgentKey] = [], picked: String? = nil, confirm: AgentKey = .returnKey) {
+            self.moves = moves
+            self.picked = picked
+            self.confirm = confirm
+        }
     }
 
-    var question: CompanionQuestion
+    public var question: CompanionQuestion
     /// Why a message can't be sent yet, after the agent's name: "is
     /// asking whether to trust this folder".
-    var blocker: String
+    public var blocker: String
     /// One per option of the question, in order.
-    var answers: [Answer]
+    public var answers: [Answer]
+
+    public init(question: CompanionQuestion, blocker: String, answers: [Answer]) {
+        self.question = question
+        self.blocker = blocker
+        self.answers = answers
+    }
 
     /// True when a screen shows the cursor on the line with these words.
-    static func cursorIsOn(_ words: String, in screen: String?) -> Bool {
+    public static func cursorIsOn(_ words: String, in screen: String?) -> Bool {
         screen?.components(separatedBy: "\n").contains { line in
             (line.contains("❯") || line.contains("›")) && line.contains(words)
         } ?? false
     }
 }
 
-nonisolated extension AgentTerminalDriver {
+public extension AgentTerminalDriver {
     func typed(_ message: String) -> String { message }
     var returnDelay: Int { 200 }
 }

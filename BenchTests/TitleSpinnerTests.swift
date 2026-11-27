@@ -1,3 +1,4 @@
+import BenchKit
 import Testing
 @testable import Bench
 
