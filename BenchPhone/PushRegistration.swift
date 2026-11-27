@@ -63,43 +63,84 @@ final class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCent
 
     /// Show banners even while the app is open, since you may be looking
     /// at a different project.
-    nonisolated func userNotificationCenter(_ center: UNUserNotificationCenter, willPresent notification: UNNotification) async -> UNNotificationPresentationOptions {
-        [.banner, .sound, .list]
+    nonisolated func userNotificationCenter(_ center: UNUserNotificationCenter, willPresent notification: UNNotification,
+                                            withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
+        completionHandler([.banner, .sound, .list])
     }
 
-    nonisolated func userNotificationCenter(_ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse) async {
-        let info = response.notification.request.content.userInfo
-        let project = (info["project"] as? String).flatMap(UUID.init(uuidString:))
-        let session = (info["session"] as? String).flatMap(UUID.init(uuidString:))
-        let url = (info["url"] as? String).flatMap(URL.init(string:))
-        let host = info["host"] as? String
+    /// A tap on a notification, or on one of its buttons.
+    ///
+    /// These are the completion-handler forms on purpose. UIKit insists the
+    /// handler is called on the main thread and ends the app if it isn't
+    /// ("Call must be made on main thread"). The `async` forms call it from
+    /// wherever the method happens to finish, which for a method that isn't
+    /// on the main actor is a background thread: every tap ended the app.
+    nonisolated func userNotificationCenter(_ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse,
+                                            withCompletionHandler completionHandler: @escaping () -> Void) {
+        let tap = Tap(response)
+        let done = MainThreadCallback(completionHandler)
+        Task { @MainActor in
+            await Self.handle(tap)
+            done.call()
+        }
+    }
+
+    /// What a tapped notification says, taken out of it so it can cross to
+    /// the main actor.
+    private nonisolated struct Tap: Sendable {
+        let project: UUID?
+        let projectText: String?
+        let session: UUID?
+        let url: URL?
+        let host: String?
+        let thread: String
+        let answer: NotificationAnswers.Answer?
+
+        init(_ response: UNNotificationResponse) {
+            let content = response.notification.request.content
+            let info = content.userInfo
+            projectText = info["project"] as? String
+            project = projectText.flatMap(UUID.init(uuidString:))
+            session = (info["session"] as? String).flatMap(UUID.init(uuidString:))
+            url = (info["url"] as? String).flatMap(URL.init(string:))
+            host = info["host"] as? String
+            thread = content.threadIdentifier
+            answer = NotificationAnswers.answer(for: response)
+        }
+    }
+
+    /// The system's completion handler, which may only be called on the
+    /// main thread.
+    private nonisolated struct MainThreadCallback: @unchecked Sendable {
+        private let handler: () -> Void
+        init(_ handler: @escaping () -> Void) { self.handler = handler }
+        @MainActor func call() { handler() }
+    }
+
+    private static func handle(_ tap: Tap) async {
         // A button on the notification: answer from here, without opening
-        // the app. iOS keeps the app running until this returns.
-        if let answer = NotificationAnswers.answer(for: response), let session {
-            let thread = response.notification.request.content.threadIdentifier
-            let projectText = info["project"] as? String
-            await MainActor.run { Analytics.capture(.notificationAnswered) }
-            let problem = await NotificationAnswers.send(answer, sessionID: session, host: host,
-                                                         client: Self.client, pairing: Self.pairing)
+        // the app. iOS keeps the app running until the handler is called.
+        if let answer = tap.answer, let session = tap.session {
+            Analytics.capture(.notificationAnswered)
+            let problem = await NotificationAnswers.send(answer, sessionID: session, host: tap.host,
+                                                         client: client, pairing: pairing)
             if let problem {
-                await NotificationAnswers.report(problem, thread: thread, project: projectText, session: session.uuidString, host: host)
+                NotificationAnswers.report(problem, thread: tap.thread, project: tap.projectText, session: session.uuidString, host: tap.host)
             }
             return
         }
-        await MainActor.run {
-            Analytics.capture(.notificationOpened)
-            // The notification may be from a Mac other than the one we're
-            // showing. Older Mac builds don't say, so assume the current one.
-            if let host, host != Self.pairing?.info?.host { Self.pairing?.select(host: host) }
-            if let project {
-                if let navigator = Self.navigator {
-                    navigator.open(projectID: project, sessionID: session)
-                } else {
-                    Self.pendingOpen = (project, session)
-                }
-            } else if let url {
-                Self.navigator?.pendingURL = url
+        Analytics.capture(.notificationOpened)
+        // The notification may be from a Mac other than the one we're
+        // showing. Older Mac builds don't say, so assume the current one.
+        if let host = tap.host, host != pairing?.info?.host { pairing?.select(host: host) }
+        if let project = tap.project {
+            if let navigator {
+                navigator.open(projectID: project, sessionID: tap.session)
+            } else {
+                pendingOpen = (project, tap.session)
             }
+        } else if let url = tap.url {
+            navigator?.pendingURL = url
         }
     }
 }
