@@ -44,7 +44,7 @@ struct PairView: View {
                 NavigationStack {
                     Form {
                         Section {
-                            TextField("Mac's tailnet name", text: $host)
+                            TextField("Tailnet name, or a pairing link", text: $host)
                                 .textInputAutocapitalization(.never)
                                 .autocorrectionDisabled()
                                 .keyboardType(.URL)
@@ -54,7 +54,7 @@ struct PairView: View {
                                 .autocorrectionDisabled()
                                 .foregroundStyle(PhoneTheme.ink)
                         } footer: {
-                            Text("The name looks like matts-macbook-pro.tail1234.ts.net. Both values are in the code Workbench shows. To pair with a Mac that doesn't use Tailscale, scan its code instead.")
+                            Text("The name looks like matts-macbook-pro.tail1234.ts.net. Both values are in the code Workbench shows. To pair with a Mac that doesn't use Tailscale, scan its code instead. For a Linux server, paste the whole link that workbench-host pair prints into the first box.")
                         }
                         .listRowBackground(PhoneTheme.surface)
                     }
@@ -67,11 +67,11 @@ struct PairView: View {
                         ToolbarItem(placement: .confirmationAction) {
                             Button("Pair") {
                                 showsManual = false
-                                pairing.pair(PairingInfo(host: host.trimmingCharacters(in: .whitespacesAndNewlines),
-                                                         token: token.trimmingCharacters(in: .whitespacesAndNewlines)))
+                                pairing.pair(pastedLink ?? PairingInfo(host: host.trimmingCharacters(in: .whitespacesAndNewlines),
+                                                                       token: token.trimmingCharacters(in: .whitespacesAndNewlines)))
                                 if isSheet { dismiss() }
                             }
-                            .disabled(host.trimmingCharacters(in: .whitespaces).isEmpty || token.trimmingCharacters(in: .whitespaces).isEmpty)
+                            .disabled(pastedLink == nil && (host.trimmingCharacters(in: .whitespaces).isEmpty || token.trimmingCharacters(in: .whitespaces).isEmpty))
                         }
                     }
                 }
@@ -138,6 +138,14 @@ struct PairView: View {
             }
         }
         .foregroundStyle(PhoneTheme.ink)
+    }
+
+    /// A whole pairing link pasted where the name goes, which carries the
+    /// token (and a relay room) itself.
+    private var pastedLink: PairingInfo? {
+        let text = host.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard text.hasPrefix("bench://"), let url = URL(string: text) else { return nil }
+        return PairingInfo(url: url)
     }
 
     private func accept(_ text: String) {

@@ -28,7 +28,7 @@ struct ProjectMenu: ToolbarContent {
             }
             ToolbarItem(placement: .topBarTrailing) {
                 Menu {
-                    if inspector == nil {
+                    if inspector == nil, !client.isHeadless {
                         NavigationLink(value: ChangesRoute(projectID: projectID)) {
                             Label("Changes", systemImage: "plus.forwardslash.minus")
                         }

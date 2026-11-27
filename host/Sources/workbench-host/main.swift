@@ -21,7 +21,7 @@ let usage = """
     usage: workbench-host <command>
 
       serve [--port N] [--bind ADDRESS]   Run the host. Devices connect to it here.
-      pair [--relay] [--host NAME]        Print the link that pairs a Mac or iPhone.
+      pair [--relay] [--host NAME]        Show the code and link that pair a Mac or iPhone.
       add <folder>                        Add a folder as a project.
       projects                            List the projects.
       service install [--port N]          Keep the host running in the background (systemd).
@@ -115,14 +115,19 @@ case "pair":
     pairing.hostName = info.host
     pairing.save(paths.pairing)
     for note in notes { print(note) }
+    let link = info.url?.absoluteString ?? ""
+    if !plain.contains("--no-qr"), let code = QRCode(link) {
+        print("\nScan this with the Workbench app on your iPhone:\n")
+        for line in code.terminalLines() { print("  " + line) }
+    }
     print("""
 
         Pairing link:
 
-          \(info.url?.absoluteString ?? "")
+          \(link)
 
         On a Mac: Workbench, the + beside This Mac in the sidebar, then paste the link.
-        On an iPhone: open the link there (send it to yourself), or paste it into the pairing screen.
+        On an iPhone: scan the code above, or choose Enter Details and paste the link.
         Anyone with this link can run commands here as you. Treat it like a password.
         """)
 
