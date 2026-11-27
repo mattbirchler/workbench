@@ -92,11 +92,22 @@ final class TerminalSession: TerminalSurfaceDelegate {
     @ObservationIgnored private var workingSince: Date?
     /// Set when work finishes while the tab isn't in front of the user.
     /// Cleared once they look at it.
-    var finishedUnseen = false
+    var finishedUnseen = false {
+        didSet { if !finishedUnseen, markedUnread { markedUnread = false } }
+    }
+    /// Set by Mark as Unread in the sidebar: a done mark you put back
+    /// yourself. Unlike one Workbench sets, coming back to the app doesn't
+    /// clear it, only opening the tab or a new turn starting. Saved, so it
+    /// lasts through a relaunch.
+    var markedUnread = false {
+        didSet { if markedUnread != oldValue { manager?.noteMarkedUnread(self) } }
+    }
     var isVisible = false {
         didSet {
             view.setOccluded(!isVisible)
             if isVisible {
+                // Opening the tab is the visit a manual mark waits for.
+                if oldValue == false, markedUnread { markedUnread = false }
                 markSeen()
                 if isAgent { manager?.lastClaudeTab[projectID] = tabID }
             }
@@ -189,10 +200,18 @@ final class TerminalSession: TerminalSurfaceDelegate {
     }
 
     /// Clears the done and attention marks if the user can see this tab.
+    /// A tab you marked unread keeps its mark until you open it again.
     func markSeen() {
-        guard isVisible, NSApp.isActive else { return }
+        guard isVisible, NSApp.isActive, !markedUnread else { return }
         needsAttention = false
         finishedUnseen = false
+    }
+
+    /// Puts the done mark back on a turn you've already looked at, so it
+    /// isn't forgotten.
+    func markUnread() {
+        finishedUnseen = true
+        markedUnread = true
     }
 
     /// How long a turn has to run before finishing in front of you makes a sound.
@@ -548,7 +567,38 @@ final class TerminalManager {
         let session = TerminalSession(tab: tab, project: project)
         session.manager = self
         sessions[tab.id] = session
+        if markedUnreadTabs.contains(tab.id) { session.markUnread() }
         return session
+    }
+
+    // MARK: Mark as Unread
+
+    static let markedUnreadKey = "markedUnreadTabs"
+    /// The tabs you marked unread, kept until you open them. Saved, so a
+    /// tab started again after a relaunch gets its mark back.
+    @ObservationIgnored private lazy var markedUnreadTabs: Set<UUID> =
+        Set((UserDefaults.standard.stringArray(forKey: Self.markedUnreadKey) ?? []).compactMap(UUID.init))
+
+    func noteMarkedUnread(_ session: TerminalSession) {
+        let before = markedUnreadTabs
+        if session.markedUnread { markedUnreadTabs.insert(session.tabID) } else { markedUnreadTabs.remove(session.tabID) }
+        if markedUnreadTabs != before { saveMarkedUnread() }
+    }
+
+    private func saveMarkedUnread() {
+        UserDefaults.standard.set(markedUnreadTabs.map(\.uuidString).sorted(), forKey: Self.markedUnreadKey)
+    }
+
+    /// The tab Mark as Unread puts the mark on: the one whose reply the
+    /// row shows. Nil when there's nothing to mark, or the row already
+    /// says something needs you (unread, working, or asking).
+    func unreadTarget(for project: Project) -> TerminalSession? {
+        guard activity(for: project) == .idle, let last = lastFinish(for: project) else { return nil }
+        return sessions[last.tabID]
+    }
+
+    func markUnread(_ project: Project) {
+        unreadTarget(for: project)?.markUnread()
     }
 
     func existingSession(_ tabID: UUID) -> TerminalSession? { sessions[tabID] }
@@ -1157,6 +1207,11 @@ final class TerminalManager {
             session.view.removeFromSuperview()
             session.view.close()
             sessions[id] = nil
+        }
+        let marked = markedUnreadTabs.intersection(tabIDs)
+        if marked != markedUnreadTabs {
+            markedUnreadTabs = marked
+            saveMarkedUnread()
         }
         AgentSessions.prune(keeping: tabIDs)
         LocalChatSource.forget(except: tabIDs)

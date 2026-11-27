@@ -971,10 +971,21 @@ private struct ProjectRow: View {
 
     @ViewBuilder
     private var menu: some View {
+        markUnreadItem
         if project.isWorktree {
             worktreeMenu
         } else {
             projectMenu
+        }
+    }
+
+    /// Puts the done mark back on a reply you've looked at but not dealt
+    /// with. First, as in Mail, and only on a row with nothing showing yet.
+    @ViewBuilder
+    private var markUnreadItem: some View {
+        if terminals.unreadTarget(for: project) != nil {
+            Button("Mark as Unread") { terminals.markUnread(project) }
+            Divider()
         }
     }
 
