@@ -168,6 +168,10 @@ final class TerminalSurfaceView: NSView {
 
     override func viewDidMoveToWindow() {
         super.viewDidMoveToWindow()
+        // Taking a focused terminal out of the window (as a tab moves into
+        // a split) skips resignFirstResponder, so it would go on thinking it
+        // had the keyboard and take Cmd+V from the side that does.
+        if focused, window?.firstResponder !== self { setFocused(false) }
         updateContentScale()
         updateSurfaceSize()
         updateColorScheme()
@@ -548,7 +552,9 @@ final class TerminalSurfaceView: NSView {
     }
 
     override func performKeyEquivalent(with event: NSEvent) -> Bool {
-        guard event.type == .keyDown, focused else { return false }
+        // Every view in the window is offered key equivalents, not just the
+        // first responder, so only the terminal that has the keyboard acts.
+        guard event.type == .keyDown, focused, window?.firstResponder === self else { return false }
 
         var bindingFlags: ghostty_binding_flags_e?
         if let surface {
