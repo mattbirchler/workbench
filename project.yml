@@ -314,8 +314,8 @@ targets:
         CODE_SIGN_ENTITLEMENTS: BenchPhone/BenchPhone.entitlements
         INFOPLIST_KEY_NSSupportsLiveActivities: YES
         PRODUCT_NAME: Bench
-        MARKETING_VERSION: "1.2.4"
-        CURRENT_PROJECT_VERSION: 74
+        MARKETING_VERSION: "1.2.5"
+        CURRENT_PROJECT_VERSION: 75
         SWIFT_VERSION: 6.0
         SWIFT_DEFAULT_ACTOR_ISOLATION: MainActor
         SWIFT_APPROACHABLE_CONCURRENCY: YES
@@ -360,8 +360,8 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: $(BENCH_BUNDLE_PREFIX).BenchPhone.notifications
         PRODUCT_NAME: BenchPhoneNotifications
         CODE_SIGN_ENTITLEMENTS: BenchPhoneNotifications/BenchPhoneNotifications.entitlements
-        MARKETING_VERSION: "1.2.4"
-        CURRENT_PROJECT_VERSION: 74
+        MARKETING_VERSION: "1.2.5"
+        CURRENT_PROJECT_VERSION: 75
         SWIFT_VERSION: 6.0
         CODE_SIGN_STYLE: Automatic
         TARGETED_DEVICE_FAMILY: "1,2"
@@ -391,8 +391,8 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: $(BENCH_BUNDLE_PREFIX).BenchPhone.widgets
         PRODUCT_NAME: BenchPhoneWidgets
         CODE_SIGN_ENTITLEMENTS: BenchPhoneWidgets/BenchPhoneWidgets.entitlements
-        MARKETING_VERSION: "1.2.4"
-        CURRENT_PROJECT_VERSION: 74
+        MARKETING_VERSION: "1.2.5"
+        CURRENT_PROJECT_VERSION: 75
         SWIFT_VERSION: 6.0
         SWIFT_DEFAULT_ACTOR_ISOLATION: MainActor
         SWIFT_APPROACHABLE_CONCURRENCY: YES
