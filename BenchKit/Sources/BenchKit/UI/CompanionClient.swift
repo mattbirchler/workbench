@@ -622,6 +622,9 @@ public final class CompanionClient {
 
     /// True once the Mac can add a folder as a project for us.
     public var canAddProjects: Bool { macFeatures.contains(CompanionFeature.addProject) }
+    /// True when the other end is a Workbench host with no screen, like a
+    /// Linux server, rather than a Mac running the app.
+    public var isHeadless: Bool { macFeatures.contains(CompanionFeature.headless) }
 
     /// The folder last asked for with `browseFolder`.
     public private(set) var folder: FolderListing?

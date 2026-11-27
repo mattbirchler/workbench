@@ -10,12 +10,15 @@ public struct HostPairing: Codable, Sendable {
     public var relayKey: String?
     /// The relay's address, when it's on.
     public var relayAddress: String?
+    /// A made-up name for this host, for a pairing that has no tailnet
+    /// name to go by. Devices only use it to tell hosts apart.
+    public var id: String?
 
     public static func load(_ file: URL) -> HostPairing {
         if let data = try? Data(contentsOf: file), let saved = try? JSONDecoder().decode(HostPairing.self, from: data) {
             return saved
         }
-        let made = HostPairing(token: PairingInfo.makeToken())
+        let made = HostPairing(token: PairingInfo.makeToken(), id: UUID().uuidString.lowercased())
         made.save(file)
         return made
     }
@@ -25,6 +28,14 @@ public struct HostPairing: Codable, Sendable {
         try? data.write(to: file, options: .atomic)
         try? FileManager.default.setAttributes([.posixPermissions: 0o600], ofItemAtPath: file.path)
     }
+
+    /// Turns the relay on, making this host's room the first time.
+    public mutating func useRelay(address: String) {
+        if relayKey == nil { relayKey = RelayRoom.make().key }
+        relayAddress = address
+    }
+
+    public var relayRoom: RelayRoom? { relayKey.map(RelayRoom.init(key:)) }
 
     public var relayEndpoint: RelayEndpoint? {
         guard let relayKey, let relayAddress else { return nil }
