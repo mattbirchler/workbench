@@ -43,16 +43,15 @@ struct MarkdownFileView: View {
         return split.sections
     }
 
-    /// The scroll view's width, so the column can be given an exact one.
+    /// The scroll view's width, which the column is sized from.
     @State private var available: CGFloat = 0
 
-    /// The column's width: the cap, or less in a narrow pane. Set
-    /// outright rather than as a maximum, since a run of prose keeps the
-    /// height it measured at its first width when the pane narrows.
-    private func columnWidth(scale: CGFloat) -> CGFloat {
-        let cap = Self.column * scale
-        guard available > 0 else { return cap }
-        return max(120, min(cap, available - 2 * Self.margin))
+    /// The column's width in a scroll view this wide: the cap, or less in
+    /// a narrow pane. Set outright rather than as a maximum, since a run of
+    /// prose keeps the height it measured at its first width when the pane
+    /// narrows.
+    private static func columnWidth(in available: CGFloat, scale: CGFloat) -> CGFloat {
+        max(120, min(column * scale, available - 2 * margin))
     }
 
     static let margin: CGFloat = 32
@@ -65,19 +64,27 @@ struct MarkdownFileView: View {
             // Markdown view lays out everything it's given at once, which
             // stalls on a long file.
             LazyVStack(alignment: .leading, spacing: 8) {
+                let width = Self.columnWidth(in: available, scale: typography.scale).rounded()
                 ForEach(Array(sections.enumerated()), id: \.offset) { index, section in
                     // The extra space a heading gets inside a run of prose.
                     MarkdownText(text: section)
                         .padding(.top, index > 0 && section.hasPrefix("#") ? 4 : 0)
+                        // Drawn afresh when the column's width changes, since a
+                        // run of prose doesn't measure itself again for that.
+                        .id("\(index) \(width)")
                 }
             }
             .foregroundStyle(palette.ink)
-            .frame(width: columnWidth(scale: typography.scale), alignment: .leading)
-            .padding(.horizontal, Self.margin)
+            .frame(width: Self.columnWidth(in: available, scale: typography.scale), alignment: .leading)
+            .frame(maxWidth: .infinity)
             .padding(.top, 28)
             .padding(.bottom, 48)
-            .frame(maxWidth: .infinity)
+            // Nothing until the width is known, rather than a column that
+            // asks the window for more room than it has.
+            .opacity(available > 0 ? 1 : 0)
         }
+        // The column's width comes from the pane, never the other way round.
+        .frame(minWidth: 0, maxWidth: .infinity)
         .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { available = $0 }
         .environment(\.companionPalette, palette)
         .environment(\.markdownFonts, typography.readingMarkdown)
