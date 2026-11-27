@@ -6,6 +6,25 @@
     <description>Updates for Workbench, a Mac app for running Claude Code.</description>
     <language>en</language>
     <item>
+      <title>Workbench 0.10.3</title>
+      <pubDate>Fri, 27 Nov 2026 15:21:32 GMT</pubDate>
+      <sparkle:version>71</sparkle:version>
+      <sparkle:shortVersionString>0.10.3</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
+      <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
+      <description><![CDATA[
+<p>Workbench 0.10.3 turns the Overview into a picture of your day, and adds a few shortcuts for getting to your pull request and your editor.</p>
+<p><strong>See your day in the Overview.</strong> The Overview now opens on a timeline of today: when each session was working, and when it was waiting on you. Under it are totals for the day, a feed of what happened, and how your time split across projects. Worktrees are named by their branch, so it&#x27;s easy to tell agents apart.</p>
+<p><strong>Open the pull request with ⇧⌘G.</strong> When the project on screen has a pull request, View &gt; Open Pull Request takes you to it, and the menu shows its number. It&#x27;s in the ⌘K command bar too, and it works for projects on another Mac.</p>
+<p><strong>Open the project in your editor with ⇧⌘E.</strong> File &gt; Open in (your editor) opens the folder of the project or worktree on screen in your editor. Pick which one in Settings &gt; General &gt; Editor: VS Code, Cursor, Zed, Sublime Text, Nova, BBEdit and others are found for you, or choose any app. It&#x27;s also in the command bar and the sidebar&#x27;s right-click menus.</p>
+<p><strong>Point Claude at files outside the project.</strong> In the chat box, typing <code>@~/</code>, <code>@../</code> or <code>@/</code> now suggests the files and folders there, the same as Claude Code does in the terminal.</p>
+<p><strong>The menu bar icon is now off unless you want it.</strong> After this update the Workbench icon is gone from your menu bar. If you used it, turn it back on in Settings &gt; General &gt; Show Workbench in the menu bar.</p>
+<p><strong>Tidier Overview cards.</strong> Cards in a row now line up at the top and share a height, so their context meters sit level.</p>
+<p>Thanks to Setu Shah for the pull request and editor shortcuts, the file suggestions and the tidier cards.</p>
+      ]]></description>
+      <enclosure url="https://github.com/mattbirchler/workbench/releases/download/v0.10.3-71/Workbench-0.10.3-71.zip" type="application/octet-stream" sparkle:edSignature="0DeKRW5iEvt8S9B3brzi6dHvsndkimotu0WhBPheP9xqY3mGyUgpftUC4ble/j3js86ob/dhPY3cd73VdujOBQ==" length="37964337"/>
+    </item>
+    <item>
       <title>Workbench 0.10.2</title>
       <pubDate>Thu, 26 Nov 2026 13:40:25 GMT</pubDate>
       <sparkle:version>70</sparkle:version>
