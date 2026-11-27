@@ -1,23 +1,23 @@
 SessionStart
-hooks.SessionStart=[{hooks=[{type="command",command="if [ -n \"$BENCH_SESSION_FILE\" ]; then cat > \"$BENCH_SESSION_FILE\"; fi"},{type="command",command="if [ -n \"$BENCH_STATE_FILE\" ]; then cat > \"$BENCH_STATE_FILE.start.tmp\" && mv -f \"$BENCH_STATE_FILE.start.tmp\" \"$BENCH_STATE_FILE.start.json\"; fi"}]}]
+hooks.SessionStart=[{hooks=[{type="command",command="if [ -n \"$BENCH_SESSION_FILE\" ]; then cat > \"$BENCH_SESSION_FILE\"; fi"},{type="command",command="if [ -n \"$BENCH_STATE_FILE\" ]; then cat > \"$BENCH_STATE_FILE.start.$$.tmp\" && mv -f \"$BENCH_STATE_FILE.start.$$.tmp\" \"$BENCH_STATE_FILE.start.json\"; fi"}]}]
 
 SessionEnd
 hooks.SessionEnd=[{hooks=[{type="command",command="if [ -n \"$BENCH_SESSION_FILE\" ]; then rm -f \"$BENCH_SESSION_FILE\"; fi"},{type="command",command="if [ -n \"$BENCH_STATE_FILE\" ]; then rm -f \"$BENCH_STATE_FILE\"; fi"}]}]
 
 UserPromptSubmit
-hooks.UserPromptSubmit=[{hooks=[{type="command",command="if [ -n \"$BENCH_STATE_FILE\" ]; then printf 'working' > \"$BENCH_STATE_FILE.tmp\" && mv -f \"$BENCH_STATE_FILE.tmp\" \"$BENCH_STATE_FILE\"; fi"},{type="command",command="if [ -n \"$BENCH_STATE_FILE\" ]; then cat > \"$BENCH_STATE_FILE.prompt.tmp\" && mv -f \"$BENCH_STATE_FILE.prompt.tmp\" \"$BENCH_STATE_FILE.prompt.json\"; fi"},{type="command",command="if [ -n \"$BENCH_STATE_FILE\" ]; then f=\"$(dirname \"$(dirname \"$BENCH_STATE_FILE\")\")/bench-commands\"; m=\"$BENCH_STATE_FILE.commands\"; now=$(head -n 1 \"$f\" 2>/dev/null); if [ -n \"$now\" ] && [ \"$now\" != \"${BENCH_COMMANDS:-}\" ] && [ \"$now\" != \"$(cat \"$m\" 2>/dev/null)\" ]; then printf '%s' \"$now\" > \"$m\"; tail -n +2 \"$f\"; fi; fi"}]}]
+hooks.UserPromptSubmit=[{hooks=[{type="command",command="if [ -n \"$BENCH_STATE_FILE\" ]; then printf 'working' > \"$BENCH_STATE_FILE.$$.tmp\" && mv -f \"$BENCH_STATE_FILE.$$.tmp\" \"$BENCH_STATE_FILE\"; fi"},{type="command",command="if [ -n \"$BENCH_STATE_FILE\" ]; then cat > \"$BENCH_STATE_FILE.prompt.$$.tmp\" && mv -f \"$BENCH_STATE_FILE.prompt.$$.tmp\" \"$BENCH_STATE_FILE.prompt.json\"; fi"},{type="command",command="if [ -n \"$BENCH_STATE_FILE\" ]; then f=\"$(dirname \"$(dirname \"$BENCH_STATE_FILE\")\")/bench-commands\"; m=\"$BENCH_STATE_FILE.commands\"; now=$(head -n 1 \"$f\" 2>/dev/null); if [ -n \"$now\" ] && [ \"$now\" != \"${BENCH_COMMANDS:-}\" ] && [ \"$now\" != \"$(cat \"$m\" 2>/dev/null)\" ]; then printf '%s' \"$now\" > \"$m\"; tail -n +2 \"$f\"; fi; fi"}]}]
 
 PreToolUse
-hooks.PreToolUse=[{hooks=[{type="command",command="if [ -n \"$BENCH_STATE_FILE\" ]; then cat > \"$BENCH_STATE_FILE.tool.tmp\" && mv -f \"$BENCH_STATE_FILE.tool.tmp\" \"$BENCH_STATE_FILE.tool.json\"; fi"}]}]
+hooks.PreToolUse=[{hooks=[{type="command",command="if [ -n \"$BENCH_STATE_FILE\" ]; then cat > \"$BENCH_STATE_FILE.tool.$$.tmp\" && mv -f \"$BENCH_STATE_FILE.tool.$$.tmp\" \"$BENCH_STATE_FILE.tool.json\"; fi"}]}]
 
 PermissionRequest
-hooks.PermissionRequest=[{hooks=[{type="command",command="if [ -n \"$BENCH_STATE_FILE\" ]; then printf 'waiting' > \"$BENCH_STATE_FILE.tmp\" && mv -f \"$BENCH_STATE_FILE.tmp\" \"$BENCH_STATE_FILE\"; fi"},{type="command",command="if [ -n \"$BENCH_STATE_FILE\" ]; then cat > \"$BENCH_STATE_FILE.question.tmp\" && mv -f \"$BENCH_STATE_FILE.question.tmp\" \"$BENCH_STATE_FILE.question.json\"; fi"}]}]
+hooks.PermissionRequest=[{hooks=[{type="command",command="if [ -n \"$BENCH_STATE_FILE\" ]; then printf 'waiting' > \"$BENCH_STATE_FILE.$$.tmp\" && mv -f \"$BENCH_STATE_FILE.$$.tmp\" \"$BENCH_STATE_FILE\"; fi"},{type="command",command="if [ -n \"$BENCH_STATE_FILE\" ]; then cat > \"$BENCH_STATE_FILE.question.$$.tmp\" && mv -f \"$BENCH_STATE_FILE.question.$$.tmp\" \"$BENCH_STATE_FILE.question.json\"; fi"}]}]
 
 PostToolUse
-hooks.PostToolUse=[{hooks=[{type="command",command="if [ -n \"$BENCH_STATE_FILE\" ]; then e=$(cat); q=\"$BENCH_STATE_FILE.question.json\"; if [ \"$(cat \"$BENCH_STATE_FILE\" 2>/dev/null)\" = waiting ] && [ -f \"$q\" ]; then c=$(sed -nE 's/.*\"tool_input\":\\{\"command\":(\"([^\"\\\\]|\\\\.)*\").*/\\1/p' \"$q\" | head -n 1); case \"$e\" in *\"\\\"command\\\":$c\"*) ;; *) exit 0 ;; esac; fi; printf 'working' > \"$BENCH_STATE_FILE.tmp\" && mv -f \"$BENCH_STATE_FILE.tmp\" \"$BENCH_STATE_FILE\"; fi"}]}]
+hooks.PostToolUse=[{hooks=[{type="command",command="if [ -n \"$BENCH_STATE_FILE\" ]; then e=$(cat); q=\"$BENCH_STATE_FILE.question.json\"; if [ \"$(cat \"$BENCH_STATE_FILE\" 2>/dev/null)\" = waiting ] && [ -f \"$q\" ]; then c=$(sed -nE 's/.*\"tool_input\":\\{\"command\":(\"([^\"\\\\]|\\\\.)*\").*/\\1/p' \"$q\" | head -n 1); case \"$e\" in *\"\\\"command\\\":$c\"*) ;; *) exit 0 ;; esac; fi; printf 'working' > \"$BENCH_STATE_FILE.$$.tmp\" && mv -f \"$BENCH_STATE_FILE.$$.tmp\" \"$BENCH_STATE_FILE\"; fi"}]}]
 
 Stop
-hooks.Stop=[{hooks=[{type="command",command="if [ -n \"$BENCH_STATE_FILE\" ]; then printf 'done' > \"$BENCH_STATE_FILE.tmp\" && mv -f \"$BENCH_STATE_FILE.tmp\" \"$BENCH_STATE_FILE\"; fi"},{type="command",command="if [ -n \"$BENCH_STATE_FILE\" ]; then cat > \"$BENCH_STATE_FILE.stop.tmp\" && mv -f \"$BENCH_STATE_FILE.stop.tmp\" \"$BENCH_STATE_FILE.stop.json\"; fi"}]}]
+hooks.Stop=[{hooks=[{type="command",command="if [ -n \"$BENCH_STATE_FILE\" ]; then printf 'done' > \"$BENCH_STATE_FILE.$$.tmp\" && mv -f \"$BENCH_STATE_FILE.$$.tmp\" \"$BENCH_STATE_FILE\"; fi"},{type="command",command="if [ -n \"$BENCH_STATE_FILE\" ]; then cat > \"$BENCH_STATE_FILE.stop.$$.tmp\" && mv -f \"$BENCH_STATE_FILE.stop.$$.tmp\" \"$BENCH_STATE_FILE.stop.json\"; fi"}]}]
 
 Interrupt
-hooks.Interrupt=[{hooks=[{type="command",command="if [ -n \"$BENCH_STATE_FILE\" ]; then printf 'done' > \"$BENCH_STATE_FILE.tmp\" && mv -f \"$BENCH_STATE_FILE.tmp\" \"$BENCH_STATE_FILE\"; fi"}]}]
+hooks.Interrupt=[{hooks=[{type="command",command="if [ -n \"$BENCH_STATE_FILE\" ]; then printf 'done' > \"$BENCH_STATE_FILE.$$.tmp\" && mv -f \"$BENCH_STATE_FILE.$$.tmp\" \"$BENCH_STATE_FILE\"; fi"}]}]

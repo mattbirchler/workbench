@@ -4,11 +4,11 @@
       {
         "hooks" : [
           {
-            "command" : "if [ -n \"$BENCH_STATE_FILE\" ]; then printf 'waiting' > \"$BENCH_STATE_FILE.tmp\" && mv -f \"$BENCH_STATE_FILE.tmp\" \"$BENCH_STATE_FILE\"; fi",
+            "command" : "if [ -n \"$BENCH_STATE_FILE\" ]; then printf 'waiting' > \"$BENCH_STATE_FILE.$$.tmp\" && mv -f \"$BENCH_STATE_FILE.$$.tmp\" \"$BENCH_STATE_FILE\"; fi",
             "type" : "command"
           },
           {
-            "command" : "if [ -n \"$BENCH_STATE_FILE\" ]; then cat > \"$BENCH_STATE_FILE.question.tmp\" && mv -f \"$BENCH_STATE_FILE.question.tmp\" \"$BENCH_STATE_FILE.question.json\"; fi",
+            "command" : "if [ -n \"$BENCH_STATE_FILE\" ]; then cat > \"$BENCH_STATE_FILE.question.$$.tmp\" && mv -f \"$BENCH_STATE_FILE.question.$$.tmp\" \"$BENCH_STATE_FILE.question.json\"; fi",
             "type" : "command"
           }
         ],
@@ -19,7 +19,7 @@
       {
         "hooks" : [
           {
-            "command" : "if [ -n \"$BENCH_STATE_FILE\" ]; then cat > \"$BENCH_STATE_FILE.compacted.tmp\" && mv -f \"$BENCH_STATE_FILE.compacted.tmp\" \"$BENCH_STATE_FILE.compacted.json\"; fi",
+            "command" : "if [ -n \"$BENCH_STATE_FILE\" ]; then cat > \"$BENCH_STATE_FILE.compacted.$$.tmp\" && mv -f \"$BENCH_STATE_FILE.compacted.$$.tmp\" \"$BENCH_STATE_FILE.compacted.json\"; fi",
             "type" : "command"
           }
         ]
@@ -29,7 +29,7 @@
       {
         "hooks" : [
           {
-            "command" : "if [ -n \"$BENCH_STATE_FILE\" ]; then cat > \"$BENCH_STATE_FILE.model.tmp\" && mv -f \"$BENCH_STATE_FILE.model.tmp\" \"$BENCH_STATE_FILE.model.json\"; fi",
+            "command" : "if [ -n \"$BENCH_STATE_FILE\" ]; then cat > \"$BENCH_STATE_FILE.model.$$.tmp\" && mv -f \"$BENCH_STATE_FILE.model.$$.tmp\" \"$BENCH_STATE_FILE.model.json\"; fi",
             "type" : "command"
           }
         ]
@@ -39,7 +39,7 @@
       {
         "hooks" : [
           {
-            "command" : "input=$(cat); case \"$input\" in *'\"agent_id\":'*) if [ \"$(cat \"$BENCH_STATE_FILE\" 2>/dev/null)\" = waiting ] && grep -Eq '\"tool_name\": *\"(AskUserQuestion|ExitPlanMode)\"' \"$BENCH_STATE_FILE.tool.json\" 2>/dev/null; then exit 0; fi ;; esac; printf '%s' \"$input\" | { if [ -n \"$BENCH_STATE_FILE\" ]; then printf 'working' > \"$BENCH_STATE_FILE.tmp\" && mv -f \"$BENCH_STATE_FILE.tmp\" \"$BENCH_STATE_FILE\"; fi; }",
+            "command" : "input=$(cat); case \"$input\" in *'\"agent_id\":'*) if [ \"$(cat \"$BENCH_STATE_FILE\" 2>/dev/null)\" = waiting ] && grep -Eq '\"tool_name\": *\"(AskUserQuestion|ExitPlanMode)\"' \"$BENCH_STATE_FILE.tool.json\" 2>/dev/null; then exit 0; fi ;; esac; printf '%s' \"$input\" | { if [ -n \"$BENCH_STATE_FILE\" ]; then printf 'working' > \"$BENCH_STATE_FILE.$$.tmp\" && mv -f \"$BENCH_STATE_FILE.$$.tmp\" \"$BENCH_STATE_FILE\"; fi; }",
             "type" : "command"
           }
         ]
@@ -49,7 +49,7 @@
       {
         "hooks" : [
           {
-            "command" : "if [ -n \"$BENCH_STATE_FILE\" ]; then cat > \"$BENCH_STATE_FILE.compact.tmp\" && mv -f \"$BENCH_STATE_FILE.compact.tmp\" \"$BENCH_STATE_FILE.compact.json\"; fi",
+            "command" : "if [ -n \"$BENCH_STATE_FILE\" ]; then cat > \"$BENCH_STATE_FILE.compact.$$.tmp\" && mv -f \"$BENCH_STATE_FILE.compact.$$.tmp\" \"$BENCH_STATE_FILE.compact.json\"; fi",
             "type" : "command"
           }
         ]
@@ -69,7 +69,7 @@
       {
         "hooks" : [
           {
-            "command" : "input=$(cat); case \"$input\" in *'\"agent_id\":'*) if [ \"$(cat \"$BENCH_STATE_FILE\" 2>/dev/null)\" = waiting ] && grep -Eq '\"tool_name\": *\"(AskUserQuestion|ExitPlanMode)\"' \"$BENCH_STATE_FILE.tool.json\" 2>/dev/null; then exit 0; fi ;; esac; printf '%s' \"$input\" | { if [ -n \"$BENCH_STATE_FILE\" ]; then cat > \"$BENCH_STATE_FILE.tool.tmp\" && mv -f \"$BENCH_STATE_FILE.tool.tmp\" \"$BENCH_STATE_FILE.tool.json\"; fi; }",
+            "command" : "input=$(cat); case \"$input\" in *'\"agent_id\":'*) if [ \"$(cat \"$BENCH_STATE_FILE\" 2>/dev/null)\" = waiting ] && grep -Eq '\"tool_name\": *\"(AskUserQuestion|ExitPlanMode)\"' \"$BENCH_STATE_FILE.tool.json\" 2>/dev/null; then exit 0; fi ;; esac; printf '%s' \"$input\" | { if [ -n \"$BENCH_STATE_FILE\" ]; then cat > \"$BENCH_STATE_FILE.tool.$$.tmp\" && mv -f \"$BENCH_STATE_FILE.tool.$$.tmp\" \"$BENCH_STATE_FILE.tool.json\"; fi; }",
             "type" : "command"
           }
         ]
@@ -77,7 +77,7 @@
       {
         "hooks" : [
           {
-            "command" : "if [ -n \"$BENCH_STATE_FILE\" ]; then printf 'waiting' > \"$BENCH_STATE_FILE.tmp\" && mv -f \"$BENCH_STATE_FILE.tmp\" \"$BENCH_STATE_FILE\"; fi",
+            "command" : "if [ -n \"$BENCH_STATE_FILE\" ]; then printf 'waiting' > \"$BENCH_STATE_FILE.$$.tmp\" && mv -f \"$BENCH_STATE_FILE.$$.tmp\" \"$BENCH_STATE_FILE\"; fi",
             "type" : "command"
           }
         ],
@@ -111,7 +111,7 @@
             "type" : "command"
           },
           {
-            "command" : "if [ -n \"$BENCH_STATE_FILE\" ]; then cat > \"$BENCH_STATE_FILE.start.tmp\" && mv -f \"$BENCH_STATE_FILE.start.tmp\" \"$BENCH_STATE_FILE.start.json\"; fi",
+            "command" : "if [ -n \"$BENCH_STATE_FILE\" ]; then cat > \"$BENCH_STATE_FILE.start.$$.tmp\" && mv -f \"$BENCH_STATE_FILE.start.$$.tmp\" \"$BENCH_STATE_FILE.start.json\"; fi",
             "type" : "command"
           }
         ]
@@ -121,11 +121,11 @@
       {
         "hooks" : [
           {
-            "command" : "if [ -n \"$BENCH_STATE_FILE\" ]; then printf 'done' > \"$BENCH_STATE_FILE.tmp\" && mv -f \"$BENCH_STATE_FILE.tmp\" \"$BENCH_STATE_FILE\"; fi",
+            "command" : "if [ -n \"$BENCH_STATE_FILE\" ]; then printf 'done' > \"$BENCH_STATE_FILE.$$.tmp\" && mv -f \"$BENCH_STATE_FILE.$$.tmp\" \"$BENCH_STATE_FILE\"; fi",
             "type" : "command"
           },
           {
-            "command" : "if [ -n \"$BENCH_STATE_FILE\" ]; then cat > \"$BENCH_STATE_FILE.stop.tmp\" && mv -f \"$BENCH_STATE_FILE.stop.tmp\" \"$BENCH_STATE_FILE.stop.json\"; fi",
+            "command" : "if [ -n \"$BENCH_STATE_FILE\" ]; then cat > \"$BENCH_STATE_FILE.stop.$$.tmp\" && mv -f \"$BENCH_STATE_FILE.stop.$$.tmp\" \"$BENCH_STATE_FILE.stop.json\"; fi",
             "type" : "command"
           }
         ]
@@ -135,7 +135,7 @@
       {
         "hooks" : [
           {
-            "command" : "if [ -n \"$BENCH_STATE_FILE\" ]; then cat > \"$BENCH_STATE_FILE.agent.tmp\" && mv -f \"$BENCH_STATE_FILE.agent.tmp\" \"$BENCH_STATE_FILE.agent.json\"; fi",
+            "command" : "if [ -n \"$BENCH_STATE_FILE\" ]; then cat > \"$BENCH_STATE_FILE.agent.$$.tmp\" && mv -f \"$BENCH_STATE_FILE.agent.$$.tmp\" \"$BENCH_STATE_FILE.agent.json\"; fi",
             "type" : "command"
           }
         ]
@@ -145,11 +145,11 @@
       {
         "hooks" : [
           {
-            "command" : "if [ -n \"$BENCH_STATE_FILE\" ]; then printf 'working' > \"$BENCH_STATE_FILE.tmp\" && mv -f \"$BENCH_STATE_FILE.tmp\" \"$BENCH_STATE_FILE\"; fi",
+            "command" : "if [ -n \"$BENCH_STATE_FILE\" ]; then printf 'working' > \"$BENCH_STATE_FILE.$$.tmp\" && mv -f \"$BENCH_STATE_FILE.$$.tmp\" \"$BENCH_STATE_FILE\"; fi",
             "type" : "command"
           },
           {
-            "command" : "if [ -n \"$BENCH_STATE_FILE\" ]; then cat > \"$BENCH_STATE_FILE.prompt.tmp\" && mv -f \"$BENCH_STATE_FILE.prompt.tmp\" \"$BENCH_STATE_FILE.prompt.json\"; fi",
+            "command" : "if [ -n \"$BENCH_STATE_FILE\" ]; then cat > \"$BENCH_STATE_FILE.prompt.$$.tmp\" && mv -f \"$BENCH_STATE_FILE.prompt.$$.tmp\" \"$BENCH_STATE_FILE.prompt.json\"; fi",
             "type" : "command"
           },
           {
