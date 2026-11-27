@@ -16,6 +16,7 @@ struct ProjectsView: View {
     @Environment(QueueStore.self) private var queue
     @State private var showsSettings = false
     @State private var showsUsage = false
+    @State private var showsDay = false
     @State private var pendingAgentAction: AgentAction?
     /// When the morning summary you put away was written.
     @State private var reachability = MacReachability()
@@ -348,10 +349,26 @@ struct ProjectsView: View {
                     .tint(activities.isShowing ? PhoneTheme.working : nil)
                 }
             }
+            if client.canShowDay {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Overview", systemImage: "chart.bar.xaxis") { showsDay = true }
+                }
+            }
             ToolbarItem(placement: .topBarTrailing) {
                 Button("Settings", systemImage: "gearshape") { showsSettings = true }
             }
         }
+        .sheet(isPresented: $showsDay) {
+            DayView()
+        }
+        #if DEBUG
+        // BENCH_OPEN_SCREEN=day opens the Overview, for screenshots.
+        .task {
+            guard ProcessInfo.processInfo.environment["BENCH_OPEN_SCREEN"] == "day" else { return }
+            try? await Task.sleep(for: .seconds(2))
+            showsDay = true
+        }
+        #endif
         .sheet(isPresented: $showsSettings) {
             PhoneSettings()
         }

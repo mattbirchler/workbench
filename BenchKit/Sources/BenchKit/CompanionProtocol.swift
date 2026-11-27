@@ -34,6 +34,8 @@ public enum CompanionFeature {
     public static let planUsage = "planUsage"
     /// The pages Claude published for a project, to list and open.
     public static let artifacts = "artifacts"
+    /// The day's agent work as a timeline (`ClientMessage.day`).
+    public static let day = "day"
     /// The slash commands a project's Claude Code offers, to suggest while typing.
     public static let slashCommands = "slashCommands"
     /// Pictures in transcripts as small copies, with the whole picture
@@ -743,6 +745,8 @@ public enum ClientMessage: Codable, Sendable {
     case setProjectActive(projectID: UUID, active: Bool)
     /// The pages Claude published for a project. Needs the artifacts feature.
     case artifacts(projectID: UUID)
+    /// What the agents did today (0) or yesterday (1). Needs the day feature.
+    case day(daysBack: Int)
     /// The slash commands Claude Code offers in a project. Needs the slashCommands feature.
     case slashCommands(projectID: UUID)
     /// The kinds of notifications this phone doesn't want, by its push
@@ -878,6 +882,7 @@ public enum ServerMessage: Codable, Sendable {
     case planUsage(PlanUsage?)
     /// A project's published pages, newest update first.
     case artifacts(projectID: UUID, links: [ArtifactLink])
+    case day(CompanionDay)
     /// A project's slash commands.
     case slashCommands(projectID: UUID, commands: [SlashCommand])
     /// The Usage page's numbers, or nil when there's nothing yet. Sent to

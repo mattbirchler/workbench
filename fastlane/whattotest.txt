@@ -1,4 +1,8 @@
-New in this build: reach your Mac from anywhere without Tailscale, through the Workbench relay. It needs the newest Workbench on your Mac, with "Use the Workbench relay" turned on in Settings > Remote Access. Also in this build: answering from notifications, widgets, and git actions from the phone. Several of these need the newest Workbench on your Mac. With an older Mac they simply won't appear.
+New in this build: an Overview of the day your agents have had. Tap the chart button at the top of the project list. It needs the newest Workbench on your Mac, and the button won't appear until your Mac has it.
+
+• Overview. Four totals for the day (time agents worked, prompts you sent, lines they wrote and removed, and how long they waited on you), then a timeline with a row for each project. Bars show when its agents worked, amber shows when they were stopped on a question for you, and a green dot marks where work finished. Under that: the latest things that finished or needed you, and where the time went by project. Switch between Today and Yesterday at the top. Tap a project to open it.
+
+Also in recent builds: reach your Mac from anywhere without Tailscale, through the Workbench relay. It needs the newest Workbench on your Mac, with "Use the Workbench relay" turned on in Settings > Remote Access. Also in this build: answering from notifications, widgets, and git actions from the phone. Several of these need the newest Workbench on your Mac. With an older Mac they simply won't appear.
 
 • The Workbench relay. Once your Mac has it turned on, open the app once on your home Wi-Fi or Tailscale so the phone learns about it (no need to scan again). After that it connects from anywhere. Your home network and Tailscale are still used first when they answer. Settings shows which way you're connected. Messages are sealed on your devices, so the relay can't read them.
 
@@ -14,4 +18,4 @@ New in this build: reach your Mac from anywhere without Tailscale, through the W
 
 • Fixed: on a narrow screen (an iPhone Duo's outer display) the model and permission pills pushed the whole chat off the left edge. The permission pill now shrinks to its symbol when there isn't room.
 
-Things to look for: slow or failed connections away from home with Tailscale off, a connection that stays on the relay when you're back home, notification buttons that don't show or don't reach the Mac, an Allow that answers the wrong question, widgets that stay empty after you've opened the app, dashboard colors that are hard to read on your wallpaper, and git actions that finish without saying how they went.
+Things to look for: an Overview that stays on "Reading the day", bars or totals that don't match what your agents did, a timeline that's hard to read with many projects, slow or failed connections away from home with Tailscale off, a connection that stays on the relay when you're back home, notification buttons that don't show or don't reach the Mac, an Allow that answers the wrong question, widgets that stay empty after you've opened the app, dashboard colors that are hard to read on your wallpaper, and git actions that finish without saying how they went.

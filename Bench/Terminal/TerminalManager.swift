@@ -468,6 +468,8 @@ final class TerminalManager {
                     session.setClaudeState(all[id]?.state)
                     if session.details != all[id] { session.details = all[id] }
                 }
+                // For the Overview's timeline: how long it sits on a permission prompt.
+                if session.isAgent { WaitLog.shared.note(tab: id, project: session.projectID, details: session.claudeState == .waiting ? session.details : nil) }
                 // Hooks fire on every prompt and tool call, which is a good
                 // pace to re-read the transcript's token counts.
                 // Before any hook but SessionStart, as after resuming, the
