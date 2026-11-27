@@ -1,4 +1,4 @@
-New in this build: an Overview of the day your agents have had. Tap the chart button at the top of the project list. It needs the newest Workbench on your Mac, and the button won't appear until your Mac has it.
+New in 1.2.5: an Overview of the day your agents have had. Tap the chart button at the top of the project list. It needs Workbench 0.10.3 or later on your Mac, and the button won't appear until your Mac has it.
 
 • Overview. Four totals for the day (time agents worked, prompts you sent, lines they wrote and removed, and how long they waited on you), then a timeline with a row for each project. Bars show when its agents worked, amber shows when they were stopped on a question for you, and a green dot marks where work finished. Under that: the latest things that finished or needed you, and where the time went by project. Switch between Today and Yesterday at the top. Tap a project to open it.
 

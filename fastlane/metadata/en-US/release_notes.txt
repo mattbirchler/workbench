@@ -1,22 +1,8 @@
-REACH YOUR MAC WITHOUT TAILSCALE
-With the newest Workbench on your Mac, you can turn on the Workbench relay in Settings > Remote Access and connect from anywhere, with no account and nothing else to install. Your home network and Tailscale are still used first, and the relay steps in only when neither connects. Everything is encrypted on your devices, so the relay can't read it.
+SEE YOUR DAY
+There's a new Overview of the day your agents have had. Tap the chart button at the top of the project list. It shows four totals for the day: how long agents worked, how many prompts you sent, the lines they wrote and removed, and how long they waited on you.
 
-ANSWER WITHOUT OPENING A SESSION
-A session waiting on permission shows its command with Deny and Allow right on its row, and a plain question shows its answers as buttons. With the newest Workbench on your Mac, notifications have Allow, Deny and Reply buttons too.
+Under that is a timeline with a row for each project. Bars show when its agents were working, amber shows when they were stopped on a question for you, and a green dot marks where work finished. Below the timeline are the latest things that finished or needed you, and where the time went by project.
 
-A LIST THAT LEADS WITH WHAT NEEDS YOU
-The title is now a headline like "2 need you". Rows show checklist progress step by step, pull requests and their checks, and how much is uncommitted. The current step gets the whole row.
+Switch between Today and Yesterday at the top, and tap a project to open it.
 
-A CLEARER CHAT
-The status has a line of its own. The model and a new permission mode switch sit in the message box. A finished turn lists the files it changed, and typing @ suggests files and folders.
-
-COMMIT, PUSH AND OPEN A PULL REQUEST
-The Changes screen has a button for the next step. It asks the project's agent to do it and shows how it went.
-
-WIDGETS
-Add Sessions to your Home Screen or Lock Screen to see what needs you and what's working. The Lock Screen dashboard shows checklist steps and uses your theme.
-
-MORE
-New Agent is a full page, Files can search the whole project, and Past Sessions are easier to scan.
-Haptics when a session finishes, a step completes, or you answer.
-Fixed the chat sliding off the left edge on an iPhone Duo's outer display.
+The Overview needs Workbench 0.10.3 or later on your Mac. The button appears once your Mac has it.
