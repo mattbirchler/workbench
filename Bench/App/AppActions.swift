@@ -320,6 +320,12 @@ struct AppActions {
                                         shortcut: "⌘O", keywords: ["open", "folder"]) { ProjectPicker.present(store: store) })
         actions.append(CommandBarAction(id: "overview", title: "Overview", symbol: "square.grid.2x2",
                                         keywords: ["sessions", "dashboard"]) { showOverview(from: .commandBar) })
+        if LiveActivitySetting.isAvailable {
+            let isOn = LiveActivitySetting.isOn
+            actions.append(CommandBarAction(id: "live-activity", title: isOn ? "Hide Live Activity" : "Show Live Activity",
+                                            symbol: "menubar.rectangle", shortcut: "⌥⌘L",
+                                            keywords: ["menu bar", "dynamic island", "sessions", "dashboard"]) { LiveActivitySetting.isOn = !isOn })
+        }
         actions.append(CommandBarAction(id: "next-needing-you", title: "Next Session Needing You", symbol: "bell",
                                         shortcut: "⌘J", keywords: ["waiting", "attention"]) { jumpToNextNeedingYou() })
         if store.selectedProjectID != nil {

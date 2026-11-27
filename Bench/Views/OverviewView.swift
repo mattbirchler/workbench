@@ -66,6 +66,7 @@ struct OverviewView: View {
     @Environment(TerminalManager.self) private var terminals
     @Environment(RepoMonitors.self) private var monitors
     @Environment(OfflineQueue.self) private var offlineQueue
+    @AppStorage(LiveActivitySetting.key) private var showsLiveActivity = false
 
     static func items(store: AppStore, terminals: TerminalManager) -> [OverviewItem] {
         var items: [OverviewItem] = []
@@ -174,6 +175,15 @@ struct OverviewView: View {
             CountChip(count: count([.working, .remoteWorking]), label: "working", color: ActivityBackground.working, text: Theme.Status.working)
             CountChip(count: count([.done]), label: "done", color: ActivityBackground.done, text: Theme.Status.done)
             CountChip(count: count([.idle, .attention]), label: "idle", color: .secondary, text: .secondary)
+            if LiveActivitySetting.isAvailable {
+                Spacer(minLength: 0)
+                Toggle(isOn: $showsLiveActivity) {
+                    Label("Live Activity", systemImage: "menubar.rectangle")
+                }
+                .toggleStyle(.button)
+                .controlSize(.small)
+                .help(showsLiveActivity ? "Take these sessions out of the menu bar (⌥⌘L)" : "Keep these sessions in the menu bar as a Live Activity (⌥⌘L)")
+            }
         }
     }
 }

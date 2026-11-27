@@ -89,6 +89,9 @@ targets:
         # Dictation, when it's turned on in Settings. Tools run in a tab
         # that ask for the microphone show this too.
         NSMicrophoneUsageDescription: Workbench uses the microphone when you dictate a message. A tool running in one of your tabs may also ask for it.
+        # The sessions dashboard in the menu bar, on macOS 27.3 and later
+        # (MacActivity, and the BenchWidgets extension that draws it).
+        NSSupportsLiveActivities: true
     dependencies:
       - package: BenchKit
       - package: Sparkle
@@ -106,6 +109,8 @@ targets:
         codeSign: true
         copy:
           destination: executables
+      # Draws the menu bar Live Activity. Lands in Contents/PlugIns.
+      - target: BenchWidgets
     # Writes the commit the app was built from into its Info.plist, as
     # BenchGitCommit, with a "+" when the tree had uncommitted changes.
     # The sidebar's foot shows it (AppVersion). Runs on every build: the
@@ -171,6 +176,43 @@ targets:
         DEAD_CODE_STRIPPING: YES
         OTHER_LDFLAGS: "-lc++"
         # libghostty is built for Apple silicon only.
+        ARCHS: arm64
+
+  # The Mac app's Live Activity: the sessions dashboard in the menu bar.
+  # Live Activities need macOS 27.3, and Xcode 27.3 to build them in. An
+  # older Xcode builds this with nothing in it, and on an older macOS the
+  # system never asks it for anything.
+  BenchWidgets:
+    type: app-extension
+    platform: macOS
+    sources:
+      - path: BenchMacWidgets
+      # The dashboard's drawing, shared with the phone's Lock Screen.
+      - path: BenchPhoneWidgets/DashboardViews.swift
+    dependencies:
+      - package: BenchKit
+    info:
+      path: BenchMacWidgets/Info.plist
+      properties:
+        CFBundleDisplayName: Workbench
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.widgetkit-extension
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: $(BENCH_BUNDLE_PREFIX).Bench.widgets
+        PRODUCT_NAME: BenchWidgets
+        # Widget extensions must be sandboxed, though the app isn't.
+        CODE_SIGN_ENTITLEMENTS: BenchMacWidgets/BenchMacWidgets.entitlements
+        ENABLE_HARDENED_RUNTIME: YES
+        MARKETING_VERSION: "0.10.2"
+        CURRENT_PROJECT_VERSION: 70
+        SWIFT_VERSION: 6.0
+        SWIFT_DEFAULT_ACTOR_ISOLATION: MainActor
+        SWIFT_APPROACHABLE_CONCURRENCY: YES
+        CODE_SIGN_STYLE: Automatic
+        SKIP_INSTALL: YES
         ARCHS: arm64
 
   # Tests for the Mac app's own model and companion code. BenchKit has its
