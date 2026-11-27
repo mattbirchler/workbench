@@ -251,7 +251,13 @@ public final class HostSessions {
 
     private func isStarting(_ runtime: Runtime) -> Bool {
         runtime.terminal.isRunning && !isRecorded(runtime.tabID) && startupPrompt(runtime) == nil
-            && Date().timeIntervalSince(runtime.launchedAt) < 20
+            && !needsSignIn(runtime) && Date().timeIntervalSince(runtime.launchedAt) < 20
+    }
+
+    /// True while Claude Code shows its first run: pick a theme, then sign in.
+    private func needsSignIn(_ runtime: Runtime) -> Bool {
+        guard let screen = runtime.terminal.screen else { return false }
+        return screen.contains("Let's get started") || screen.contains("Select login method")
     }
 
     /// Why a message can't be typed into a session right now, or nil when
@@ -264,9 +270,7 @@ public final class HostSessions {
         }
         guard isRecorded(runtime.tabID) else {
             if isStarting(runtime) { return "\(wording.name) is starting." }
-            let screen = runtime.terminal.screen ?? ""
-            // Claude Code's first run: pick a theme, then sign in.
-            if screen.contains("Let's get started") || screen.contains("Select login method") || screen.contains("Welcome to Claude Code") {
+            if needsSignIn(runtime) {
                 return "\(wording.product) isn't signed in on that machine yet. Run claude there once and sign in, then start a new session."
             }
             return "\(wording.product) is waiting on something in its terminal that Workbench can't answer from here. On that machine, run claude in this folder once to get past it."

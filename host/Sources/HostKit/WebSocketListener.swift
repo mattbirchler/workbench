@@ -48,7 +48,7 @@ public final class WebSocketListener {
                     channel.pipeline.addHandler(plain)
                 }
             }
-            .childChannelOption(ChannelOptions.socketOption(.tcp_nodelay), value: 1)
+            .childChannelOption(ChannelOptions.tcpOption(.tcp_nodelay), value: 1)
         channel = try bootstrap.bind(host: host, port: port).wait()
     }
 
