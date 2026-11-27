@@ -92,6 +92,9 @@ targets:
         # The sessions dashboard in the menu bar, on macOS 27.3 and later
         # (MacActivity, and the BenchWidgets extension that draws it).
         NSSupportsLiveActivities: true
+        # The app group the app shares with that extension, to hand it
+        # project icons (DashboardIcons). Mac app groups start with the team.
+        BenchAppGroup: $(DEVELOPMENT_TEAM).$(BENCH_BUNDLE_PREFIX).Bench
     dependencies:
       - package: BenchKit
       - package: Sparkle
@@ -197,6 +200,8 @@ targets:
         CFBundleDisplayName: Workbench
         CFBundleShortVersionString: $(MARKETING_VERSION)
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        # Where the app leaves project icons for the roster (DashboardIcons).
+        BenchAppGroup: $(DEVELOPMENT_TEAM).$(BENCH_BUNDLE_PREFIX).Bench
         NSExtension:
           NSExtensionPointIdentifier: com.apple.widgetkit-extension
     settings:

@@ -39,6 +39,7 @@ struct DashboardSummary: View {
     @Environment(\.dashboardLook) private var look
     let state: DashboardAttributes.ContentState
     let isStale: Bool
+    var font = Font.caption
 
     var body: some View {
         Group {
@@ -52,7 +53,7 @@ struct DashboardSummary: View {
                 }
             }
         }
-        .font(.caption)
+        .font(font)
         .lineLimit(1)
     }
 
@@ -129,6 +130,8 @@ struct DashboardSteps: View {
     let tint: Color
     /// How wide the segments are together, or nil to fill the space.
     var width: CGFloat? = 34
+    var height: CGFloat = 4
+    var textSize: CGFloat = 10
 
     private static let segmentLimit = 8
 
@@ -150,10 +153,10 @@ struct DashboardSteps: View {
                         }
                 }
             }
-            .frame(width: width, height: 4)
+            .frame(width: width, height: height)
             .frame(maxWidth: width == nil ? .infinity : nil)
             Text("\(done)/\(total)")
-                .font(.system(size: 10, weight: .semibold, design: .rounded).monospacedDigit())
+                .font(.system(size: textSize, weight: .semibold, design: .rounded).monospacedDigit())
                 .foregroundStyle(tint)
                 .fixedSize()
         }

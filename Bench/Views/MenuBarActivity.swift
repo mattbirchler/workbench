@@ -42,6 +42,8 @@ final class MenuBarActivity {
 
     private let store: AppStore
     private let terminals: TerminalManager
+    private let icons: ProjectIcons?
+    private let rosterIcons = RosterIcons()
     private var activity: Handle?
     private var shown: DashboardAttributes.ContentState?
     /// True from a change until the activity catches up, so a burst of
@@ -55,9 +57,10 @@ final class MenuBarActivity {
     private var timer: Timer?
     private var activation: NSObjectProtocol?
 
-    init(store: AppStore, terminals: TerminalManager) {
+    init(store: AppStore, terminals: TerminalManager, icons: ProjectIcons?) {
         self.store = store
         self.terminals = terminals
+        self.icons = icons
         // One left behind by a copy of the app that quit or crashed.
         let leftovers = Activity<DashboardAttributes>.activities.map(Handle.init)
         enqueue {
@@ -107,7 +110,9 @@ final class MenuBarActivity {
         refreshQueued = false
         guard !removed else { return }
         let state = withObservationTracking {
-            Self.demo ?? Self.state(OverviewView.items(store: store, terminals: terminals))
+            demoWithIcons ?? Self.state(OverviewView.items(store: store, terminals: terminals)) { [icons, rosterIcons] project in
+                rosterIcons.name(for: project, image: icons?.image(for: project))
+            }
         } onChange: { [weak self] in
             DispatchQueue.main.async { self?.queueRefresh() }
         }
@@ -185,6 +190,8 @@ final class MenuBarActivity {
         var rows = [
             DashboardRow(id: UUID(uuidString: "00000000-0000-0000-0000-000000000001")!, project: "Recipes", activity: "working",
                          text: "Adding a shopping list", since: demoStart, stepsDone: 2, stepsTotal: 5),
+            DashboardRow(id: UUID(uuidString: "00000000-0000-0000-0000-000000000004")!, project: "Weather", activity: "working",
+                         text: "Reading the forecast module, its fixtures and tests", since: demoStart.addingTimeInterval(-340)),
             DashboardRow(id: UUID(uuidString: "00000000-0000-0000-0000-000000000002")!, project: "Quick Notes", activity: "done",
                          text: "Fixed the sync crash", checks: "passing"),
         ]
@@ -194,7 +201,7 @@ final class MenuBarActivity {
             rows.insert(DashboardRow(id: UUID(uuidString: "00000000-0000-0000-0000-000000000003")!, project: "Website", activity: "waiting",
                                      text: "Allow npm run build?", since: demoStart), at: 0)
         }
-        return .init(rows: rows, more: 0, working: 1, waiting: asks ? 1 : 0, done: 1)
+        return .init(rows: rows, more: 0, working: 2, waiting: asks ? 1 : 0, done: 1)
         #else
         return nil
         #endif
@@ -203,12 +210,24 @@ final class MenuBarActivity {
     private static let demoStart = Date.now
     #endif
 
+    /// The demo, with your first few projects' icons on its rows, to see
+    /// those too.
+    private var demoWithIcons: DashboardAttributes.ContentState? {
+        guard var state = Self.demo else { return nil }
+        for (index, project) in store.projects.prefix(state.rows.count).enumerated() {
+            state.rows[index].icon = rosterIcons.name(for: project, image: icons?.image(for: project))
+        }
+        return state
+    }
+
     private static var macName: String { Host.current().localizedName ?? "Mac" }
 
     /// The dashboard for the sessions as the overview lists them: what
     /// needs you first, then what's working, then what just finished.
-    static func state(_ items: [OverviewItem], now: Date = .now) -> DashboardAttributes.ContentState {
-        var rows: [DashboardRow] = []
+    /// `icon` names a project's icon file for the roster.
+    static func state(_ items: [OverviewItem], now: Date = .now,
+                      icon: (Project) -> String? = { _ in nil }) -> DashboardAttributes.ContentState {
+        var rows: [(row: DashboardRow, project: Project)] = []
         var working = 0, waiting = 0, done = 0
         for item in items {
             let details = item.details
@@ -221,10 +240,10 @@ final class MenuBarActivity {
             switch item.activity {
             case .waiting:
                 waiting += 1
-                rows.append(row(details?.question ?? "Waiting for you", since: details?.questionAt ?? details?.promptAt))
+                rows.append((row(details?.question ?? "Waiting for you", since: details?.questionAt ?? details?.promptAt), item.project))
             case .attention:
                 waiting += 1
-                rows.append(row("Needs attention"))
+                rows.append((row("Needs attention"), item.project))
             case .working, .remoteWorking:
                 working += 1
                 let steps = item.session?.visibleChecklist
@@ -236,18 +255,75 @@ final class MenuBarActivity {
                     row.stepsDone = steps.doneCount
                     row.stepsTotal = steps.count
                 }
-                rows.append(row)
+                rows.append((row, item.project))
             case .done:
                 guard let stopped = details?.stoppedAt, now.timeIntervalSince(stopped) < DashboardActivity.doneFor else { continue }
                 done += 1
-                rows.append(row(details?.summary ?? "Finished"))
+                rows.append((row(details?.summary ?? "Finished"), item.project))
             case .idle:
                 continue
             }
         }
         // The items come ranked, needs-you first.
-        let shown = Array(rows.prefix(DashboardActivity.maxRows))
+        let shown = rows.prefix(DashboardActivity.maxRows).map { entry in
+            var row = entry.row
+            row.icon = icon(entry.project)
+            return row
+        }
         return .init(rows: shown, more: rows.count - shown.count, working: working, waiting: waiting, done: done)
+    }
+}
+
+/// Project icons as small files in the folder the app shares with its
+/// widget extension, which is sandboxed and can't read a project's own.
+/// A file is named for its project and its picture, so a changed icon is a
+/// changed row, and the roster redraws.
+@MainActor
+private final class RosterIcons {
+    private var known: [UUID: (image: NSImage?, repoName: String, name: String?)] = [:]
+    private let folder = DashboardIcons.folder
+
+    init() {
+        // Ones nothing has asked for in a while. Any still wanted are
+        // written again the first time they're asked for.
+        guard let folder else { return }
+        let files = (try? FileManager.default.contentsOfDirectory(at: folder, includingPropertiesForKeys: [.contentModificationDateKey])) ?? []
+        for file in files {
+            let modified = (try? file.resourceValues(forKeys: [.contentModificationDateKey]))?.contentModificationDate
+            if let modified, modified.timeIntervalSinceNow < -7 * 24 * 3600 { try? FileManager.default.removeItem(at: file) }
+        }
+    }
+
+    func name(for project: Project, image: NSImage?) -> String? {
+        guard let folder else { return nil }
+        if let entry = known[project.id], entry.image === image, entry.repoName == project.repoName { return entry.name }
+        let name = write(project, image: image, to: folder)
+        known[project.id] = (image, project.repoName, name)
+        return name
+    }
+
+    private func write(_ project: Project, image: NSImage?, to folder: URL) -> String? {
+        // The icon as the sidebar draws it, lettered tile and all.
+        let renderer = ImageRenderer(content: ProjectIcon(project: project, image: image, size: 64, outlined: false))
+        renderer.scale = 1
+        guard let drawn = renderer.cgImage,
+              let png = NSBitmapImageRep(cgImage: drawn).representation(using: .png, properties: [:]) else { return nil }
+        var hash: UInt64 = 14_695_981_039_346_656_037
+        for byte in png { hash = (hash ^ UInt64(byte)) &* 1_099_511_628_211 }
+        let prefix = project.id.uuidString
+        let name = "\(prefix)-\(String(hash, radix: 16)).png"
+        let file = folder.appendingPathComponent(name)
+        do {
+            try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+            for old in try FileManager.default.contentsOfDirectory(atPath: folder.path) where old.hasPrefix(prefix) && old != name {
+                try? FileManager.default.removeItem(at: folder.appendingPathComponent(old))
+            }
+            if !FileManager.default.fileExists(atPath: file.path) { try png.write(to: file, options: .atomic) }
+            return name
+        } catch {
+            NSLog("MenuBarActivity: couldn't save an icon: %@", String(describing: error))
+            return nil
+        }
     }
 }
 #endif
