@@ -42,7 +42,7 @@
 <main id="main">
   <div class="wrap page-head">
     <h1 class="display">The Workbench relay</h1>
-    <p>An optional way to reach your Mac from anywhere, with no account. Here is when it's used, what it can see, and how to run your own.</p>
+    <p>An optional way to reach your Mac from anywhere, no account needed. Here's when it gets used, what it can (and can't) see, and how to run your own if you'd rather not use mine.</p>
   </div>
 
   <div class="wrap">
@@ -54,18 +54,18 @@
         <li><strong>Tailscale.</strong> Straight to your Mac from anywhere, over your own private network.</li>
         <li><strong>The relay,</strong> only if you turn it on, and only when neither of the first two answers.</li>
       </ol>
-      <p>The first two connect your devices directly, with no server in between, and they always come first. The relay is off until you turn it on in Workbench &gt; Settings &gt; Remote Access on your Mac.</p>
+      <p>The first two connect your devices directly, with no server in between, and they always get tried first. The relay stays off until you turn it on in Workbench &gt; Settings &gt; Remote Access on your Mac.</p>
 
       <h2 id="what-it-sees">What the relay can and can't see</h2>
-      <p>With the relay on, your Mac and your device each connect out to a relay server, and it passes messages between them. Every message is encrypted on your devices with keys made from your pairing code. The relay never has the pairing code, so it can't read what it carries.</p>
+      <p>With the relay on, your Mac and your device each connect out to a relay server, and it passes messages between them. Every message is encrypted on your devices with keys made from your pairing code. The relay never gets the pairing code, so it can't read anything it carries.</p>
       <ul>
         <li><strong>It can't see</strong> your projects, code, prompts, replies, file names, or anything else in a message.</li>
         <li><strong>It can see</strong> a random room ID for your Mac, the network addresses of your Mac and device while they're connected, and how much data moves and when.</li>
-        <li><strong>It keeps</strong> nothing on disk and no log. The <a href="privacy.html">privacy policy</a> has the details.</li>
+        <li><strong>It keeps</strong> nothing on disk, and there's no log. The <a href="privacy.html">privacy policy</a> has the details.</li>
       </ul>
 
       <h2 id="host">Host your own</h2>
-      <p>The relay is a small open source Node program. Run it yourself and nothing of yours goes through ours. It needs Node 22 or later, and a host that keeps one process running and passes WebSockets through.</p>
+      <p>The relay is a small open source Node program. Run it yourself and nothing of yours ever touches mine. It needs Node 22 or later, and a host that keeps one process running and passes WebSockets through.</p>
       <div class="agent-copy">
         <div>
           <strong>Setting this up with an agent?</strong>
@@ -122,7 +122,7 @@ railway domain --service relay</code></pre>
         <li><strong>Run one copy.</strong> A Mac and its devices meet inside one process, so two copies behind a load balancer can leave them unable to find each other.</li>
         <li><strong>Limits.</strong> The relay caps how much each Mac can send in a day and how many devices can join. Each limit is an environment variable, listed in the <a href="https://github.com/mattbirchler/workbench/blob/main/relay-live/README.md#limits">README</a>.</li>
         <li><strong>No reporting.</strong> A relay you host sends no usage numbers to anyone unless you set a PostHog key yourself.</li>
-        <li><strong>Restarts are fine.</strong> When the relay restarts, your Mac and devices reconnect on their own.</li>
+        <li><strong>Restarts are fine.</strong> When the relay restarts, your Mac and devices just reconnect on their own.</li>
       </ul>
     </article>
   </div>

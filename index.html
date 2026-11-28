@@ -60,7 +60,7 @@
   <div class="wrap hero-grid">
     <div class="hero-copy">
       <h1 class="display hero-title">A coding interface for how we work today<span class="caret" aria-hidden="true"></span></h1>
-      <p class="lede">Run Claude across all your projects, control Claude Code running on a headless Mac, and keep an eye on everything from your iPhone. Codex works too, in beta.</p>
+      <p class="lede">Run Claude Code across all your projects, drive it on a headless Mac from your laptop, and check in from your iPhone when you're away from your desk. Codex works too (it's in beta).</p>
       <div class="hero-cta">
         <a class="btn btn-primary" data-download href="https://github.com/mattbirchler/workbench/releases/latest/download/Workbench.dmg">
           <svg aria-hidden="true"><use href="#download"/></svg>Download for Mac
@@ -211,12 +211,12 @@
   <div class="wrap feature-grid">
     <div class="feature-text">
       <h2 class="display">Terminal or chat. Same session.</h2>
-      <p>Every Claude tab runs Claude Code in a real terminal, built on Ghostty, with your font and keybindings. Press <kbd>⌥⌘T</kbd> and the same session turns into a chat: edits show as diffs, commands fold their output away, and questions and permission prompts become cards with real buttons.</p>
+      <p>Every Claude tab is Claude Code running in a real terminal, built on Ghostty, so your font and keybindings come along. Press <kbd>⌥⌘T</kbd> and that same session becomes a chat: edits show up as diffs, command output folds away, and questions and permission prompts turn into cards with actual buttons. Press it again to flip back.</p>
       <ul class="ticks">
-        <li>Slash commands autocomplete: built-in ones, yours, the project's, and your skills.</li>
-        <li>Claude's suggested next message waits in the box. Press <kbd>Tab</kbd> to take it.</li>
-        <li>Queue messages while Claude works, then edit, remove, or send them now.</li>
-        <li>Subagents get cards that show what each one is doing right now.</li>
+        <li>Slash commands autocomplete, whether they're built in, yours, the project's, or your skills.</li>
+        <li>Claude's suggested next message waits in the box, and <kbd>Tab</kbd> takes it.</li>
+        <li>Queue up messages while Claude works, then edit them, delete them, or send one right away.</li>
+        <li>Subagents get their own cards, so you can see what each one is up to.</li>
       </ul>
     </div>
     <figure class="feature-media">
@@ -229,12 +229,12 @@
   <div class="wrap feature-grid">
     <div class="feature-text">
       <h2 class="display">Codex too, in beta.</h2>
-      <p>Workbench is built for Claude Code, and it runs OpenAI's Codex in the same kind of tab. Codex tabs get the same chat, permission cards, past sessions, recaps, and iPhone app, with Codex's own models and effort levels right in the message box.</p>
+      <p>Workbench is built for Claude Code first, but it also runs OpenAI's Codex in the same kind of tab. Codex tabs get the same chat, permission cards, past sessions, recaps, and iPhone app, with Codex's own models and effort levels right there in the message box.</p>
       <ul class="ticks">
         <li>Choose which agent new tabs run, or open one of each from the ＋ menu.</li>
         <li>Start an agent on its own branch with Codex, from the New Agent sheet or with <code>bench agent --with codex</code>.</li>
         <li>Keep separate Claude and Codex accounts, and pick which ones each project uses.</li>
-        <li>Still Claude-only for now: answering Codex's own questions and plans from the chat, attaching pictures, and switching permission modes.</li>
+        <li>A few things are still Claude-only for now: answering Codex's questions and plans from the chat, attaching pictures, and switching permission modes.</li>
       </ul>
     </div>
     <figure class="feature-media">
@@ -247,8 +247,8 @@
   <div class="wrap feature-grid">
     <div class="feature-text">
       <h2 class="display">Every project gets its own workspace.</h2>
-      <p>Add a folder and Workbench gives it tabs for Claude, shells, files, diffs, and previews of your dev server. The sidebar shows each project's branch, pull request, and whether Claude is working, waiting on you, or done, with a one-line recap of what it last finished.</p>
-      <p>Projects sort themselves. Pin the ones you always want on top. The ones you're using sit under Active, and the rest fold away until you need them.</p>
+      <p>Add a folder and Workbench gives it its own tabs for Claude, shells, files, diffs, and previews of your dev server. The sidebar shows each project's branch, its pull request, and whether Claude is working, waiting on you, or done, plus a one-line recap of what it last finished.</p>
+      <p>Projects sort themselves, too. Pin the ones you always want up top, the ones you're using sit under Active, and the rest fold away until you need them.</p>
     </div>
     <figure class="feature-media">
       <img class="shot" src="assets/img/mac-start.webp" alt="A project's start page in Workbench with a Start Claude button, buttons for a new Codex, shell or browser tab and an agent on a branch, and four recent conversations" width="2400" height="1576" loading="lazy">
@@ -260,7 +260,7 @@
   <div class="wrap feature-grid">
     <div class="feature-text">
       <h2 class="display">Watch the changes land.</h2>
-      <p>The changes panel lists every file Claude touches, live, grouped by folder with additions and deletions. Click one for a full diff, and comment on lines to send notes back to Claude. The branch header shows how far ahead or behind you are, against whichever branch you pick.</p>
+      <p>The changes panel lists every file Claude touches as it happens, grouped by folder with additions and deletions. Click a file for the full diff, and leave comments on lines to send notes back to Claude. The branch header shows how far ahead or behind you are against whatever branch you pick.</p>
     </div>
     <figure class="feature-media">
       <img class="shot" src="assets/img/mac-diff.webp" alt="A diff tab showing the lines Claude added to RecipeDetailView.swift, next to the checklist and the changes panel" width="2400" height="1576" loading="lazy">
@@ -272,8 +272,8 @@
   <div class="wrap feature-grid">
     <div class="feature-text">
       <h2 class="display">Hand work to agents on their own branches.</h2>
-      <p>Start an agent with a prompt and Workbench gives it a fresh git worktree on its own branch, so it can't step on what you're doing. Each one shows its status, its pull request, and whether checks passed. After a PR merges, Workbench follows the deploy on hosts like Vercel and Railway, then cleans up the worktree.</p>
-      <p><strong>Brain Dump</strong> (<kbd>⌥⌘N</kbd>) starts several at once. Describe everything you want done, and Claude splits it into one task per project, each with a branch and a prompt you can edit. Nothing starts until you click Start.</p>
+      <p>Start an agent with a prompt and Workbench gives it a fresh git worktree on its own branch, so it can't trip over what you're doing. Each one shows its status, its pull request, and whether checks passed. After a PR merges, Workbench follows the deploy on hosts like Vercel and Railway, then cleans up the worktree for you.</p>
+      <p><strong>Brain Dump</strong> (<kbd>⌥⌘N</kbd>) starts a bunch at once. Describe everything you want done and Claude splits it into one task per project, each with a branch and a prompt you can edit. Nothing starts until you click Start.</p>
     </div>
     <figure class="feature-media">
       <div class="agents" aria-label="Three agents in the sidebar: agent/dark-mode opened PR #42 with checks passed and deployed; agent/pricing-page is working; agent/fix-sync is waiting on you" role="img">
@@ -301,7 +301,7 @@
   <div class="wrap">
     <div class="feature-text wide">
       <h2 class="display">36 themes to make it yours.</h2>
-      <p>Pick one theme for light mode and one for dark, and Workbench switches with your Mac. The terminal, sidebars, chat, and diffs all take the theme's colors, and its accent color shows up on buttons, checklists, and your messages. Prefer your Ghostty theme? That works too.</p>
+      <p>Pick one theme for light mode and one for dark, and Workbench switches along with your Mac. The terminal, sidebars, chat, and diffs all pick up the theme's colors, and its accent color shows up on buttons, checklists, and your messages. Already have a Ghostty theme you love? That works too.</p>
     </div>
     <figure class="themes-media">
       <img class="shot" src="assets/img/themes.webp" alt="The same Workbench window in six of its themes: Clean Slate, Northern Lights, Oat Milk, Indigo Works, Sakura Note, and Hearth" width="3048" height="1338" loading="lazy">
@@ -314,8 +314,8 @@
   <div class="wrap feature-grid">
     <div class="feature-text">
       <h2 class="display">Run it on a headless Mac. Drive it from anywhere.</h2>
-      <p>Leave Workbench running on a Mac mini in the closet and work in its projects from your laptop's sidebar, as if they were local. Read and answer its sessions, start Claude tabs and agents, review its changes, and run its shortcuts, like the dev server. While an agent is working, Workbench keeps that Mac from going to sleep on its own.</p>
-      <p>The Macs connect directly on your home network, or from anywhere over your own Tailscale network. No Tailscale? Turn on the optional <a class="inline-link" href="relay.html">Workbench relay</a>, which is encrypted end to end and needs no account. Turn on Remote Access on the headless Mac, copy its pairing link, and paste it into the other one. The <a class="inline-link" href="support.html#using-another-mac">support page</a> has the steps.</p>
+      <p>Leave Workbench running on a Mac mini in the closet and work in its projects from your laptop's sidebar like they were local. Read and answer its sessions, start Claude tabs and agents, review changes, and run its shortcuts (like the dev server). While an agent is working, Workbench keeps that Mac from dozing off.</p>
+      <p>The Macs connect directly on your home network, or from anywhere over your own Tailscale network. Don't use Tailscale? Turn on the optional <a class="inline-link" href="relay.html">Workbench relay</a> instead. It's encrypted end to end and you don't need an account. To pair them, turn on Remote Access on the headless Mac, copy its pairing link, and paste it into the other one. The <a class="inline-link" href="support.html#using-another-mac">support page</a> has the full steps.</p>
     </div>
     <figure class="feature-media">
       <div class="agents remote" role="img" aria-label="The Workbench sidebar on a laptop, switched to a Mac mini over Tailscale: api-server is working on migration tests, ios-app is waiting for permission to run xcodebuild test, and docs is done.">
@@ -348,7 +348,7 @@
   <div class="wrap">
     <div class="feature-text wide">
       <h2 class="display">Keep up from your iPhone.</h2>
-      <p>The iPhone app connects straight to your Mac on your home Wi-Fi or over your own Tailscale network, with nothing in between. If you'd rather skip Tailscale, the optional <a class="inline-link" href="relay.html">Workbench relay</a> reaches your Mac from anywhere, encrypted so the relay can't read it. Sessions that need you sit at the top. Read along as Claude works, answer its questions, tap Allow or Deny, reply with a message or a photo, and review diffs from the couch. You can start new tabs and agents too.</p>
+      <p>The iPhone app connects straight to your Mac on your home Wi-Fi or over your own Tailscale network, with nothing in between. If you'd rather skip Tailscale, the optional <a class="inline-link" href="relay.html">Workbench relay</a> gets you to your Mac from anywhere, and it's encrypted so the relay can't read a thing. Sessions that need you sit at the top. From there you can read along as Claude works, answer its questions, tap Allow or Deny, reply with a message or a photo, and review diffs from the couch. You can start new tabs and agents from your phone too.</p>
       <a class="btn btn-ghost phone-cta" href="https://apps.apple.com/us/app/workbench-manage-your-agents/id6827762868">
         <svg aria-hidden="true"><use href="#phone"/></svg>Get it on the App Store
       </a>
@@ -357,9 +357,9 @@
       <img src="assets/img/iphone.webp" alt="The Workbench iPhone app: a project list with sessions that need you, are working, and are done; a working session with its checklist; and a permission prompt with Allow and Deny" width="2400" height="1589" loading="lazy">
     </figure>
     <ul class="phone-points">
-      <li><h3>Notifications you choose</h3><p>Right-click a project on the Mac to hear when Claude needs you, when it finishes, and when checks and deploys are done.</p></li>
-      <li><h3>A Lock Screen dashboard</h3><p>Put every session on your Lock Screen at once, kept up to date by your Mac.</p></li>
-      <li><h3>iPad too</h3><p>The same app runs as a full iPad app. Both need iOS 27.</p></li>
+      <li><h3>Notifications you choose</h3><p>Right-click a project on the Mac to pick what you hear about: when Claude needs you, when it finishes, and when checks and deploys are done.</p></li>
+      <li><h3>A Lock Screen dashboard</h3><p>Every session on your Lock Screen at once, kept up to date by your Mac.</p></li>
+      <li><h3>iPad too</h3><p>The same app is a full iPad app too. Both need iOS 27.</p></li>
     </ul>
   </div>
 </section>
@@ -380,7 +380,7 @@
     </div>
     <div>
       <h2 class="display">And from the shell.</h2>
-      <p class="muted-p">Every tab Workbench opens has <code>bench</code> on its PATH, so you or Claude can talk to the app. Ask Claude to “tell me on my phone when the build finishes” and it knows what to do.</p>
+      <p class="muted-p">Every tab Workbench opens has <code>bench</code> on its PATH, so you or Claude can talk to the app. Ask Claude to “tell me on my phone when the build finishes” and it just does it.</p>
       <div class="term" role="img" aria-label="Terminal examples of the bench command: bench projects, bench add, bench notify, and bench notify --phone">
         <div class="term-bar" aria-hidden="true"><i></i><i></i><i></i><span>zsh</span></div>
         <pre aria-hidden="true"><span class="p">❯</span> bench projects
@@ -398,12 +398,12 @@ Field Notes  ~/Code/field-notes  agent/export</span>
   <div class="wrap">
     <h2 class="display small-things-title">The small things.</h2>
     <ul class="small-things">
-      <li><h3>Your plan's limits</h3><p>Rings show your 5-hour, weekly, and per-model limits, grey until they need your attention.</p></li>
-      <li><h3>Menu bar status</h3><p>See what's working and what needs you without switching apps.</p></li>
+      <li><h3>Your plan's limits</h3><p>Rings show your 5-hour, weekly, and per-model limits. They stay grey until you actually need to pay attention.</p></li>
+      <li><h3>Menu bar status</h3><p>Turn on the menu bar icon to see what's working and what needs you without switching apps.</p></li>
       <li><h3>Other Macs</h3><p>Pair a second Mac and work in its projects from the same sidebar.</p></li>
-      <li><h3>Shortcuts</h3><p>One-click buttons for commands you run all the time, plus a dev server button with port previews.</p></li>
-      <li><h3>Your draft stays put</h3><p>Text in the message box is still there when you switch projects and come back.</p></li>
-      <li><h3>Updates itself</h3><p>New versions download in the background and install when you quit.</p></li>
+      <li><h3>Shortcuts</h3><p>One-click buttons for the commands you run all the time, plus a dev server button with port previews.</p></li>
+      <li><h3>Your draft stays put</h3><p>Whatever you typed in the message box is still there when you switch projects and come back.</p></li>
+      <li><h3>Updates itself</h3><p>New versions download in the background and install when you quit. No nagging.</p></li>
     </ul>
   </div>
 </section>
@@ -426,14 +426,14 @@ Field Notes  ~/Code/field-notes  agent/export</span>
     <div>
       <h2 class="display">Get started in a minute.</h2>
       <ol class="steps">
-        <li><span>Download Workbench and open it.</span></li>
+        <li><span>Download Workbench and open the disk image.</span></li>
         <li><span>Drag Workbench into your Applications folder.</span></li>
-        <li><span>Open it. The welcome checks your Mac for what it needs, signs you in to Claude Code, and suggests projects from the folders you've already used.</span></li>
+        <li><span>Open it. The welcome screen checks your Mac for what it needs, signs you in to Claude Code, and suggests projects from folders you've already worked in.</span></li>
       </ol>
       <a class="btn btn-primary" data-download href="https://github.com/mattbirchler/workbench/releases/latest/download/Workbench.dmg">
         <svg aria-hidden="true"><use href="#download"/></svg>Download for Mac
       </a>
-      <p class="fine">Signed and notarized by Apple. Free to use.</p>
+      <p class="fine">Signed and notarized by Apple. It's free and <a class="inline-link" href="https://github.com/mattbirchler/workbench">open source</a>, so if something's broken or you have an idea, <a class="inline-link" href="https://github.com/mattbirchler/workbench/issues">open an issue</a> or <a class="inline-link" href="mailto:matt@birchtree.me">email me</a>.</p>
     </div>
     <div class="reqs">
       <h3>You'll need</h3>
