@@ -1207,6 +1207,7 @@ private struct Composer: View {
     /// monitor sees where you are.
     @State private var history = ComposerHistory()
     @Environment(\.tabHasKeys) private var tabHasKeys
+    @Environment(\.pictureClosings) private var pictureClosings
     /// Edges of the message box with text scrolled past them.
     @State private var hiddenEdges: Edge.Set = []
     /// Kept as state so the key monitor sees the latest.
@@ -1504,6 +1505,11 @@ private struct Composer: View {
                     // side of a split getting the keys.
                     .task(id: FocusKey(session: session.id, canReply: session.canReply, hasKeys: tabHasKeys)) {
                         await takeFocus()
+                    }
+                    // Closing a picture opened over the window hands the
+                    // cursor back here rather than leaving it nowhere.
+                    .onChange(of: pictureClosings) {
+                        Task { await takeFocus() }
                     }
                     // Past eight lines the box scrolls. Fade whichever edge has
                     // more text past it, so it's clear there's more.
