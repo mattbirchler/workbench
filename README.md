@@ -2,13 +2,18 @@
 
 # Workbench
 
-A lean Mac terminal for working across many projects with Claude Code. Pick a
-project in the sidebar and get terminals that open in its folder. The right
-panel shows what's changing in git. OpenAI's Codex runs in Workbench too, in
-beta.
+Workbench is a lean Mac terminal I made for working across a bunch of projects
+with Claude Code at once. Pick a project in the sidebar and you get terminals
+that open in its folder, plus a panel on the right that shows what's changing
+in git. OpenAI's Codex works in Workbench too (it's in beta).
 
-Terminals are [libghostty](https://github.com/ghostty-org/ghostty), so Workbench
-uses your existing Ghostty config (font, theme, keybindings).
+The terminals are [libghostty](https://github.com/ghostty-org/ghostty), so
+Workbench picks up your existing Ghostty config: font, theme, keybindings, all
+of it.
+
+If you just want to use the app, grab it from
+[workbenchapp.dev](https://workbenchapp.dev). The rest of this README covers
+building it yourself and a few features that are easier to explain in text.
 
 ## Building
 
@@ -26,19 +31,18 @@ That file is gitignored. With no team, the Mac app is signed to run on your
 Mac only. The iPhone app needs a team and a bundle id prefix of your own.
 
 A copy you build yourself never checks for updates and sends no analytics.
-Only builds signed by Workbench's developer do (see
-`Analytics/OfficialBuild.swift`).
+Only builds I sign do that (see `Analytics/OfficialBuild.swift`).
 
 ## Codex (beta)
 
-Workbench is built for Claude Code, and it can also run Codex in the same kind
-of tab: the same chat, permission cards, past sessions, recaps and iPhone app,
+Workbench is built for Claude Code first, but it can also run Codex in the same
+kind of tab. You get the same chat, permission cards, past sessions, recaps and iPhone app,
 with Codex's own models and effort levels in the message box. It's offered on
 any Mac with `codex` installed. Pick which agent new tabs run in Settings >
 Agents, or open one of each from the ＋ menu. Settings > Accounts lists your
 Codex sign-ins beside your Claude ones, and each project can use its own.
 
-Some things are still Claude-only: Codex's multiple-choice questions and plans
+A few things are still Claude-only for now: Codex's multiple-choice questions and plans
 are answered in its terminal, and attaching pictures and switching permission
 modes from the chat don't work with Codex yet. See
 [docs/codex.md](docs/codex.md) for how it works and what's missing.
@@ -57,7 +61,7 @@ After a pull request merges, Workbench follows the deploy of its merge commit
 and shows "Deploying", "Deployed" or "Deploy failed" beside the project's
 branch, with a notification when it finishes. It reads the deployments that
 hosts like Railway, Vercel, Netlify and Render post to GitHub, through `gh`, so
-there's no account to connect. Repos that never deploy show nothing.
+there's no account to connect. Repos that never deploy just show nothing.
 
 ## Commit, Push, Open PR
 
@@ -144,9 +148,9 @@ Agents go by their branch name. Commands act on the project they're run in,
 or on another with `--project <name or folder>`, and the ones that report
 something take `--json`.
 
-Claude is told about `bench` when Workbench starts it, so "start three
-agents on these bugs and tell me on my phone when they're done" works
-without further explanation. One session's message to another is always
+Claude is told about `bench` when Workbench starts it, so you can say "start
+three agents on these bugs and tell me on my phone when they're done" and it
+just works, no extra explaining needed. One session's message to another is always
 marked with where it came from. A session can't answer another's permission
 requests, merge, or throw away an agent's unsaved work: those stay with you.
 
